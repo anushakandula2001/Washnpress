@@ -1,0 +1,63 @@
+openapi: 3.1.0
+info:
+  title: Wash N Press API
+  version: 1.0.0
+  description: Current and target API specification seed
+servers:
+  - url: http://localhost:3000
+paths:
+  /api/schedule:
+    post:
+      summary: Select pickup slot with preferred window fallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                preferredWindows:
+                  type: array
+                  items:
+                    type: string
+                    enum: [Morning, Afternoon, Evening]
+                nowIso:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Slot found
+        '400':
+          description: Validation error
+        '404':
+          description: No slot available
+  /api/operations/qc:
+    post:
+      summary: Submit QC pass or fail decision
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderId, pass]
+              properties:
+                orderId:
+                  type: string
+                pass:
+                  type: boolean
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: QC processed
+        '400':
+          description: Validation error
+        '422':
+          description: Missing QC fail reason
+  /api/sustainability:
+    get:
+      summary: Get sustainability summary
+      responses:
+        '200':
+          description: Sustainability summary

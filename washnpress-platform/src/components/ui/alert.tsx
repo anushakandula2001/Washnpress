@@ -1,0 +1,26 @@
+import * as React from "react";
+import { cn } from "@/lib/utils/cn";
+
+export function Alert({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return (
+    <div
+      role="alert"
+      className={cn("rounded-lg border border-border bg-muted/40 p-4", className)}
+      {...props}
+    />
+  );
+}
+
+export function AlertTitle({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h5 className={cn("mb-1 font-medium", className)} {...props} />;
+}
+
+export function AlertDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
+  return <div className={cn("text-sm text-muted-foreground", className)} {...props} />;
+}

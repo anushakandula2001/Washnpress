@@ -1,0 +1,493 @@
+Wash N Press — Detailed Project Report & Functional Document
+1
+WASH N PRESS
+A Women-Led, Water-Conscious Community Laundry Subscription Platform
+Detailed Project Report (DPR) & Functional Requirements Document — Version 1.0
+Table of Contents
+
+-- 1 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+2
+PART A — DETAILED PROJECT REPORT
+1. Executive Summary
+Wash N Press is a hyperlocal, subscription-based laundry platform serving gated communities,
+apartment societies, and PG/co-living accommodations. The model combines app-based
+convenience for residents with a decentralized, community-embedded operating structure: each
+serviced society's micro-laundry unit is owned and run by a two-member women's team
+recruited from the local community, supported by Wash N Press through equipment, training,
+and working-capital assistance.
+The project is built around three pillars: convenience (predictable subscription-based laundry
+service with live tracking), livelihood creation (women's micro-entrepreneurship at the
+community level), and sustainability (low-water and water-recycling washing machinery to
+reduce the environmental footprint of a traditionally water-intensive service).
+2. Project Background & Rationale
+Urban housing societies in India represent a dense, underserved market for recurring household
+services. Laundry remains a daily time burden for residents, while existing solutions are either
+informal (unreliable, no quality assurance) or centralized commercial laundromats (logistics-
+heavy, impersonal). Wash N Press addresses this gap by embedding the service physically
+inside the community it serves.
+Simultaneously, urban and peri-urban women — particularly those with limited access to formal
+employment due to caregiving responsibilities, mobility constraints, or lack of formal
+qualifications — represent an underutilized workforce that benefits from hyperlocal, flexible
+micro-enterprise opportunities within walking distance of home. This project is structured to
+address both gaps with one operating model.
+3. Project Objectives
+• Deliver a reliable, app-based laundry subscription service to residents of partnered
+housing societies.
+• Establish a women-led micro-enterprise (two-member unit) in each serviced society,
+providing equipment, training, and initial working-capital support.
+• Reduce fresh-water consumption per garment processed through water-saving and
+water-recycling machinery.
+• Build a scalable, replicable operating and franchise-style model that can expand society-
+by-society and city-by-city without proportional increases in central overhead.
+• Create a measurable social and environmental impact track record suitable for impact-
+investment, CSR partnership, and government MSME/SHG scheme alignment.
+4. Social Impact Model — Women-Led Micro-Units
+4.1 Structure
+
+-- 2 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+3
+Each society-level micro-laundry unit is operated by a two-member women's team, ideally
+residents of that society or its immediate vicinity, minimizing commute and enabling flexible
+hours around family responsibilities. Wash N Press functions as the enabling platform: providing
+the machinery (capex), the app/ops system, training, and an initial operating-capital cushion
+during ramp-up; the women's team provides labor, day-to-day unit management, and the
+community trust relationship that's difficult for a centralized vendor to replicate.
+4.2 Recruitment, Training & Support
+1. Identify and recruit candidates through local women's Self-Help Groups (SHGs), RWA
+networks, or direct community outreach — prioritizing residents of the target society.
+2. Provide a structured training program covering machine operation, fabric handling, the
+Ops App workflow, basic customer service, and hygiene/safety standards.
+3. Provide initial working-capital support (e.g., a guaranteed minimum monthly draw for the
+first 3–6 months) to de-risk the ramp-up period before subscriber volume stabilizes.
+4. Pair each new unit with an experienced mentor unit (once the network has matured) for
+peer support.
+4.3 Revenue-Sharing Model
+A blended structure is recommended over a flat wage, to align incentives with service quality
+and retention: a fixed monthly base draw per unit (covering baseline livelihood needs) plus a
+percentage share of subscription and add-on revenue above an agreed volume threshold. This
+mirrors structures used in SHG-linked micro-enterprise and managed-franchise models, and
+should be finalized in consultation with a legal/financial advisor alongside applicable schemes
+such as India's National Rural Livelihood Mission (NRLM/DAY) or state-level women's
+enterprise support programs, where the unit may qualify for additional subsidy or low-interest
+credit support.
+4.4 Governance & Accountability
+• Each unit operates under a written partnership agreement defining equipment
+ownership, revenue share, quality standards, and renewal/exit terms.
+• Unit performance (quality scores, complaint rate, turnaround time) is tracked through the
+same Ops App and Admin Console used for centralized hubs, ensuring consistent
+service standards across the network.
+• A grievance and support channel is maintained for the women's teams themselves,
+separate from the resident-facing support system.
+5. Sustainability Model — Water Conservation
+5.1 Rationale
+Laundry is among the more water-intensive household services, and centralizing or
+decentralizing that water use without addressing efficiency simply relocates the environmental
+cost rather than reducing it. Building water efficiency into the core machinery choice — rather
+than treating it as an optional upgrade — makes sustainability a structural feature of the
+business rather than a marketing claim.
+
+-- 3 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+4
+5.2 Machinery Approach
+• Use commercial washing machines with built-in greywater recycling/reuse modules,
+which capture and filter rinse-cycle water for reuse in subsequent wash cycles, reducing
+fresh-water draw per load.
+• Evaluate low-water-consumption machine models (front-load, high-efficiency commercial
+units) over conventional top-load machines for all new unit installations.
+• Where feasible at higher-volume hubs, consider on-site greywater treatment for reuse in
+non-potable applications (e.g., facility cleaning), subject to local water-authority approval.
+5.3 Economic Framing
+Water-efficient machinery should be evaluated as a capex decision with a defined payback
+period — higher upfront equipment cost weighed against monthly water (and associated
+heating/pumping) savings — rather than imposed uniformly regardless of unit economics. High-
+volume hubs, where water cost is a larger share of operating expense, are the natural first
+deployment point; the payback period should improve as machine costs fall with scale,
+informing the rollout sequence to smaller micro-units.
+5.4 Impact Tracking
+• Track and report liters of fresh water saved per garment / per unit / network-wide, as a
+core sustainability KPI alongside financial metrics.
+• Use this data point in RWA pitches, CSR partnership conversations, and impact-investor
+reporting.
+6. Business Model (Revised with Social & Sustainability
+Layer)
+6.1 Revenue Streams
+• Subscription fees (Basic / Standard / Premium / Family Pack tiers) — primary revenue
+stream.
+• Pay-per-use for non-subscribers and add-on services (dry cleaning, express delivery,
+shoe/bag cleaning).
+• B2B2C society contracts via RWA tie-ups, with group discount and minimum-volume
+guarantees.
+6.2 Cost Structure
+Cost Category Components Notes
+Processing Water, power, detergent, equipment
+depreciation, ironing labor
+Reduced water cost
+where recycling
+machinery deployed
+Women's-unit revenue
+share
+Base draw + performance-linked share Replaces traditional fixed
+logistics labor cost at
+micro-unit level
+
+-- 4 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+5
+Cost Category Components Notes
+Equipment capex Washing/drying/ironing machinery incl. water-
+recycling modules
+Higher upfront cost for
+water-efficient models;
+evaluated on payback
+period
+Logistics (hub model
+only)
+Pickup/delivery staff, routing, fuel Reduced where micro-
+units serve their own
+society directly
+Garment risk Loss/damage claims Mitigated via QR/RFID
+batch tagging (see
+Functional Requirements)
+Training & onboarding Women's-unit recruitment, training program
+delivery
+One-time cost per new
+unit; amortized over unit
+lifetime
+6.3 Capital Structure Options
+• Direct capex funding of unit machinery by Wash N Press, recovered through revenue
+share over the partnership term.
+• Blended funding combining Wash N Press capital with SHG/MSME scheme-linked
+subsidy or low-interest credit available to women-led micro-enterprises.
+• CSR or impact-investment co-funding, given the dual social (livelihood) and
+environmental (water conservation) impact thesis — a stronger fit for grant or
+concessional capital than a pure-commercial model.
+7. Implementation Roadmap
+Phase Focus Key Milestones
+Phase 1: Pilot (Months 1–
+6)
+1–3 societies in a single city Recruit & train first women's units; install
+water-efficient machinery; validate unit
+economics, garment-loss rate, and
+resident satisfaction
+Phase 2: Hyperlocal
+Density (Months 6–18)
+50–100 societies in 2–3 cities Standardize training/onboarding
+playbook; formalize revenue-share and
+partnership agreement template; build
+CSR/impact-investor case using Phase
+1 data
+Phase 3: Cluster
+Expansion (Year 2+)
+Cluster-based density to
+reduce per-unit onboarding
+cost
+Explore scheme-linked financing
+(NRLM/SHG); evaluate centralized hub
+model for very high-density clusters
+where micro-units have hit volume
+ceiling
+Phase 4: Scale & Brand
+(Year 3+)
+Multi-city, franchise-style
+replication
+Mature mentor-unit network; publish
+annual social & environmental impact
+report
+
+-- 5 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+6
+8. Risk Analysis
+Risk Mitigation
+Slow ramp-up volume at new units
+affecting women's-team income
+stability
+Guaranteed base draw during initial months; phased rollout
+tied to pre-validated subscriber interest before unit launch
+Quality inconsistency across
+decentralized units
+Standardized training, Ops App-enforced QC checkpoints,
+network-wide performance tracking
+Garment loss/damage disputes Mandatory QR/RFID batch tagging from pickup through
+delivery (see Functional Requirements, Section 4.4)
+RWA onboarding delays (committee
+approval cycles)
+Parallel direct-to-resident interest capture; free-trial offers to
+build resident demand pressure on committees
+Higher capex for water-efficient
+machinery straining early unit
+economics
+Phased rollout starting at higher-volume sites where payback
+period is shortest
+Dependency on scheme-linked
+financing that may not materialize
+Treat as upside, not baseline assumption; core financial
+model should work on Wash N Press capital alone
+9. Expected Social & Environmental Outcomes
+• Direct livelihood creation for two women per serviced society, scaling linearly with
+society count.
+• Reduced fresh-water consumption per garment processed versus conventional laundry
+machinery, tracked and reported network-wide.
+• Community-embedded service trust, supporting higher resident retention than a
+centralized, anonymous vendor relationship.
+• A replicable model suitable for partnership with CSR programs, state women's enterprise
+schemes, and impact-focused investors.
+
+-- 6 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+7
+PART B — FUNCTIONAL REQUIREMENTS DOCUMENT
+10. Document Purpose & Scope
+This section defines the features, user roles, workflows, and system behavior required to build
+the Wash N Press platform, updated to reflect the women-led micro-unit operating model and
+sustainability tracking requirements introduced in Part A.
+10.1 In Scope
+• Resident-facing mobile app (subscriptions, scheduling, tracking, payments)
+• Operations app for women's-unit operators, pickup/delivery staff (hub model), and hub
+workers
+• Admin console for society management, women's-unit management, vendor operations,
+sustainability tracking, and business reporting
+• Garment-level tracking system (QR/RFID) to mitigate loss/damage risk
+• Society (RWA) onboarding and B2B2C contract workflows
+• Women's-unit recruitment, training, and revenue-share management workflows
+10.2 Out of Scope (Phase 1)
+• Smart locker / IoT hardware integration (Phase 2+)
+• Franchise management module (Phase 3)
+• Home cleaning bundle and wardrobe management features (future expansion)
+11. User Roles & Personas
+Role Description Primary Interface
+Resident / Subscriber End customer living in a partnered society;
+subscribes to plans, schedules pickups
+Resident App
+Non-Subscriber (Guest) One-off / pay-per-use customer in a serviced area Resident App
+(guest checkout)
+Women's-Unit Operator (2
+per unit)
+Operates the in-society micro-laundry unit:
+processing, light pickup/delivery, resident interface
+Ops App (unit
+mode)
+Pickup & Delivery Agent
+(hub model)
+Field staff collecting/returning garments on hub-
+served routes
+Ops App (route
+mode)
+Hub/Facility Worker Processes garments at a centralized hub (high-
+density clusters)
+Ops App (hub
+mode)
+Society Admin (RWA) Manages community-level contract, views usage,
+communicates with residents
+Admin Console
+(society view)
+Wash N Press Ops/Impact
+Manager
+Manages units, training pipeline, revenue-share,
+sustainability KPIs
+Admin Console (full
+access)
+
+-- 7 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+8
+Role Description Primary Interface
+Customer Support Agent Handles complaints, refunds, garment disputes Admin Console
+(support view)
+12. Resident App — Functional Requirements
+12.1 Onboarding & Account Setup
+5. Select society from a list (geofenced/searchable); sign up via mobile number + OTP.
+6. Enter flat/unit number, validated against society's registered unit list.
+7. Complete profile: name, alternate contact, preferred pickup time windows.
+12.2 Subscription Management
+• Browse/compare tiers (Basic/Standard/Premium/Family Pack) with garment caps,
+turnaround, price.
+• Select plan, billing cycle, pay via integrated gateway; view usage vs. cap.
+• Upgrade/downgrade (next-cycle effective, admin-configurable proration), pause, cancel
+with reason capture.
+12.3 Pickup Scheduling
+• View available slots for their society (generated based on the local women's-unit or hub
+route capacity).
+• Book one-time or recurring pickups; reschedule/cancel up to a configurable cutoff.
+• Push + SMS/WhatsApp confirmation for every scheduled pickup.
+12.4 Order & Garment Tracking
+• Unique Order ID per pickup; garment count/category logged by operator at pickup, QR-
+tagged.
+• Live status timeline: Picked Up → At Unit/Hub → In Wash → Ironing/QC → Out for
+Delivery → Delivered.
+• Digital itemized garment receipt for every order, basis for any disputes.
+12.5 Wallet, Billing & Payments
+• In-app wallet, auto-renewal via saved payment method, full invoice history, UPI/card/net
+banking support.
+12.6 Add-on Services
+• Dry cleaning, shoe/bag cleaning, express delivery; special-instructions field per order.
+12.7 Support & Issue Resolution
+• Raise complaint per order with photo upload; SLA-tracked resolution; auto wallet credit
+per configured rules.
+
+-- 8 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+9
+12.8 Sustainability Visibility (New)
+• Optional resident-facing impact widget: "X liters of water saved this month through our
+recycling machinery," reinforcing the platform's sustainability positioning.
+13. Operations App — Functional Requirements
+13.1 Women's-Unit Operator Workflow (Primary Model)
+8. Operator logs in and views the day's bookings for their society (no multi-society routing
+needed — single-society scope).
+9. At pickup (in-society, short-distance), operator logs garment count/category and applies
+QR batch tag.
+10. Garments processed on-site: Wash → Dry → Iron → QC, each stage logged in-app.
+11. QC fail/damage triggers automatic resident notification and support ticket — never
+silently proceeds.
+12. Operator scans QR at delivery to confirm match against pickup manifest; captures
+delivery confirmation (OTP/signature).
+13. App logs water usage per cycle (where machinery supports automated reporting) or
+allows manual log entry, feeding the sustainability dashboard.
+13.2 Hub & Route Model (High-Density Clusters Only)
+• Used only where a society/cluster has outgrown micro-unit capacity; retains the route-
+batching and agent-delivery workflow from the original hub model.
+• Same QR-tagging, QC-checkpoint, and discrepancy-blocking logic applies regardless of
+operating model.
+13.3 Inventory & Garment Tracking
+• QR (Phase 1) or RFID (Phase 2, pending pilot loss-rate data) batch tag is the system of
+record from pickup through delivery.
+• Lost/damaged garment reporting workflow with photo evidence, linked to order and
+resident for compensation.
+13.4 Women's-Unit Operations Support
+• In-app access to training materials and refresher modules.
+• Earnings dashboard showing base draw + performance-linked share, updated per billing
+cycle.
+• Direct escalation channel to the Wash N Press Ops/Impact Manager for equipment
+issues or operational support.
+14. Admin Console — Functional Requirements
+14.1 Society (RWA) Onboarding
+
+-- 9 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+10
+14. Create society profile: name, address, unit structure, contract terms (discount %,
+minimum volume, exclusivity period).
+15. Bulk/manual upload of registered units for resident verification.
+16. Configure pickup slots and capacity based on the assigned women's-unit or hub route.
+14.2 Women's-Unit Management (New)
+• Unit profile: location, operators (2 per unit), equipment installed (incl. water-recycling
+specifications), training completion status.
+• Revenue-share configuration per unit: base draw amount, performance threshold, share
+percentage above threshold.
+• Recruitment pipeline tracker: candidate sourcing (SHG/RWA/direct), interview, training,
+go-live status.
+• Unit performance dashboard: quality score, complaint rate, turnaround time, resident
+satisfaction — comparable across units for network-wide quality consistency.
+14.3 Subscription & Pricing Configuration
+• Define tiers, garment caps, pricing — globally or per-society for negotiated B2B rates.
+• Configure add-ons, proration/pause/cancellation rules, promotional codes.
+14.4 Operations Dashboard
+• Real-time order status across all units/hubs; unit and hub capacity/utilization monitoring.
+• Route performance (hub model) and garment loss/damage rate tracking by
+unit/hub/operator.
+14.5 Sustainability Dashboard (New)
+• Network-wide and per-unit water usage tracking: liters consumed vs. liters saved
+through recycling machinery, benchmarked against conventional-machine baseline.
+• Exportable sustainability impact report for CSR partner and impact-investor reporting.
+14.6 Business Reporting & Analytics
+Report Key Metrics Frequency
+Subscription
+performance
+New subs, churn, upgrade/downgrade trends Weekly/Monthly
+Revenue MRR, ARPU, add-on revenue share Monthly
+Unit/hub economics Cost per garment, breakeven household count,
+utilization %, revenue-share payout
+Monthly
+Social impact Number of active women's units, livelihoods
+supported, retention rate of operators
+Monthly
+Sustainability Liters of water saved network-wide and per unit Monthly
+Garment risk Loss/damage incidents per 1,000 garments
+processed
+Weekly
+
+-- 10 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+11
+Report Key Metrics Frequency
+Support SLA Avg. resolution time, complaint volume by category Weekly
+14.7 Customer Support Tools
+• Unified ticket queue across channels; order-level detail view (manifest, photos, unit/hub
+history).
+• Refund/credit issuance to resident wallet with configurable approval thresholds.
+14.8 User & Role Management
+• Role-based access for admin, ops/impact manager, support agent, and society-level
+RWA viewer accounts.
+• Audit log of all configuration changes (pricing, society contracts, revenue-share terms,
+refund overrides).
+15. Non-Functional Requirements
+Category Requirement
+Performance App screens load within 2 seconds on 4G; status updates reflected within
+30 seconds of operator action
+Availability 99.5% uptime for resident-facing app and payment processing
+Scalability Must support scaling from single-society pilot to multi-city, hundreds-of-units
+operation without redesign
+Security PCI-DSS compliant payment handling; OTP authentication; encrypted
+resident PII storage
+Data Privacy Compliance with India's Digital Personal Data Protection Act (DPDP)
+Localization English plus at least one regional language at launch (e.g., Hindi),
+extensible further — important given community-level operator usage
+Offline Resilience Ops App must allow offline logging of pickups/deliveries/processing with
+sync on reconnect
+Usability Operator-facing Ops App UI designed for varying levels of
+smartphone/digital literacy, given the community-recruitment model
+16. Third-Party Integrations
+• Payment Gateway: Razorpay or equivalent (UPI, cards, net banking, autopay/eNACH).
+• SMS/WhatsApp Business API for transactional notifications.
+• Maps/Navigation for hub-model route optimization and live tracking.
+• Push Notifications: Firebase Cloud Messaging or equivalent.
+• QR scanning: native camera-based for MVP; RFID integration reserved as a Phase 2
+upgrade path.
+
+-- 11 of 12 --
+
+Wash N Press — Detailed Project Report & Functional Document
+12
+• Water-usage data capture: manual entry for MVP; direct machine telemetry integration
+where supported by chosen water-recycling machinery vendor, for Phase 2.
+17. End-to-End Order Workflow (Summary)
+17. Resident books or has a recurring pickup slot with their society's women's unit.
+18. Operator logs garment count, applies QR batch tag, marks pickup complete → resident
+notified.
+19. On-site processing: Wash → Dry → Iron → QC, with status updates at each stage;
+water usage logged.
+20. QC pass moves to "Ready for Delivery"; QC fail triggers resident notification and support
+ticket.
+21. Operator delivers, scans QR to confirm match, captures delivery confirmation.
+22. Order closed; garment usage deducted from subscription cap; resident may rate and
+dispute within a configurable window.
+18. Open Items for Product & Operational Decision
+• Final revenue-share formula for women's units (base draw amount, threshold,
+percentage) — requires finance and legal input, and alignment with any SHG/MSME
+scheme terms.
+• QR vs. RFID tagging decision — pending validated loss/damage rate from the Phase 1
+pilot.
+• Water-recycling machinery vendor selection and payback-period analysis per unit size.
+• Threshold at which a society transitions from a women's-unit model to a centralized hub
+model (very high-density clusters).
+• Legal structuring of the women's-unit partnership agreement (employment vs. micro-
+franchise vs. SHG-linked enterprise) — requires legal review.
+• Identification of applicable government schemes (NRLM/DAY, state women's enterprise
+programs) for potential co-funding or credit support.
+
+-- 12 of 12 --
+

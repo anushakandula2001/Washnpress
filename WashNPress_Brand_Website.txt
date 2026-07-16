@@ -1,0 +1,249 @@
+Wash
+N Press
+B ra nd Iden tit y · L og o Co nc epts · W ebsi te B lu epr in t
+Women-Led Water-Conscious Community-First
+Empowering Communities · Conserving Water · Reimagining Laundry
+
+-- 1 of 11 --
+
+B R A N D F O U N D A T I O N S
+What Wash N Press Stands For
+Three pillars that shape every brand decision
+Water-Conscious
+Every drop counts. Our eco-machinery
+recycles rinse water, reducing fresh-
+water draw by up to 60% vs
+conventional laundry.
+Women-Led
+Each society unit is operated by a two-
+member women's team — hyperlocal
+livelihoods, within walking distance of
+home.
+Community-First
+Not a distant vendor. Wash N Press lives
+inside your society, trusted by your
+RWA, operated by your neighbours.
+"Laundry as a lifestyle service — not a chore."
+
+-- 2 of 11 --
+
+B R A N D C O L O U R P A L E T T E
+Aqua · Teal · Ice · Slate
+Water-inspired. Trustworthy. Fresh.
+Aqua Light
+#00C9C9
+Primary CTA
+Aqua
+#00A8A8
+Brand Primary
+Deep Aqua
+#006D6D
+Headers
+Dark Teal
+#004D4D
+Backgrounds
+Mint Accent
+#00E5CC
+Highlights
+Ice Blue
+#B2F0EE
+Light fills
+Amber
+#F5A623
+Impact/CTA alt
+White
+#FFFFFF
+Cards / Copy
+
+-- 3 of 11 --
+
+L O G O C O N C E P T A
+The Spinning Drop
+A water droplet forming a laundry drum — sustainability meets service
+wash n press
+I co n
+Circular drum + embedded water droplet. Spins 360° as a loader animation in-
+app.
+Wo r d mar k
+"wash" in Aqua, "n" in Mint accent, "press" in Deep Teal. Cambria serif —
+trustworthy and approachable.
+Wo r ks o n
+App icon, letterhead, society signage, laundry bags, delivery boxes.
+A v o id
+Never use on busy photographic backgrounds. Always maintain clear space =
+icon width ÷ 4.
+
+-- 4 of 11 --
+
+L O G O C O N C E P T B
+The Wave Mark
+A fluid wave forming a "W" — movement, water, and cleanliness in one mark
+W A S H N P R E S S
+community laundry
+WnP
+On White
+WnP
+On Brand
+WnP
+Dark Mode
+WnP
+Pale Fill
+→ Always test logo legibility at 24px × 24px for app icon use
+
+-- 5 of 11 --
+
+L O G O C O N C E P T C + T Y P O G R A P H Y
+The Leaf-Drop Monogram
+Sustainability in the mark — the eco angle made visible
+WnP
+Wash N Press
+community laundry
+T Y P O G R A P H Y S Y S T E M
+Disp lay / Lo go
+Cambria Serif
+36–52 pt
+Headlines, logo wordmark
+Su b-headers
+Calibri SemiBold
+18–24 pt
+Section labels, card titles
+Bo dy Co py
+Calibri Regular
+12–14 pt
+App UI, website paragraphs
+Captio ns / Meta
+Calibri Light
+9–11 pt
+Timestamps, fine print
+T A G L I N E O P T I O N S
+"Clean. Close. Conscious."
+"Your community's laundry, handled with care."
+"Fresh clothes. Saved water. Local livelihoods."
+
+-- 6 of 11 --
+
+W E B S I T E A R C H I T E C T U R E
+Site Map & Page Structure
+6 core pages, designed for resident + RWA conversion
+1
+Home
+Hero, how it works, eco stats, app download CTA
+2
+Plans
+Tier comparison, family pack, society pricing
+3
+For Societies
+RWA pitch, onboarding steps, testimonials
+4
+Our Story
+Women-led mission, sustainability, impact
+numbers
+5
+How It Works
+Step-by-step pickup-to-delivery visual flow
+6
+Contact / Join
+Society interest form, operator recruitment,
+support
+
+-- 7 of 11 --
+
+W E B S I T E — H O M E P A G E L A Y O U T
+Homepage Section Blueprint
+Desktop layout · mobile-first responsive design
+Wash N Press Home Plans Societies Our Story How It Works Get Started
+Clean clothes, delivered to your door.
+Subscribe once. Enjoy every week.
+View Plans →
+[ App Preview ]
+Book Slot → We Collect → 🫧 We Wash → We Deliver
+284L Water Saved/Month 62% Recycled Water 2 Women Per Unit 50+ Societies
+
+-- 8 of 11 --
+
+W E B S I T E — K E Y S E C T I O N D E S I G N S
+Three Conversion-Critical Sections
+Design intent for Plans page, Society pitch, and Impact story
+Plans Page
+✓ 3-column card layout per tier
+✓ Garment cap + turnaround time above the
+fold
+✓ "Most popular" badge on Standard plan
+✓ Family Pack as a separate highlighted row
+✓ Annual vs Monthly toggle (shows savings
+%)
+✓ Society group discount shown inline
+For Societies (RWA)
+✓ Full-width hero with RWA testimonial
+✓ 3-step onboarding timeline graphic
+✓ Downloadable society proposal PDF CTA
+✓ Live chat / WhatsApp CTA for committee
+queries
+✓ "Request a demo" form above the fold
+✓ Exclusivity + revenue-share benefits callout
+Our Impact
+✓ Live counter: liters of water saved
+✓ Women's unit story — photo + name +
+society
+✓ Before/after: conventional vs WnP water
+use
+✓ Monthly impact PDF download
+✓ Sustainable machinery partner logos
+✓ CSR partnership enquiry CTA
+
+-- 9 of 11 --
+
+B R A N D A P P L I C A T I O N S
+Logo In Use
+How the mark appears across every touchpoint
+App Icon
+72×72 px rounded square.
+Aqua bg, white icon.
+Laundry Bag Tag
+Embossed WnP monogram
++ QR batch code.
+Society Signage
+Unit door plate.
+"WnP Operated Here".
+Notification Badge
+Push notification icon.
+Aqua circle, white bell.
+Eco Report Cover
+Monthly PDF.
+Water savings impact.
+Website Favicon
+16×16 px. Droplet mark
+on brand aqua.
+
+-- 10 of 11 --
+
+N E X T S T E P S
+From Identity to Launch
+Recommended actions to take the brand from concept to live
+01
+Finalise Logo
+Choose between Concept A, B, or C. Commission a vector artist to
+build the full SVG mark with clear-space guidelines and all approved
+colour variants.
+02
+Register Trademark
+File WnP wordmark + mark under Class 37 (laundry services) with
+India's Trade Marks Registry. Simultaneously register the .in and .com
+domains.
+03
+Brand Guidelines
+Compile a single PDF covering: logo usage, colour codes
+(HEX/CMYK/RGB), typography scale, photography style, and icon
+library.
+04
+Build Website MVP
+Homepage, Plans, For Societies, and Contact pages. Static site
+(Next.js) deploying to Vercel. Link to app store pages once live.
+05
+Society Launch Kit
+RWA pitch deck, printed signage templates, laundry-bag artwork file,
+and welcome-letter template — all using the finalised brand.
+"Clean. Close. Conscious." — Wash N Press
+
+-- 11 of 11 --
+

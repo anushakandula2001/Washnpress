@@ -1,0 +1,254 @@
+Wash N Press — App Functional Specification
+1
+WASH N PRESS
+App Functional Specification
+Resident App & Operations App — Screen-Level Detail, Version 1.0
+Table of Contents
+
+-- 1 of 8 --
+
+Wash N Press — App Functional Specification
+2
+1. Purpose
+This document specifies the Wash N Press mobile applications at screen level: screen-by-
+screen field definitions, validations, states, and user flows. It is intended for use directly by
+UI/UX designers and engineers building the Resident App and the Operations App, and should
+be read alongside the platform-level Functional Requirements Document and DPR for business
+context.
+Two applications are covered: the Resident App (consumer-facing, iOS/Android) and the
+Operations App (used by women's-unit operators and, where applicable, hub-model
+pickup/delivery agents and facility workers).
+2. Resident App — Screen-Level Specification
+2.1 Screen Flow Overview
+• Splash → Location/Society Selection → Sign Up/Login (OTP) → Profile Setup → Home
+• Home → Plans → Plan Detail → Payment → Subscription Active
+• Home → Schedule Pickup → Slot Selection → Confirmation
+• Home → Order Tracking → Order Detail → Rate/Dispute
+• Home → Wallet/Billing, Support, Profile/Settings (tab navigation)
+2.2 Splash & Society Selection
+Element Detail
+Society search Text search + geofenced auto-suggest based on device location
+Society not listed "Notify me" capture: name, phone, society name/area — routed to B2B
+onboarding lead queue
+Validation Society must be in Active or Coming Soon status to proceed; Inactive
+societies hidden from search
+2.3 Sign Up / Login
+1. Input: 10-digit mobile number → "Send OTP" button.
+2. OTP screen: 6-digit input, auto-read where supported, "Resend OTP" enabled after 30-
+second cooldown.
+3. On verification: check if number exists → returning user goes to Home; new user goes to
+Profile Setup.
+Validation: mobile number must be a valid 10-digit Indian number; OTP expires after 5 minutes;
+max 5 OTP attempts before temporary lockout (15 minutes).
+2.4 Profile Setup
+Field Type Required Validation
+Full Name Text Yes Min 2 characters
+
+-- 2 of 8 --
+
+Wash N Press — App Functional Specification
+3
+Field Type Required Validation
+Flat/Unit Number Text/Dropdown Yes Validated against society's registered
+unit list if available; else free text flagged
+for admin verification
+Tower/Block Dropdown Conditional Shown only if society has multiple
+towers
+Alternate Contact Phone No Valid 10-digit number if entered
+Preferred Pickup
+Window
+Multi-select (e.g.,
+morning/evening)
+No Used to pre-filter slot suggestions
+2.5 Home Screen
+• Active subscription summary card: plan name, garments used/cap, days remaining in
+cycle.
+• Primary CTA: "Schedule Pickup" (prominent button).
+• Active order status strip if an order is in progress (tapping opens Order Detail).
+• Quick links: Plans, Wallet, Add-on Services, Support.
+• If no active subscription: Home shows plan comparison CTA in place of the subscription
+card.
+2.6 Plans & Subscription
+Screen Key Elements
+Plan Comparison Card per tier (Basic/Standard/Premium/Family Pack) showing garment
+cap, turnaround time, price/cycle, "Select" CTA
+Plan Detail Full inclusions, add-on eligibility, billing cycle selector (monthly/quarterly),
+auto-renewal toggle (default ON)
+Payment Payment method selection (UPI/card/net banking/wallet), order summary,
+"Pay & Subscribe" CTA
+Subscription Confirmation Success state with plan summary; "Schedule your first pickup" CTA
+Manage Subscription View current plan, Upgrade/Downgrade (effective next cycle, shown with
+proration note), Pause (date range picker, capped days remaining
+shown), Cancel (reason dropdown + confirmation)
+2.7 Schedule Pickup
+4. Slot Selection screen: calendar/date picker + available time-slot list for the resident's
+society (slots reflect women's-unit or hub route capacity).
+5. Recurring toggle: "Repeat this pickup" → day-of-week multi-select.
+6. Special instructions text field (optional, e.g., fabric care notes).
+7. Add-on selection (dry cleaning, shoe/bag cleaning, express delivery) inline before
+confirmation.
+
+-- 3 of 8 --
+
+Wash N Press — App Functional Specification
+4
+8. Confirmation screen: summary + "Confirm Pickup" CTA → triggers push/SMS
+confirmation.
+Edge case: if no slots are available within the resident's preferred window, show next available
+slot across all windows rather than a dead end. If recurring slot becomes unavailable in a future
+week, notify resident proactively with a reschedule prompt.
+Cancellation: "Cancel Pickup" available from Order Detail up to the configurable cutoff (e.g., 2
+hours before slot); after cutoff, button is disabled with explanatory text.
+2.8 Order Tracking
+Status Resident-Facing Label Notification Sent
+Scheduled Pickup Scheduled On booking
+Picked Up Garments Collected On operator confirmation, with garment count
+Processing In Wash / Ironing On stage transition (optional granular toggle in
+settings)
+QC Hold Quality Check in Progress Only if QC fail — includes reason and next
+steps
+Out for Delivery On the Way On dispatch, with live location map
+Delivered Delivered On delivery confirmation, with itemized receipt
+link
+• Order Detail screen: itemized garment list, status timeline, operator/agent contact
+(masked number), live map during "Out for Delivery," "Raise an Issue" CTA.
+• Rate & Dispute: 5-star rating + optional comment after delivery; "Raise an Issue" opens
+a structured complaint form (issue type dropdown, photo upload, description) available
+within a 48-hour window post-delivery.
+2.9 Wallet & Billing
+• Wallet balance display, "Add Money" CTA, transaction history (credits/debits with order
+references).
+• Invoice list with downloadable PDF per billing cycle.
+• Saved payment methods management (add/remove UPI ID, card).
+2.10 Support
+• FAQ/help center (searchable).
+• "My Tickets" list showing open/resolved complaints with status.
+• New ticket flow: category selection, order linkage (optional), description, photo upload.
+• In-app chat entry point (if live chat is implemented) or ticket-based async support for
+MVP.
+2.11 Profile & Settings
+• Edit profile fields, manage notification preferences (push/SMS/WhatsApp toggles per
+category).
+
+-- 4 of 8 --
+
+Wash N Press — App Functional Specification
+5
+• Language selection (English/Hindi at launch).
+• Sustainability impact widget (optional): cumulative water saved through the resident's
+society's unit.
+• Logout, account deletion request (per DPDP compliance).
+
+-- 5 of 8 --
+
+Wash N Press — App Functional Specification
+6
+3. Operations App — Screen-Level Specification
+The Operations App serves two primary modes: Unit Mode (default, for women's-unit operators
+working within a single society) and Route Mode (for hub-model pickup/delivery agents and
+facility workers, used only in high-density clusters operating the centralized hub model). Login
+determines which mode loads.
+3.1 Login & Daily Start
+9. Login via mobile number + OTP or staff ID + PIN (configurable by deployment).
+10. Unit Mode: lands on "Today's Bookings" screen scoped to the operator's society.
+11. Route Mode: lands on "Today's Route" screen showing the assigned stop sequence.
+3.2 Unit Mode — Today's Bookings
+Element Detail
+Booking list Grouped by time slot; each entry shows resident name (masked per privacy
+settings), flat number, pickup/delivery type
+Status actions Per booking: "Mark Picked Up" / "Mark Delivered" buttons
+Garment logging On "Mark Picked Up": opens garment entry screen (category + count fields,
+e.g., Shirts: 4, Trousers: 2, Bedsheets: 1)
+QR tagging After garment entry, app generates/prints or displays a QR batch code to
+physically tag the garment bag
+3.3 Unit Mode — Processing Pipeline
+12. Scan QR on batch arrival at the in-society processing point → status moves to "In
+Wash."
+13. Operator manually advances status through Wash → Dry → Iron, each a single-tap
+action with optional timer (using the recipe-style timer pattern for wash/dry cycles).
+14. QC screen: pass/fail toggle per batch; if Fail, mandatory reason dropdown (stain not
+removed, damage, fabric issue, other) + photo upload — this auto-creates a resident
+notification and a support ticket; batch cannot proceed to "Ready for Delivery" until QC is
+marked Pass or a documented exception override is approved by Admin.
+15. Water usage entry (manual for MVP): liters used per cycle, or auto-populated if
+integrated machinery telemetry is available — feeds the Admin sustainability dashboard.
+3.4 Unit Mode — Delivery
+16. From "Ready for Delivery" queue, operator selects batch, scans QR to pull up the
+original pickup manifest.
+17. App displays manifest count side-by-side with a re-count entry field — if counts
+mismatch, "Mark Delivered" is blocked and a discrepancy reason is required, auto-
+generating a support ticket.
+18. Delivery confirmation: OTP entered by resident, or digital signature capture.
+
+-- 6 of 8 --
+
+Wash N Press — App Functional Specification
+7
+19. Order marked Delivered → resident notified, garment count deducted from subscription
+cap.
+3.5 Route Mode — Today's Route (Hub Model)
+• Optimized stop list grouped by building/tower with turn-by-turn navigation link per stop.
+• Same garment-logging and QR-tagging flow as Unit Mode, applied per stop.
+• Route completion summary: total stops, total garments collected, any flagged issues.
+3.6 Hub Worker Mode (Hub Model)
+• Incoming manifest queue: list of batches en route from all collection points.
+• Scan-to-receive at hub; processing pipeline screens identical in structure to Unit Mode
+(Wash → Dry → Iron → QC).
+• Outgoing dispatch queue: batches ready for the delivery route, grouped by route/agent.
+3.7 Earnings & Performance (Unit Mode)
+Element Detail
+Earnings summary Current cycle: base draw amount, orders processed, performance-linked
+share accrued, projected payout
+Performance metrics Quality score (QC pass rate), on-time pickup/delivery rate, complaint count
+— visible to operator for transparency
+Training access Library of training videos/modules; refresher module completion tracking
+Escalation "Report an Issue" — equipment malfunction, supply shortage, safety
+concern — routed directly to Ops/Impact Manager
+3.8 Offline Behavior
+• All pickup/delivery/processing actions are cached locally if connectivity is unavailable
+and synced automatically on reconnect.
+• Visual indicator (banner) when operating offline; queued actions shown with a pending-
+sync icon until confirmed synced.
+4. Cross-App Notification Matrix
+Event Resident App Operations App
+Pickup booked Confirmation push + SMS New booking appears in Today's
+Bookings
+Pickup completed "Garments Collected" push with
+count
+—
+QC fail "Quality Check" push + auto support
+ticket
+Flag cleared once resident notified
+Out for delivery Push + live map —
+
+-- 7 of 8 --
+
+Wash N Press — App Functional Specification
+8
+Event Resident App Operations App
+Delivery completed Push + itemized receipt Earnings ledger updated
+Discrepancy at delivery Support ticket auto-opened, resident
+notified of investigation
+Operator must log reason before
+proceeding
+5. Validation & Error-State Summary
+• All monetary fields: non-negative, two-decimal precision, currency-locked to INR.
+• All phone number fields: 10-digit Indian mobile format, validated on blur.
+• Garment count fields: non-negative integers only; zero allowed (e.g., add-on-only order
+with no standard garments).
+• QR scan failures (damaged/unreadable code): manual batch-ID entry fallback, logged
+with a flag for Admin review.
+• Network failure during payment: transaction status polled and reconciled before showing
+success/failure to resident — never assume success on timeout.
+6. Open Items
+• Final decision on masked vs. full resident contact visibility to operators (privacy vs.
+operational convenience trade-off).
+• Whether QC override (proceeding despite a Fail) requires real-time Admin approval or
+can be operator-initiated with after-the-fact audit.
+• Granularity of push notification settings exposed to residents (per-stage toggle vs. single
+on/off).
+• Machinery telemetry integration timeline for automated water-usage logging vs. manual
+entry at MVP.
+
+-- 8 of 8 --
+
