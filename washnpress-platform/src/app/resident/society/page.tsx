@@ -111,10 +111,18 @@ export default function SocietyPage() {
         Already have an account?{" "}
         <button
           type="button"
-          onClick={() => router.push("/resident")}
+          onClick={() => router.push("/login")}
           className="font-medium text-primary hover:underline"
         >
-          Go to Dashboard
+          Sign in
+        </button>
+        {" · "}
+        <button
+          type="button"
+          onClick={() => router.push("/register")}
+          className="font-medium text-primary hover:underline"
+        >
+          Register
         </button>
       </p>
     </main>
