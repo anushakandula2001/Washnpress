@@ -4,8 +4,12 @@ export type ResidentProfile = {
   name: string;
   flatNumber: string;
   tower: string;
+  floor?: string | null;
   mobile: string;
   society: string;
+  residentCode?: string | null;
+  email?: string | null;
+  gender?: string | null;
 };
 
 export type ResidentSubscription = {
@@ -43,7 +47,7 @@ export type ResidentOrder = {
 };
 
 export type TrackingEvent = {
-  stage: OrderStage;
+  stage: string;
   label: string;
   timestamp: string | null;
   completed: boolean;
@@ -224,14 +228,22 @@ export const societies: Society[] = [
 ];
 
 export function formatPickupDisplay(pickup: ResidentPickup): string {
+  if (!pickup.date || !pickup.startTime || !pickup.endTime) {
+    return "No pickup scheduled";
+  }
+
   const pickupDate = new Date(`${pickup.date}T${pickup.startTime}:00`);
-  const today = new Date("2026-07-16T00:00:00");
-  const tomorrow = new Date("2026-07-17T00:00:00");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const pickupDay = new Date(pickupDate);
+  pickupDay.setHours(0, 0, 0, 0);
 
   let dayLabel: string;
-  if (pickupDate.toDateString() === tomorrow.toDateString()) {
+  if (pickupDay.getTime() === tomorrow.getTime()) {
     dayLabel = "Tomorrow";
-  } else if (pickupDate.toDateString() === today.toDateString()) {
+  } else if (pickupDay.getTime() === today.getTime()) {
     dayLabel = "Today";
   } else {
     dayLabel = pickupDate.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });

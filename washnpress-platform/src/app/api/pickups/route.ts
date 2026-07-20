@@ -33,14 +33,18 @@ export async function POST(request: Request) {
   const parsed = bookSchema.safeParse(await request.json());
   if (!parsed.success) return badRequest("Invalid request", parsed.error.flatten());
   try {
-    const { pickup, slot } = await bookPickup({
+    const { pickup, slot, order } = await bookPickup({
       residentId: auth.session.residentId!,
       societyId: auth.session.societyId!,
       slotId: parsed.data.slotId,
       specialInstructions: parsed.data.specialInstructions,
       recurring: parsed.data.recurring,
     });
-    return created({ pickup, slot: toPickupSlot(slot) });
+    return created({
+      pickup,
+      slot: toPickupSlot(slot),
+      order: { id: order.id, orderCode: order.order_code },
+    });
   } catch (e) {
     return badRequest(e instanceof Error ? e.message : "Booking failed");
   }

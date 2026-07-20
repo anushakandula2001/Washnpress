@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
-import { selectPickupSlot, bookPickup } from "@/backend/services/pickup-service";
+import { selectPickupSlot, bookPickup, listResidentSlots } from "@/backend/services/pickup-service";
 import { toPickupSlot } from "@/backend/api/transformers";
-import { ok, unauthorized, badRequest, notFound } from "@/backend/api/response";
+import { ok, badRequest, notFound } from "@/backend/api/response";
 import type { TimeWindow } from "@/lib/types";
 
 const scheduleSchema = z.object({
@@ -11,7 +11,19 @@ const scheduleSchema = z.object({
   slotId: z.string().uuid().optional(),
   specialInstructions: z.string().optional(),
   book: z.boolean().default(false),
+  garmentCount: z.number().int().min(0).optional(),
+  items: z
+    .array(z.object({ category: z.string(), quantity: z.number().int().min(0) }))
+    .optional(),
 });
+
+export async function GET(request: Request) {
+  const auth = await requireResident(request);
+  if ("error" in auth) return auth.error;
+  if (!auth.session.societyId) return badRequest("Society not linked to profile");
+  const slots = await listResidentSlots(auth.session.societyId);
+  return ok({ slots });
+}
 
 export async function POST(request: Request) {
   const auth = await requireResident(request);
@@ -29,13 +41,19 @@ export async function POST(request: Request) {
 
   if (parsed.data.slotId && parsed.data.book) {
     try {
-      const { pickup, slot } = await bookPickup({
+      const { pickup, slot, order } = await bookPickup({
         residentId: session.residentId!,
         societyId: session.societyId!,
         slotId: parsed.data.slotId,
         specialInstructions: parsed.data.specialInstructions,
+        garmentCount: parsed.data.garmentCount,
+        items: parsed.data.items,
       });
-      return ok({ pickup, slot: toPickupSlot(slot) });
+      return ok({
+        pickup,
+        slot: toPickupSlot(slot),
+        order: { id: order.id, orderCode: order.order_code },
+      });
     } catch (error) {
       return badRequest(error instanceof Error ? error.message : "Booking failed");
     }

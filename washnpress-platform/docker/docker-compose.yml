@@ -3,8 +3,11 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+    # Host 3002 so local `npm run dev` always owns http://localhost:3000
     ports:
-      - "3000:3000"
+      - "3002:3000"
+    profiles:
+      - web
     env_file:
       - .env.example
     depends_on:

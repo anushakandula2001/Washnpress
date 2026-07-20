@@ -13,13 +13,18 @@ export async function GET(request: Request) {
 
   return ok({
     name: profile.full_name,
-    flatNumber: profile.unit_number,
-    tower: profile.tower_block,
+    flatNumber: (profile as { flat_number?: string }).flat_number ?? profile.unit_number,
+    tower: (profile as { tower_name?: string }).tower_name ?? profile.tower_block,
+    floor: (profile as { floor_label?: string }).floor_label ?? null,
     mobile: profile.phone,
     society: profile.society_name,
     city: profile.city,
     alternateContact: profile.alternate_contact,
     preferredWindows: profile.preferred_windows,
+    residentCode: (profile as { resident_code?: string }).resident_code ?? null,
+    email: (profile as { email?: string }).email ?? null,
+    gender: (profile as { gender?: string }).gender ?? null,
+    flatId: (profile as { flat_id?: string }).flat_id ?? null,
   });
 }
 

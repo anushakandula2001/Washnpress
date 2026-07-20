@@ -44,7 +44,8 @@ export async function getSessionForRole(
   const session = await getSessionFromRequest(request);
   if (session) return session;
 
-  if (process.env.NODE_ENV === "development" && role) {
+  // Dev-only cookie-less fallback for API smoke tests — never overrides a real session
+  if (process.env.NODE_ENV === "development" && role && process.env.WNP_DEMO_SESSION === "1") {
     return loadSessionByPhone(DEMO_PHONES[role]);
   }
 
@@ -61,18 +62,27 @@ export async function requireResident(request: Request) {
   const result = await requireSession(request, "resident");
   if ("error" in result) return result;
   if (!result.session.residentId) return { error: forbidden("Resident profile required") };
+  if (!result.session.roles.includes("resident") && !result.session.roles.includes("admin")) {
+    return { error: forbidden("Requires resident role") };
+  }
   return result;
 }
 
 export async function requireRole(request: Request, role: "resident" | "operator" | "admin") {
   const result = await requireSession(request, role);
   if ("error" in result) return result;
-  if (!result.session.roles.includes(role) && process.env.NODE_ENV !== "development") {
+
+  const roles = result.session.roles ?? [];
+  const ok =
+    roles.includes(role) ||
+    (role === "operator" && roles.includes("admin"));
+
+  if (!ok) {
     return { error: forbidden(`Requires ${role} role`) };
   }
   return result;
 }
 
 export function hasRole(session: SessionUser, role: string) {
-  return session.roles.includes(role) || process.env.NODE_ENV === "development";
+  return session.roles.includes(role) || (role === "operator" && session.roles.includes("admin"));
 }

@@ -1,6 +1,7 @@
 import { requireResident } from "@/backend/api/guards";
 import { listNotifications, markNotificationRead } from "@/backend/repositories/billing";
-import { ok, unauthorized } from "@/backend/api/response";
+import { ok } from "@/backend/api/response";
+import { countUnreadResidentNotifications } from "@/backend/repositories/notifications";
 
 export async function GET(request: Request) {
   const auth = await requireResident(request);
@@ -8,7 +9,7 @@ export async function GET(request: Request) {
   const session = auth.session;
 
   const notifications = await listNotifications(session.residentId!);
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  const unreadCount = await countUnreadResidentNotifications(session.residentId!);
 
   return ok({
     notifications: notifications.map((n) => ({

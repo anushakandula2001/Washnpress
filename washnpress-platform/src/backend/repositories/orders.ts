@@ -92,3 +92,49 @@ export async function listOrderItems(orderId: string) {
   );
   return result.rows;
 }
+
+export async function createOrderForPickup(data: {
+  pickupId: string;
+  garmentCount?: number;
+  items?: { category: string; quantity: number }[];
+}) {
+  const total =
+    data.garmentCount ??
+    data.items?.reduce((sum, i) => sum + i.quantity, 0) ??
+    0;
+
+  const orderCode = `WNP-${Date.now().toString().slice(-8)}`;
+
+  const order = await queryOne<{ id: string; order_code: string }>(
+    `INSERT INTO orders (pickup_id, order_code, status, qr_batch_code, pickup_garment_count)
+     VALUES ($1, $2, 'Scheduled', $3, $4)
+     RETURNING id, order_code`,
+    [data.pickupId, orderCode, `QR-${orderCode}`, total],
+  );
+
+  if (!order) throw new Error("Failed to create order");
+
+  if (data.items) {
+    for (const item of data.items) {
+      if (item.quantity <= 0) continue;
+      await query(
+        `INSERT INTO order_items (order_id, category, quantity) VALUES ($1, $2, $3)`,
+        [order.id, item.category, item.quantity],
+      );
+    }
+  }
+
+  await query(
+    `INSERT INTO order_events (order_id, event_type, event_payload)
+     VALUES ($1, 'order_placed', $2::jsonb)`,
+    [order.id, JSON.stringify({ status: "Order Placed", orderCode })],
+  );
+
+  await query(
+    `INSERT INTO order_events (order_id, event_type, event_payload)
+     VALUES ($1, 'pickup_scheduled', $2::jsonb)`,
+    [order.id, JSON.stringify({ status: "Pickup Scheduled", orderCode })],
+  );
+
+  return order;
+}

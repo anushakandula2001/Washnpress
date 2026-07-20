@@ -10,6 +10,24 @@ SELECT u.id, 'unit', '98XX-XXX-XX02'
 FROM users u WHERE u.phone = '9876500002'
 ON CONFLICT (user_id) DO NOTHING;
 
+-- Link demo operator to Green Heights so ops portal is scoped correctly
+INSERT INTO operator_societies (operator_id, society_id)
+SELECT o.id, s.id
+FROM operators o
+JOIN users u ON u.id = o.user_id
+JOIN societies s ON s.name = 'Green Heights'
+WHERE u.phone = '9876500002'
+ON CONFLICT DO NOTHING;
+
+UPDATE operators SET
+  operator_code = COALESCE(NULLIF(operator_code, ''), 'OPR-000002'),
+  unit_id = COALESCE(
+    unit_id,
+    (SELECT id FROM units WHERE society_id = (SELECT id FROM societies WHERE name = 'Green Heights' LIMIT 1) LIMIT 1)
+  ),
+  status = COALESCE(status, 'active')
+WHERE user_id = (SELECT id FROM users WHERE phone = '9876500002');
+
 INSERT INTO referrals (resident_id, code, total_earned_inr)
 SELECT r.id, 'ASHA100', 100.00
 FROM residents r

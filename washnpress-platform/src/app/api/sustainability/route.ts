@@ -6,7 +6,8 @@ import { ok } from "@/backend/api/response";
 export async function GET(request: Request) {
   const session = await getSessionFromRequest(request);
 
-  if (session?.residentId) {    const logs = await getSustainabilitySummary(session.residentId);
+  if (session?.residentId) {
+    const logs = await getSustainabilitySummary(session.residentId);
     const summary = summarizeWaterLogs(
       logs.map((l) => ({
         orderId: "db",
@@ -18,7 +19,5 @@ export async function GET(request: Request) {
     return ok(summary);
   }
 
-  const { waterLogs } = await import("@/lib/mock-data");
-  const { summarizeWaterLogs: summarize } = await import("@/lib/domain");
-  return ok(summarize(waterLogs));
+  return ok({ totalGarments: 0, totalActualLiters: 0, totalSavedLiters: 0 });
 }

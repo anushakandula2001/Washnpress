@@ -86,16 +86,42 @@ export async function getMaskedOperator(orderCode: string) {
 }
 
 export async function updateOrderStatus(orderCode: string, status: string, actorUserId?: string) {
-  const order = await queryOne<{ id: string }>(
-    `UPDATE orders SET status = $2, updated_at = now() WHERE order_code = $1 RETURNING id`,
+  const order = await queryOne<{ id: string; resident_id: string }>(
+    `UPDATE orders o SET status = $2, updated_at = now()
+     FROM pickups p
+     WHERE o.order_code = $1 AND o.pickup_id = p.id
+     RETURNING o.id, p.resident_id`,
     [orderCode, status],
   );
-  if (!order) return null;
+  if (!order) {
+    const fallback = await queryOne<{ id: string }>(
+      `UPDATE orders SET status = $2, updated_at = now() WHERE order_code = $1 RETURNING id`,
+      [orderCode, status],
+    );
+    if (!fallback) return null;
+    await query(
+      `INSERT INTO order_events (order_id, event_type, event_payload, actor_user_id)
+       VALUES ($1, 'status_change', $2::jsonb, $3)`,
+      [fallback.id, JSON.stringify({ status }), actorUserId ?? null],
+    );
+    return findOrderByCode(orderCode);
+  }
+
   await query(
     `INSERT INTO order_events (order_id, event_type, event_payload, actor_user_id)
      VALUES ($1, 'status_change', $2::jsonb, $3)`,
     [order.id, JSON.stringify({ status }), actorUserId ?? null],
   );
+
+  const { createResidentNotification } = await import("@/backend/repositories/notifications");
+  const title =
+    status === "Delivered" ? "Order delivered" : `Order update: ${status}`;
+  const body =
+    status === "Delivered"
+      ? `Your order ${orderCode} has been delivered.`
+      : `Your order ${orderCode} is now "${status}".`;
+  await createResidentNotification(order.resident_id, title, body);
+
   return findOrderByCode(orderCode);
 }
 

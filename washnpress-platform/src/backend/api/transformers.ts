@@ -42,10 +42,14 @@ export function toResidentOrder(order: DbOrder) {
   const currentStage = STATUS_TO_STAGE[order.status] ?? "Pickup";
   const display = STATUS_DISPLAY[order.status] ?? { label: order.status, variant: "default" as const };
   const scheduled = new Date(order.scheduled_for);
+  const created =
+    typeof order.created_at === "string"
+      ? order.created_at
+      : new Date(order.created_at as unknown as string | number | Date).toISOString();
 
   return {
     id: order.order_code,
-    placedDate: order.created_at.split("T")[0],
+    placedDate: created.split("T")[0],
     pickupDate: scheduled.toISOString().split("T")[0],
     pickupTime: `${scheduled.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`,
     garments: order.pickup_garment_count,
@@ -81,21 +85,37 @@ export function toSubscriptionResponse(sub: DbSubscription) {
 }
 
 export function toPlanResponse(plan: DbPlan, currentPlanId?: string) {
+  const features = [
+    `${plan.garment_cap} Garments / month`,
+    `${plan.turnaround_hours}h Turnaround`,
+    plan.max_pickups ? `${plan.max_pickups} Pickups / cycle` : null,
+    plan.free_delivery ? "Free Delivery" : "Standard Delivery",
+    plan.priority_pickup ? "Priority Pickup" : null,
+    plan.express_discount_percent && parseFloat(plan.express_discount_percent) > 0
+      ? `${plan.express_discount_percent}% Express discount`
+      : null,
+  ].filter(Boolean) as string[];
+
   return {
     id: plan.id,
     tier: plan.tier,
-    name: plan.tier,
+    name: plan.name || plan.tier,
+    description: plan.description ?? null,
     garmentCap: plan.garment_cap,
     turnaroundHours: plan.turnaround_hours,
     monthlyInr: parseFloat(plan.monthly_inr),
-    annualDiscountPercent: parseFloat(plan.annual_discount_percent),
+    quarterlyInr: plan.quarterly_inr ? parseFloat(plan.quarterly_inr) : null,
+    yearlyInr: plan.yearly_inr ? parseFloat(plan.yearly_inr) : null,
+    annualDiscountPercent: parseFloat(plan.annual_discount_percent ?? "0"),
+    maxPickups: plan.max_pickups ?? null,
+    priorityPickup: Boolean(plan.priority_pickup),
+    freeDelivery: Boolean(plan.free_delivery),
+    expressDiscountPercent: plan.express_discount_percent
+      ? parseFloat(plan.express_discount_percent)
+      : 0,
+    validityDays: plan.validity_days ?? 30,
     isCurrent: plan.id === currentPlanId,
-    features: [
-      `${plan.garment_cap} Garments / month`,
-      `${plan.turnaround_hours}h Turnaround`,
-      "Free Pickup & Delivery",
-      plan.tier === "Premium" || plan.tier === "Family Pack" ? "Priority Support" : "Standard Support",
-    ],
+    features,
   };
 }
 

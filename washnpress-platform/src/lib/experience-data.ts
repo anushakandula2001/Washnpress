@@ -98,6 +98,7 @@ export function countByStatus(orderList: Order[]) {
     "QC Hold": 0,
     "Out for Delivery": 0,
     Delivered: 0,
+    Cancelled: 0,
   };
 
   for (const order of orderList) {

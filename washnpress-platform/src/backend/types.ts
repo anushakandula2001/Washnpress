@@ -13,10 +13,19 @@ export type SessionUser = {
 export type DbPlan = {
   id: string;
   tier: string;
+  name?: string | null;
+  description?: string | null;
   garment_cap: number;
   turnaround_hours: number;
   monthly_inr: string;
+  quarterly_inr?: string | null;
+  yearly_inr?: string | null;
   annual_discount_percent: string;
+  max_pickups?: number | null;
+  priority_pickup?: boolean;
+  free_delivery?: boolean;
+  express_discount_percent?: string | null;
+  validity_days?: number | null;
   is_active: boolean;
 };
 

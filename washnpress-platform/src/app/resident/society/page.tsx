@@ -2,24 +2,46 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, MapPin, Users, Building2 } from "lucide-react";
+import { Search, MapPin, Building2 } from "lucide-react";
 import { useResident } from "@/components/resident/resident-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { societies, type Society } from "@/lib/resident-data";
+import { api } from "@/frontend/api-client";
+import type { Society } from "@/lib/resident-data";
 
 export default function SocietyPage() {
   const router = useRouter();
   const { selectedSociety, selectSociety } = useResident();
   const [query, setQuery] = useState("");
   const [selecting, setSelecting] = useState<string | null>(null);
+  const [societies, setSocieties] = useState<Society[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (selectedSociety) {
-      router.replace("/resident");
+      router.replace("/resident/dashboard");
     }
   }, [selectedSociety, router]);
+
+  useEffect(() => {
+    void api.societies()
+      .then((data) => {
+        setSocieties(
+          data.societies.map((s) => ({
+            id: String(s.id),
+            name: String(s.name),
+            address: String(s.address ?? s.address_line_1 ?? ""),
+            city: String(s.city ?? ""),
+            residents: Number(s.residents ?? 0),
+            distanceKm: Number(s.distanceKm ?? 0),
+            status: (s.status as Society["status"]) || "Active",
+          })),
+        );
+      })
+      .catch(() => setSocieties([]))
+      .finally(() => setLoading(false));
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -30,12 +52,12 @@ export default function SocietyPage() {
         s.city.toLowerCase().includes(q) ||
         s.address.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, societies]);
 
   function handleSelect(society: Society) {
     setSelecting(society.id);
     selectSociety(society);
-    router.push("/resident");
+    router.push("/resident/dashboard");
   }
 
   return (
@@ -50,81 +72,53 @@ export default function SocietyPage() {
         </p>
       </div>
 
-      <div className="relative mb-6">
+      <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
+          className="pl-9"
+          placeholder="Search by name or city"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search your society"
-          className="h-12 rounded-xl pl-10"
         />
       </div>
 
-      <div className="space-y-4">
-        {filtered.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            No societies found. Try a different search.
-          </p>
+      <div className="space-y-3">
+        {loading ? (
+          <p className="text-center text-sm text-muted-foreground">Loading societies…</p>
+        ) : filtered.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">No societies found.</p>
         ) : (
           filtered.map((society) => (
-            <article
+            <button
               key={society.id}
-              className="rounded-2xl border border-border bg-card p-5 shadow-sm"
+              onClick={() => handleSelect(society)}
+              disabled={selecting === society.id}
+              className="w-full rounded-xl border border-border bg-card p-4 text-left transition hover:border-primary/40 hover:bg-primary/5"
             >
-              <div className="flex items-start justify-between gap-2">
-                <h2 className="text-lg font-bold text-foreground">{society.name}</h2>
-                <Badge variant="success">{society.status}</Badge>
-              </div>
-
-              <div className="mt-3 flex items-start gap-2 text-sm text-muted-foreground">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                <div>
-                  <p>{society.address}</p>
-                  <p>{society.city}</p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Building2 className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-semibold">{society.name}</p>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3" />
+                      {society.address || society.city}
+                    </p>
+                  </div>
                 </div>
+                <Badge variant="secondary">{society.status}</Badge>
               </div>
-
-              <div className="mt-3 flex gap-4 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1">
-                  <Users className="h-3.5 w-3.5" />
-                  {society.residents.toLocaleString()} residents
-                </span>
-                <span className="inline-flex items-center gap-1">
-                  <Building2 className="h-3.5 w-3.5" />
-                  {society.distanceKm} km away
-                </span>
+              <div className="mt-3">
+                <Button size="sm" variant="outline" disabled={selecting === society.id}>
+                  {selecting === society.id ? "Selecting…" : "Select"}
+                </Button>
               </div>
-
-              <Button
-                className="mt-4 w-full rounded-xl"
-                onClick={() => handleSelect(society)}
-                disabled={selecting === society.id}
-              >
-                {selecting === society.id ? "Loading..." : "Select"}
-              </Button>
-            </article>
+            </button>
           ))
         )}
       </div>
-
-      <p className="mt-6 text-center text-xs text-muted-foreground">
-        Already have an account?{" "}
-        <button
-          type="button"
-          onClick={() => router.push("/login")}
-          className="font-medium text-primary hover:underline"
-        >
-          Sign in
-        </button>
-        {" · "}
-        <button
-          type="button"
-          onClick={() => router.push("/register")}
-          className="font-medium text-primary hover:underline"
-        >
-          Register
-        </button>
-      </p>
     </main>
   );
 }

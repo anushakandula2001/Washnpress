@@ -1,36 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Phone, MessageCircle } from "lucide-react";
 import { ResidentShell } from "@/components/resident/resident-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { supportTickets } from "@/lib/experience-data";
+import { api } from "@/frontend/api-client";
 
 const categories = ["Pickup Issue", "Quality Concern", "Billing", "Delivery", "Other"];
+
+type Ticket = {
+  id: string;
+  issue: string;
+  status: string;
+  slaHours?: number;
+};
 
 export default function SupportPage() {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [submitted, setSubmitted] = useState(false);
-  const [tickets, setTickets] = useState(supportTickets);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function loadTickets() {
+    setLoading(true);
+    try {
+      const data = await api.support.list();
+      setTickets(
+        data.tickets.map((t) => ({
+          id: String(t.id ?? t.ticket_code ?? ""),
+          issue: String(t.description ?? t.issue ?? ""),
+          status: String(t.status ?? "open"),
+          slaHours: typeof t.sla_hours === "number" ? t.sla_hours : 6,
+        })),
+      );
+    } catch {
+      setTickets([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadTickets();
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!category || !description.trim()) return;
-
-    const newTicket = {
-      id: `SUP-${300 + tickets.length}`,
-      issue: description,
-      status: "In Progress" as const,
-      slaHours: 6,
-    };
-    setTickets([newTicket, ...tickets]);
-    setSubmitted(true);
-    setCategory("");
-    setDescription("");
+    if (!category || description.trim().length < 10) {
+      setError("Select a category and enter at least 10 characters.");
+      return;
+    }
+    setError(null);
+    try {
+      await api.support.create({ category, description: description.trim() });
+      setSubmitted(true);
+      setCategory("");
+      setDescription("");
+      await loadTickets();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create ticket");
+    }
   }
 
   return (
@@ -42,6 +76,11 @@ export default function SupportPage() {
             <CardDescription>Describe your issue and we&apos;ll respond within 6 hours</CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <p className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </p>
+            )}
             {submitted ? (
               <div className="rounded-xl bg-emerald-500/10 p-6 text-center">
                 <p className="font-semibold text-emerald-700">Ticket Submitted!</p>
@@ -53,7 +92,7 @@ export default function SupportPage() {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
                 <div>
                   <p className="mb-2 text-sm text-muted-foreground">Category</p>
                   <div className="flex flex-wrap gap-2">
@@ -78,64 +117,47 @@ export default function SupportPage() {
                   <Input
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Tell us what happened..."
                     className="mt-1"
-                    required
+                    placeholder="Minimum 10 characters"
                   />
                 </label>
-                <Button type="submit" className="w-full" disabled={!category || !description.trim()}>
-                  Submit Ticket
-                </Button>
+                <Button type="submit">Submit Ticket</Button>
               </form>
             )}
           </CardContent>
         </Card>
 
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Contact</CardTitle>
-            </CardHeader>
-            <CardContent className="flex gap-3">
-              <a
-                href="tel:+919876543210"
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border p-4 transition hover:bg-muted"
-              >
-                <Phone className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">Call Us</span>
-              </a>
-              <a
-                href="https://wa.me/919876543210"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border p-4 transition hover:bg-muted"
-              >
-                <MessageCircle className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">WhatsApp</span>
-              </a>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Tickets</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {tickets.map((ticket) => (
-                <div key={ticket.id} className="rounded-xl border border-border p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium">{ticket.id}</p>
-                    <Badge variant={ticket.status === "Resolved" ? "success" : "secondary"}>
-                      {ticket.status}
-                    </Badge>
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Tickets</CardTitle>
+            <CardDescription>Recent support requests from your account</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {loading ? (
+              <p className="text-sm text-muted-foreground">Loading…</p>
+            ) : tickets.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No tickets yet.</p>
+            ) : (
+              tickets.map((t) => (
+                <div key={t.id} className="rounded-xl border border-border p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-medium">{t.issue}</p>
+                    <Badge variant="secondary">{t.status}</Badge>
                   </div>
-                  <p className="mt-1 text-sm text-muted-foreground">{ticket.issue}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">SLA: {ticket.slaHours}h</p>
+                  <p className="mt-1 text-xs text-muted-foreground">#{t.id}</p>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+              ))
+            )}
+            <div className="flex gap-2 pt-2">
+              <Button variant="outline" size="sm" className="gap-1">
+                <Phone className="h-3.5 w-3.5" /> Call
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1">
+                <MessageCircle className="h-3.5 w-3.5" /> Chat
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </ResidentShell>
   );

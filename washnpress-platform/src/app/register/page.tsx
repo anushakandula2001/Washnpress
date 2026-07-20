@@ -28,7 +28,7 @@ export default function RegisterPage() {
             <p>Complete your profile with society and flat details after verification.</p>
             <p>Schedule pickups, track orders, and manage your subscription from one place.</p>
             <p>
-              Return to <Link href="/">home</Link>.
+              Already registered? <Link href="/login">Sign in</Link>.
             </p>
           </CardContent>
         </Card>
