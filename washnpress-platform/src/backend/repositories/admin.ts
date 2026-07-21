@@ -565,6 +565,7 @@ export async function listResidentsAdmin(filters?: {
   q?: string;
   societyId?: string;
   tower?: string;
+  floor?: string;
   subscription?: string;
   status?: string;
 }) {
@@ -584,6 +585,10 @@ export async function listResidentsAdmin(filters?: {
   if (filters?.tower) {
     params.push(`%${filters.tower}%`);
     where.push(`(r.tower_block ILIKE $${params.length} OR t.name ILIKE $${params.length})`);
+  }
+  if (filters?.floor) {
+    params.push(filters.floor);
+    where.push(`fl.label = $${params.length}`);
   }
   if (filters?.status) {
     params.push(filters.status);
@@ -799,18 +804,37 @@ export async function getSocietyDetail(societyId: string) {
   return { society, towers, operators, residents, orders };
 }
 
+const ORDER_TAB_STATUS_MAP: Record<string, string[]> = {
+  pending_pickup: ["Scheduled"],
+  processing: ["Picked Up", "In Wash", "Dry", "QC Hold"],
+  ready: ["Iron"],
+  out: ["Out for Delivery"],
+  completed: ["Delivered"],
+  cancelled: ["Cancelled"],
+};
+
 export async function listOrdersAdmin(filters?: {
   status?: string;
   societyId?: string;
   residentId?: string;
+  operatorId?: string;
   q?: string;
+  filter?: string;
 }) {
   const params: unknown[] = [];
   const where: string[] = ["1=1"];
-  if (filters?.status) {
+
+  if (filters?.filter && filters.filter !== "all") {
+    const statuses = ORDER_TAB_STATUS_MAP[filters.filter];
+    if (statuses) {
+      params.push(statuses);
+      where.push(`o.status = ANY($${params.length}::text[])`);
+    }
+  } else if (filters?.status) {
     params.push(filters.status);
     where.push(`o.status ILIKE $${params.length}`);
   }
+
   if (filters?.societyId) {
     params.push(filters.societyId);
     where.push(`p.society_id = $${params.length}`);
@@ -819,28 +843,41 @@ export async function listOrdersAdmin(filters?: {
     params.push(filters.residentId);
     where.push(`p.resident_id = $${params.length}`);
   }
-  if (filters?.q) {
-    params.push(`%${filters.q}%`);
-    where.push(`(o.order_code ILIKE $${params.length} OR u.full_name ILIKE $${params.length} OR u.phone ILIKE $${params.length})`);
+  if (filters?.operatorId) {
+    params.push(filters.operatorId);
+    where.push(`op.id = $${params.length}`);
+  }
+  if (filters?.q?.trim()) {
+    params.push(`%${filters.q.trim()}%`);
+    where.push(
+      `(o.order_code ILIKE $${params.length} OR u.full_name ILIKE $${params.length} OR u.phone ILIKE $${params.length} OR op.operator_code ILIKE $${params.length} OR ou.full_name ILIKE $${params.length} OR s.name ILIKE $${params.length})`,
+    );
   }
 
   return (
     await query(
-      `SELECT o.id, o.order_code, o.status, o.pickup_garment_count, o.created_at, o.updated_at,
+      `SELECT o.id, o.order_code, o.status, o.pickup_garment_count, o.delivered_garment_count,
+              o.qc_status, o.created_at, o.updated_at,
               p.scheduled_for, p.resident_id, p.society_id,
               u.full_name AS resident_name, u.phone AS resident_phone,
               s.name AS society_name,
-              (
-                SELECT op.operator_code FROM operator_societies os
-                JOIN operators op ON op.id = os.operator_id
-                WHERE os.society_id = p.society_id
-                ORDER BY op.created_at LIMIT 1
-              ) AS operator_code
+              r.tower_block, r.unit_number,
+              op.id AS operator_id, op.operator_code,
+              ou.full_name AS operator_name, ou.phone AS operator_phone
        FROM orders o
        JOIN pickups p ON p.id = o.pickup_id
        JOIN residents r ON r.id = p.resident_id
        JOIN users u ON u.id = r.user_id
        JOIN societies s ON s.id = p.society_id
+       LEFT JOIN LATERAL (
+         SELECT os.operator_id
+         FROM operator_societies os
+         WHERE os.society_id = p.society_id
+         ORDER BY os.created_at ASC
+         LIMIT 1
+       ) soc_op ON TRUE
+       LEFT JOIN operators op ON op.id = soc_op.operator_id
+       LEFT JOIN users ou ON ou.id = op.user_id
        WHERE ${where.join(" AND ")}
        ORDER BY o.created_at DESC
        LIMIT 200`,
@@ -853,37 +890,82 @@ export async function getOrderDetailAdmin(orderCode: string) {
   const order = await queryOne(
     `SELECT o.*, p.scheduled_for, p.special_instructions, p.resident_id, p.society_id,
             u.full_name AS resident_name, u.phone AS resident_phone, r.id AS resident_uuid,
-            s.name AS society_name, s.id AS society_uuid
+            r.tower_block, r.unit_number, r.resident_code,
+            s.name AS society_name, s.id AS society_uuid,
+            op.id AS operator_id, op.operator_code,
+            ou.full_name AS operator_name, ou.phone AS operator_phone
      FROM orders o
      JOIN pickups p ON p.id = o.pickup_id
      JOIN residents r ON r.id = p.resident_id
      JOIN users u ON u.id = r.user_id
      JOIN societies s ON s.id = p.society_id
+     LEFT JOIN LATERAL (
+       SELECT os.operator_id
+       FROM operator_societies os
+       WHERE os.society_id = p.society_id
+       ORDER BY os.created_at ASC
+       LIMIT 1
+     ) soc_op ON TRUE
+     LEFT JOIN operators op ON op.id = soc_op.operator_id
+     LEFT JOIN users ou ON ou.id = op.user_id
      WHERE o.order_code = $1 OR o.id::text = $1`,
     [orderCode],
   );
   if (!order) return null;
 
-  const events = (
-    await query(
-      `SELECT id, event_type, event_payload, created_at
+  const [events, items, operators, addons, refunds, payments, tickets, auditLogs] = await Promise.all([
+    query(
+      `SELECT id, event_type, event_payload, actor_user_id, created_at
        FROM order_events WHERE order_id = $1 ORDER BY created_at ASC`,
       [order.id],
-    )
-  ).rows;
-
-  const operators = (
-    await query(
+    ).then((r) => r.rows),
+    query(
+      `SELECT id, category, quantity, created_at FROM order_items WHERE order_id = $1 ORDER BY category`,
+      [order.id],
+    ).then((r) => r.rows),
+    query(
       `SELECT o.id, o.operator_code, u.full_name, u.phone
        FROM operator_societies os
        JOIN operators o ON o.id = os.operator_id
        JOIN users u ON u.id = o.user_id
        WHERE os.society_id = $1`,
       [order.society_id],
-    )
-  ).rows;
+    ).then((r) => r.rows),
+    query(
+      `SELECT a.name, oas.quantity, a.price_inr::float AS price_inr
+       FROM order_addon_selections oas
+       JOIN addon_services a ON a.id = oas.addon_id
+       WHERE oas.order_id = $1`,
+      [order.id],
+    ).then((r) => r.rows),
+    query(
+      `SELECT id, amount_inr, reason, status, created_at
+       FROM refunds WHERE order_id = $1 ORDER BY created_at DESC`,
+      [order.id],
+    ).then((r) => r.rows),
+    query(
+      `SELECT id, amount_inr, type, status, gateway_ref, metadata, created_at
+       FROM payment_transactions
+       WHERE resident_id = $1
+         AND (metadata->>'orderId' = $2 OR metadata->>'order_id' = $2 OR metadata->>'orderCode' = $3)
+       ORDER BY created_at DESC`,
+      [order.resident_id, order.id, order.order_code],
+    ).then((r) => r.rows),
+    query(
+      `SELECT id, ticket_code, category, description, status, priority, created_at
+       FROM support_tickets WHERE order_id = $1 ORDER BY created_at DESC`,
+      [order.id],
+    ).then((r) => r.rows),
+    query(
+      `SELECT id, action, entity_name, entity_id, metadata, created_at
+       FROM audit_logs
+       WHERE entity_name = 'orders' AND entity_id = $1::text
+       ORDER BY created_at DESC LIMIT 50`,
+      [order.id],
+    ).then((r) => r.rows),
+  ]);
 
-  return { order, events, operators };
+  return { order, events, items, operators, addons, refunds, payments, tickets, auditLogs };
 }
 
 export async function listPricingCatalog() {
@@ -958,6 +1040,13 @@ export async function setResidentUserStatus(residentId: string, status: string) 
      FROM residents r WHERE r.user_id = u.id AND r.id = $1
      RETURNING u.*`,
     [residentId, status],
+  );
+}
+
+export async function setUserStatus(userId: string, status: string) {
+  return queryOne(
+    `UPDATE users SET status = $2, updated_at = now() WHERE id = $1 RETURNING *`,
+    [userId, status],
   );
 }
 

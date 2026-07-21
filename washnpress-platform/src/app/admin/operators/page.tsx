@@ -1,413 +1,418 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { api } from "@/frontend/api-client";
+import { useToast } from "@/components/ui/toast";
 import { adminNav } from "@/lib/portal-nav";
+import { usePagination } from "@/lib/admin/use-pagination";
+import { exportToCsv, exportToExcel, exportToPdf } from "@/lib/admin/export-utils";
+import { BulkActionBar } from "@/components/admin/shared/BulkActionBar";
+import { EmptyState } from "@/components/admin/shared/EmptyState";
+import { OperatorStats } from "@/components/admin/operators/OperatorStats";
+import { OperatorToolbar } from "@/components/admin/operators/OperatorToolbar";
+import { OperatorFilters } from "@/components/admin/operators/OperatorFilters";
+import { OperatorTable } from "@/components/admin/operators/OperatorTable";
+import { OperatorDrawer } from "@/components/admin/operators/OperatorDrawer";
+import { CreateOperatorWizard } from "@/components/admin/operators/CreateOperatorWizard";
+import { AssignSocietyDialog } from "@/components/admin/operators/AssignSocietyDialog";
+import { TransferOperatorDialog } from "@/components/admin/operators/TransferOperatorDialog";
+import { Pagination } from "@/components/admin/operators/Pagination";
+import {
+  defaultOperatorFilters,
+  type OperatorFilters as OperatorFiltersType,
+  type OperatorRow,
+  type SocietyOpt,
+} from "@/components/admin/operators/types";
+import { UserPlus } from "lucide-react";
 
-type Step = 1 | 2 | 3;
+function normalizeRow(raw: Record<string, unknown>): OperatorRow {
+  return {
+    id: String(raw.id),
+    operator_code: raw.operator_code ? String(raw.operator_code) : null,
+    full_name: String(raw.full_name ?? ""),
+    phone: String(raw.phone ?? ""),
+    email: raw.email ? String(raw.email) : null,
+    status: String(raw.status ?? "active"),
+    user_status: raw.user_status ? String(raw.user_status) : undefined,
+    city: raw.city ? String(raw.city) : null,
+    state: raw.state ? String(raw.state) : null,
+    pincode: raw.pincode ? String(raw.pincode) : null,
+    address_line_1: raw.address_line_1 ? String(raw.address_line_1) : null,
+    societies: Array.isArray(raw.societies) ? raw.societies.map(String) : [],
+    society_ids: Array.isArray(raw.society_ids) ? raw.society_ids.map(String) : [],
+    residents_count: Number(raw.residents_count ?? 0),
+    orders_managed: Number(raw.orders_managed ?? 0),
+    created_at: raw.created_at ? String(raw.created_at) : undefined,
+    joined_at: raw.joined_at ? String(raw.joined_at) : null,
+    last_login_at: raw.last_login_at ? String(raw.last_login_at) : null,
+  };
+}
 
-type OperatorRow = {
-  id: string;
-  operator_code: string | null;
-  full_name: string;
-  phone: string;
-  email: string | null;
-  status: string;
-  city?: string | null;
-  societies: string[];
-  residents_count?: number;
-  orders_managed?: number;
-  created_at?: string;
-  last_login_at: string | null;
-};
+function applyClientFilters(rows: OperatorRow[], filters: OperatorFiltersType): OperatorRow[] {
+  let result = [...rows];
 
-const emptyForm = {
-  fullName: "",
-  email: "",
-  phone: "",
-  status: "active" as "active" | "inactive",
-  societyName: "",
-  address: "",
-  towerName: "",
-  flatUnit: "",
-  city: "",
-  state: "",
-  pincode: "",
-};
+  if (filters.q.trim()) {
+    const q = filters.q.trim().toLowerCase();
+    result = result.filter((r) => {
+      const hay = `${r.full_name} ${r.phone} ${r.operator_code ?? ""} ${r.email ?? ""} ${r.city ?? ""} ${r.societies.join(" ")}`.toLowerCase();
+      return hay.includes(q);
+    });
+  }
+
+  if (filters.societyId === "__unassigned__") {
+    result = result.filter((r) => !r.societies.length);
+  } else if (filters.societyId) {
+    result = result.filter((r) => r.society_ids?.includes(filters.societyId));
+  }
+
+  if (filters.status) {
+    result = result.filter((r) => r.status === filters.status);
+  }
+
+  if (filters.city) {
+    result = result.filter((r) => (r.city ?? "").toLowerCase() === filters.city.toLowerCase());
+  }
+
+  if (filters.joinedFrom) {
+    result = result.filter((r) => (r.created_at ?? r.joined_at ?? "") >= filters.joinedFrom);
+  }
+  if (filters.joinedTo) {
+    result = result.filter((r) => (r.created_at ?? r.joined_at ?? "") <= filters.joinedTo + "T23:59:59");
+  }
+
+  switch (filters.sortBy) {
+    case "oldest":
+      result.sort((a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? ""));
+      break;
+    case "name":
+      result.sort((a, b) => a.full_name.localeCompare(b.full_name));
+      break;
+    case "z-a":
+      result.sort((a, b) => b.full_name.localeCompare(a.full_name));
+      break;
+    case "residents":
+      result.sort((a, b) => (b.residents_count ?? 0) - (a.residents_count ?? 0));
+      break;
+    case "orders":
+      result.sort((a, b) => (b.orders_managed ?? 0) - (a.orders_managed ?? 0));
+      break;
+    case "societies":
+      result.sort((a, b) => b.societies.length - a.societies.length);
+      break;
+    case "performance":
+      result.sort((a, b) => (b.orders_managed ?? 0) - (a.orders_managed ?? 0));
+      break;
+    default:
+      result.sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""));
+  }
+
+  return result;
+}
 
 export default function OperatorsAdminPage() {
-  const [step, setStep] = useState<Step>(1);
-  const [form, setForm] = useState(emptyForm);
-  const [operators, setOperators] = useState<OperatorRow[]>([]);
-  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+  const [rows, setRows] = useState<OperatorRow[]>([]);
+  const [societies, setSocieties] = useState<SocietyOpt[]>([]);
+  const [filters, setFilters] = useState<OperatorFiltersType>(defaultOperatorFilters);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [drawerId, setDrawerId] = useState<string | null>(null);
+  const [drawerTab, setDrawerTab] = useState("profile");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [dialogOperatorId, setDialogOperatorId] = useState<string | null>(null);
   const [createdCode, setCreatedCode] = useState<string | null>(null);
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
 
   const load = useCallback(async () => {
-    const ops = await api.admin.users.listOperators();
-    const rows = (ops.operators as OperatorRow[]).map((o) => ({
-      ...o,
-      societies: Array.isArray(o.societies) ? o.societies : [],
-    }));
-    setOperators(rows);
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/operators", { credentials: "same-origin" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message ?? "Failed to load");
+      setRows(((data.operators as Array<Record<string, unknown>>) ?? []).map(normalizeRow));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Load failed");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    void load().catch((err) => setError(err instanceof Error ? err.message : "Load failed"));
+    void fetch("/api/admin/societies", { credentials: "same-origin" })
+      .then((r) => r.json())
+      .then((d) =>
+        setSocieties(
+          ((d.societies as Array<{ id: string; name: string; city?: string }>) ?? []).map((s) => ({
+            id: s.id,
+            name: s.name,
+            city: s.city ?? null,
+          })),
+        ),
+      )
+      .catch(() => null);
+  }, []);
+
+  useEffect(() => {
+    void load();
   }, [load]);
 
-  function canStep1() {
-    return Boolean(form.fullName.trim() && form.phone.length === 10);
+  const cities = useMemo(
+    () => [...new Set(rows.map((r) => r.city).filter(Boolean) as string[])].sort(),
+    [rows],
+  );
+
+  const filtered = useMemo(() => applyClientFilters(rows, filters), [rows, filters]);
+
+  const dialogOperator = rows.find((r) => r.id === dialogOperatorId);
+
+  function openDrawer(id: string, tab = "profile") {
+    setDrawerId(id);
+    setDrawerTab(tab);
+    setDrawerOpen(true);
   }
 
-  function canStep2() {
-    return Boolean(
-      form.societyName.trim() &&
-        form.address.trim() &&
-        form.towerName.trim() &&
-        form.city.trim() &&
-        form.state.trim() &&
-        form.pincode.trim(),
-    );
+  function openAssign(id: string) {
+    setDialogOperatorId(id);
+    setAssignOpen(true);
   }
 
-  async function createOperator() {
-    if (saving) return;
-    if (!canStep1() || !canStep2()) {
-      setError("Please complete all required fields");
+  function openTransfer(id: string) {
+    setDialogOperatorId(id);
+    setTransferOpen(true);
+  }
+
+  async function updateStatus(id: string, status: string) {
+    const res = await fetch("/api/admin/operators", {
+      method: "PATCH",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ operatorId: id, status }),
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      toast(data.message ?? "Update failed", "error");
       return;
     }
-    setSaving(true);
-    setError(null);
-    setCreatedCode(null);
-    try {
-      const res = (await api.admin.users.create({
-        phone: form.phone,
-        fullName: form.fullName.trim(),
-        email: form.email || undefined,
-        roles: ["operator"],
-        status: form.status,
-        city: form.city.trim(),
-        state: form.state.trim(),
-        pincode: form.pincode.trim(),
-        addressLine1: form.address.trim(),
-        community: {
-          societyName: form.societyName.trim(),
-          towerName: form.towerName.trim(),
-          city: form.city.trim(),
-          state: form.state.trim(),
-          pincode: form.pincode.trim(),
-          address: form.address.trim(),
-          flatUnit: form.flatUnit.trim() || undefined,
-        },
-      })) as { operatorCode?: string | null; user?: { operatorCode?: string | null } };
+    toast(status === "active" ? "Operator activated" : "Operator deactivated", "success");
+    await load();
+  }
 
-      const code = res.operatorCode ?? res.user?.operatorCode ?? null;
-      setCreatedCode(code);
-      setForm(emptyForm);
-      setStep(1);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create operator");
-    } finally {
-      setSaving(false);
+  async function bulkStatus(status: string) {
+    await Promise.all([...selected].map((id) => updateStatus(id, status)));
+    setSelected(new Set());
+  }
+
+  function handleExport(format: "csv" | "excel" | "pdf") {
+    const headers = [
+      "Operator ID",
+      "Name",
+      "Phone",
+      "Email",
+      "City",
+      "Societies",
+      "Residents",
+      "Orders",
+      "Status",
+      "Last Login",
+      "Joined",
+    ];
+    const data = filtered.map((r) => [
+      r.operator_code ?? r.id,
+      r.full_name,
+      r.phone,
+      r.email ?? "",
+      r.city ?? "",
+      r.societies.join("; "),
+      String(r.residents_count ?? 0),
+      String(r.orders_managed ?? 0),
+      r.status,
+      r.last_login_at ? new Date(r.last_login_at).toLocaleDateString() : "",
+      r.created_at ? new Date(r.created_at).toLocaleDateString() : "",
+    ]);
+    if (format === "csv") exportToCsv("operators.csv", headers, data);
+    else if (format === "excel") exportToExcel("operators.xls", headers, data);
+    else exportToPdf("operators.pdf", "Operators", headers, data);
+    toast("Export started", "success");
+  }
+
+  function handleAction(action: string, row: OperatorRow) {
+    switch (action) {
+      case "view":
+      case "edit":
+        openDrawer(row.id, "profile");
+        break;
+      case "societies":
+      case "assign":
+        openDrawer(row.id, "societies");
+        if (action === "assign") openAssign(row.id);
+        break;
+      case "transfer":
+        openDrawer(row.id, "societies");
+        openTransfer(row.id);
+        break;
+      case "residents":
+        openDrawer(row.id, "residents");
+        break;
+      case "orders":
+        openDrawer(row.id, "orders");
+        break;
+      case "performance":
+        openDrawer(row.id, "performance");
+        break;
+      case "notifications":
+        openDrawer(row.id, "notifications");
+        break;
+      case "deactivate":
+        void updateStatus(row.id, "inactive");
+        break;
     }
   }
 
-  const filtered = operators.filter((op) => {
-    if (statusFilter && op.status !== statusFilter) return false;
-    if (!q.trim()) return true;
-    const hay = `${op.full_name} ${op.phone} ${op.operator_code ?? ""} ${op.societies.join(" ")}`.toLowerCase();
-    return hay.includes(q.trim().toLowerCase());
-  });
+  function handleStatFilter(filter: string) {
+    if (filter === "active") setFilters((f) => ({ ...f, status: "active" }));
+    else if (filter === "inactive") setFilters((f) => ({ ...f, status: "inactive" }));
+    else if (filter === "unassigned") {
+      setFilters(defaultOperatorFilters);
+      setRows((prev) => prev);
+      toast("Showing operators with no society assignments", "info");
+      setFilters((f) => ({ ...f, societyId: "__unassigned__" }));
+    } else setFilters(defaultOperatorFilters);
+  }
+
+  const pagination = usePagination(filtered);
 
   return (
     <PortalShell
       navItems={adminNav}
       portalLabel="Admin Portal"
       greeting="Operators"
-      subtitle="Create operators and manage society assignments"
+      subtitle="Create operators and manage society assignments across the platform."
     >
-      <section className="mb-6 grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Total Operators</p>
-            <p className="mt-1 text-2xl font-bold">{operators.length}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Active</p>
-            <p className="mt-1 text-2xl font-bold">
-              {operators.filter((o) => o.status === "active").length}
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-xs text-muted-foreground">Societies Covered</p>
-            <p className="mt-1 text-2xl font-bold">
-              {new Set(operators.flatMap((o) => o.societies)).size}
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-
       {createdCode && (
         <div className="mb-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary">
-          Operator created. Operator ID: <strong>{createdCode}</strong>. They can login via OTP on
-          /login.
+          Operator created. Operator ID: <strong>{createdCode}</strong>. They can login via OTP on /login.
         </div>
       )}
-      {error && (
-        <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
+      {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
+
+      <OperatorStats rows={rows} loading={loading} onFilter={handleStatFilter} />
+      <OperatorToolbar
+        onRefresh={() => void load()}
+        onExport={handleExport}
+        onCreate={() => setWizardOpen(true)}
+        loading={loading}
+      />
+      <OperatorFilters
+        filters={filters}
+        societies={societies}
+        onChange={(patch) => setFilters((f) => ({ ...f, ...patch }))}
+        onReset={() => setFilters(defaultOperatorFilters)}
+      />
+
+      <BulkActionBar
+        count={selected.size}
+        onClear={() => setSelected(new Set())}
+        actions={
+          <>
+            <Button size="sm" variant="outline" onClick={() => void bulkStatus("inactive")}>
+              Deactivate
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => void bulkStatus("active")}>
+              Activate
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => handleExport("csv")}>
+              Export Selected
+            </Button>
+          </>
+        }
+      />
+
+      {!loading && filtered.length === 0 ? (
+        <EmptyState
+          title="No operators found"
+          description="Try adjusting your search or filters, or create a new operator."
+          actions={
+            <Button size="sm" className="gap-1.5" onClick={() => setWizardOpen(true)}>
+              <UserPlus className="h-4 w-4" />
+              Create Operator
+            </Button>
+          }
+        />
+      ) : (
+        <>
+          <OperatorTable
+            rows={pagination.paginated}
+            loading={loading}
+            selected={selected}
+            onSelect={(id, checked) => {
+              const next = new Set(selected);
+              if (checked) next.add(id);
+              else next.delete(id);
+              setSelected(next);
+            }}
+            onSelectAll={(checked) =>
+              setSelected(checked ? new Set(pagination.paginated.map((r) => r.id)) : new Set())
+            }
+            onRowClick={(r) => openDrawer(r.id)}
+            onAction={handleAction}
+          />
+          <Pagination
+            from={pagination.from}
+            to={pagination.to}
+            total={pagination.total}
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.goTo}
+            onPageSizeChange={pagination.setSize}
+          />
+        </>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Create Operator</CardTitle>
-            <CardDescription>Step {step} of 3 — operators cannot self-register</CardDescription>
-            <div className="mt-2 flex gap-2">
-              {[1, 2, 3].map((s) => (
-                <Badge key={s} variant={step === s ? "default" : "secondary"}>
-                  {s === 1 ? "Basic" : s === 2 ? "Society" : "Review"}
-                </Badge>
-              ))}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {step === 1 && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-sm sm:col-span-2">
-                  <span className="text-muted-foreground">Full Name *</span>
-                  <Input
-                    className="mt-1"
-                    value={form.fullName}
-                    onChange={(e) => setForm({ ...form, fullName: e.target.value })}
-                  />
-                </label>
-                <label className="text-sm">
-                  <span className="text-muted-foreground">Mobile Number *</span>
-                  <Input
-                    className="mt-1"
-                    value={form.phone}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        phone: e.target.value.replace(/\D/g, "").slice(0, 10),
-                      })
-                    }
-                  />
-                </label>
-                <label className="text-sm">
-                  <span className="text-muted-foreground">Email</span>
-                  <Input
-                    className="mt-1"
-                    type="email"
-                    value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  />
-                </label>
-                <label className="text-sm">
-                  <span className="text-muted-foreground">Role</span>
-                  <Input className="mt-1" value="Operator" disabled />
-                </label>
-                <label className="text-sm">
-                  <span className="text-muted-foreground">Status</span>
-                  <select
-                    className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    value={form.status}
-                    onChange={(e) =>
-                      setForm({ ...form, status: e.target.value as "active" | "inactive" })
-                    }
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </label>
-              </div>
-            )}
+      <OperatorDrawer
+        operatorId={drawerId}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        initialTab={drawerTab}
+        onAssignSociety={openAssign}
+        onTransfer={openTransfer}
+        onRefreshList={() => void load()}
+      />
 
-            {step === 2 && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <label className="text-sm sm:col-span-2">
-                  <span className="text-muted-foreground">Society Name *</span>
-                  <Input
-                    className="mt-1"
-                    value={form.societyName}
-                    onChange={(e) => setForm({ ...form, societyName: e.target.value })}
-                    placeholder="Type society / community name"
-                  />
-                </label>
-                <label className="text-sm sm:col-span-2">
-                  <span className="text-muted-foreground">Address *</span>
-                  <textarea
-                    className="mt-1 min-h-[88px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={form.address}
-                    onChange={(e) => setForm({ ...form, address: e.target.value })}
-                  />
-                </label>
-                <label className="text-sm">
-                  <span className="text-muted-foreground">Tower Name *</span>
-                  <Input
-                    className="mt-1"
-                    value={form.towerName}
-                    onChange={(e) => setForm({ ...form, towerName: e.target.value })}
-                  />
-                </label>
-                <label className="text-sm">
-                  <span className="text-muted-foreground">Flat / Unit</span>
-                  <Input
-                    className="mt-1"
-                    value={form.flatUnit}
-                    onChange={(e) => setForm({ ...form, flatUnit: e.target.value })}
-                  />
-                </label>
-                <label className="text-sm">
-                  <span className="text-muted-foreground">City *</span>
-                  <Input
-                    className="mt-1"
-                    value={form.city}
-                    onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  />
-                </label>
-                <label className="text-sm">
-                  <span className="text-muted-foreground">State *</span>
-                  <Input
-                    className="mt-1"
-                    value={form.state}
-                    onChange={(e) => setForm({ ...form, state: e.target.value })}
-                  />
-                </label>
-                <label className="text-sm">
-                  <span className="text-muted-foreground">Pincode *</span>
-                  <Input
-                    className="mt-1"
-                    value={form.pincode}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        pincode: e.target.value.replace(/\D/g, "").slice(0, 6),
-                      })
-                    }
-                  />
-                </label>
-              </div>
-            )}
+      <CreateOperatorWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        societies={societies}
+        onSuccess={(code) => {
+          setCreatedCode(code);
+          void load();
+        }}
+      />
 
-            {step === 3 && (
-              <div className="space-y-2 rounded-xl border border-border bg-muted/30 p-4 text-sm">
-                {[
-                  ["Name", form.fullName],
-                  ["Mobile", `+91 ${form.phone}`],
-                  ["Email", form.email || "—"],
-                  ["Operator Role", "Operator"],
-                  ["Generated Operator ID", "Assigned on create (OPR-######)"],
-                  ["Society", form.societyName],
-                  ["Address", form.address],
-                  ["Tower", form.towerName],
-                  ["Flat", form.flatUnit || "—"],
-                  ["City", form.city],
-                  ["State", form.state],
-                  ["Pincode", form.pincode],
-                  ["Status", form.status],
-                ].map(([k, v]) => (
-                  <div key={k} className="flex justify-between gap-4 border-b border-border/60 py-1.5 last:border-0">
-                    <span className="text-muted-foreground">{k}</span>
-                    <span className="max-w-[60%] text-right font-medium">{v}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+      <AssignSocietyDialog
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+        operatorId={dialogOperatorId}
+        operatorName={dialogOperator?.full_name}
+        societies={societies}
+        assignedIds={dialogOperator?.society_ids ?? []}
+        onSuccess={() => void load()}
+      />
 
-            <div className="flex flex-wrap gap-2 pt-2">
-              {step > 1 && (
-                <Button variant="outline" disabled={saving} onClick={() => setStep((s) => (s - 1) as Step)}>
-                  Back
-                </Button>
-              )}
-              {step < 3 && (
-                <Button
-                  disabled={
-                    saving || (step === 1 && !canStep1()) || (step === 2 && !canStep2())
-                  }
-                  onClick={() => {
-                    setError(null);
-                    setStep((s) => (s + 1) as Step);
-                  }}
-                >
-                  Continue
-                </Button>
-              )}
-              {step === 3 && (
-                <Button disabled={saving || !canStep1() || !canStep2()} onClick={() => void createOperator()}>
-                  {saving ? "Creating…" : "Create Operator"}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Operators list</CardTitle>
-            <CardDescription>{filtered.length} shown</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid gap-2 sm:grid-cols-2">
-              <Input placeholder="Search…" value={q} onChange={(e) => setQ(e.target.value)} />
-              <select
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <option value="">All statuses</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
-            <div className="max-h-[560px] space-y-2 overflow-y-auto">
-              {filtered.map((op) => (
-                <Link
-                  key={op.id}
-                  href={`/admin/operators/${op.id}`}
-                  className="block rounded-xl border border-border p-3 no-underline transition hover:bg-muted/40"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-foreground">{op.full_name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {op.operator_code ?? "—"} · +91 {op.phone}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {op.societies.join(", ") || "No society"} · Residents{" "}
-                        {op.residents_count ?? 0} · Orders {op.orders_managed ?? 0}
-                      </p>
-                    </div>
-                    <Badge variant={op.status === "active" ? "success" : "secondary"}>
-                      {op.status}
-                    </Badge>
-                  </div>
-                </Link>
-              ))}
-              {filtered.length === 0 && (
-                <p className="text-sm text-muted-foreground">No operators match filters.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <TransferOperatorDialog
+        open={transferOpen}
+        onOpenChange={setTransferOpen}
+        operatorId={dialogOperatorId}
+        operatorName={dialogOperator?.full_name}
+        societies={societies}
+        assignedIds={dialogOperator?.society_ids ?? []}
+        onSuccess={() => void load()}
+      />
     </PortalShell>
   );
 }

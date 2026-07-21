@@ -17,7 +17,9 @@ export async function GET(request: Request) {
       status: url.searchParams.get("status") ?? undefined,
       societyId: url.searchParams.get("societyId") ?? undefined,
       residentId: url.searchParams.get("residentId") ?? undefined,
+      operatorId: url.searchParams.get("operatorId") ?? undefined,
       q: url.searchParams.get("q") ?? undefined,
+      filter: url.searchParams.get("filter") ?? undefined,
     }),
   });
 }

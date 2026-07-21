@@ -22,6 +22,7 @@ export async function GET(request: Request) {
     q: url.searchParams.get("q") ?? undefined,
     societyId: url.searchParams.get("societyId") ?? undefined,
     tower: url.searchParams.get("tower") ?? undefined,
+    floor: url.searchParams.get("floor") ?? undefined,
     subscription: url.searchParams.get("subscription") ?? undefined,
     status: url.searchParams.get("status") ?? undefined,
   });

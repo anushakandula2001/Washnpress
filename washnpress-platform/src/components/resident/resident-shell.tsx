@@ -41,17 +41,8 @@ const navItems = [
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2.5 px-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-        <svg viewBox="0 0 32 32" className="h-6 w-6 text-primary" fill="currentColor">
-          <path d="M4 20c4-8 8-12 12-12s8 4 12 12c-2 2-6 4-12 4S6 22 4 20z" opacity="0.3" />
-          <path d="M6 22c3-6 7-9 10-9s7 3 10 9c-1.5 1.5-4 2.5-10 2.5S7.5 23.5 6 22z" />
-        </svg>
-      </div>
-      <div>
-        <p className="text-sm font-bold tracking-wide text-foreground">WASH N PRESS</p>
-        <p className="text-[10px] leading-tight text-muted-foreground">Clean Clothes, Clear Water</p>
-      </div>
+    <div className="flex items-center px-2">
+      <img src="/logo.png" alt="Wash N Press" className="h-10 w-auto object-contain" />
     </div>
   );
 }

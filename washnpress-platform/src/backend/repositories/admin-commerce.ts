@@ -337,9 +337,35 @@ export async function setRefundStatus(refundId: string, status: "approved" | "re
 
 /* ── Pickups / deliveries admin lists ───────────────────── */
 
-export async function listAdminPickups(filter?: string) {
+export type AdminPickupListFilters = {
+  filter?: string;
+  societyId?: string;
+  operatorId?: string;
+  q?: string;
+};
+
+const PICKUP_LIST_FROM = `
+  FROM pickups p
+  JOIN residents r ON r.id = p.resident_id
+  JOIN users u ON u.id = r.user_id
+  JOIN societies s ON s.id = p.society_id
+  LEFT JOIN pickup_slots ps ON ps.id = p.pickup_slot_id
+  LEFT JOIN orders o ON o.pickup_id = p.id
+  LEFT JOIN LATERAL (
+    SELECT op.id, op.operator_code, ou.full_name, ou.phone
+    FROM operator_societies os
+    JOIN operators op ON op.id = os.operator_id
+    JOIN users ou ON ou.id = op.user_id
+    WHERE os.society_id = p.society_id
+    ORDER BY os.created_at ASC
+    LIMIT 1
+  ) op ON true`;
+
+function buildAdminPickupWhere(filters: AdminPickupListFilters) {
   const params: unknown[] = [];
   let where = "1=1";
+  const { filter, societyId, operatorId, q } = filters;
+
   if (filter === "today") {
     where += ` AND p.scheduled_for::date = CURRENT_DATE`;
   } else if (filter === "upcoming") {
@@ -348,62 +374,362 @@ export async function listAdminPickups(filter?: string) {
     where += ` AND p.status = 'completed'`;
   } else if (filter === "cancelled") {
     where += ` AND p.status = 'cancelled'`;
+  } else if (filter === "assigned") {
+    where += ` AND op.id IS NOT NULL AND p.status IN ('scheduled','rescheduled')`;
+  } else if (filter === "missed") {
+    where += ` AND p.scheduled_for < now() AND p.status IN ('scheduled','rescheduled')`;
   }
+
+  if (societyId) {
+    params.push(societyId);
+    where += ` AND p.society_id = $${params.length}`;
+  }
+  if (operatorId) {
+    params.push(operatorId);
+    where += ` AND op.id = $${params.length}`;
+  }
+  if (q?.trim()) {
+    params.push(`%${q.trim()}%`);
+    const i = params.length;
+    where += ` AND (
+      u.full_name ILIKE $${i} OR u.phone ILIKE $${i} OR s.name ILIKE $${i}
+      OR r.tower_block ILIKE $${i} OR r.unit_number ILIKE $${i}
+      OR o.order_code ILIKE $${i} OR op.operator_code ILIKE $${i}
+      OR op.full_name ILIKE $${i}
+    )`;
+  }
+
+  return { where, params };
+}
+
+const PICKUP_LIST_SELECT = `
+  SELECT p.*,
+         u.full_name AS resident_name, u.phone, u.email AS resident_email,
+         r.id AS resident_id, r.resident_code, r.tower_block, r.unit_number,
+         s.id AS society_id, s.name AS society_name, s.city AS society_city,
+         ps.slot_window, ps.start_time::text, ps.end_time::text,
+         o.id AS order_id, o.order_code, o.status AS order_status, o.pickup_garment_count,
+         op.id AS operator_id, op.operator_code, op.full_name AS operator_name, op.phone AS operator_phone`;
+
+export async function listAdminPickups(filterOrFilters?: string | AdminPickupListFilters) {
+  const filters: AdminPickupListFilters =
+    typeof filterOrFilters === "string" ? { filter: filterOrFilters } : (filterOrFilters ?? {});
+  const { where, params } = buildAdminPickupWhere(filters);
   return (
     await query(
-      `SELECT p.*, u.full_name AS resident_name, u.phone, s.name AS society_name,
+      `${PICKUP_LIST_SELECT}
+       ${PICKUP_LIST_FROM}
+       WHERE ${where}
+       ORDER BY p.scheduled_for DESC
+       LIMIT 500`,
+      params,
+    )
+  ).rows;
+}
+
+export async function getAdminPickupStats() {
+  const row = (
+    await queryOne<{
+      today: string;
+      scheduled: string;
+      assigned: string;
+      completed: string;
+      missed: string;
+      cancelled: string;
+    }>(
+      `SELECT
+         COUNT(*) FILTER (WHERE p.scheduled_for::date = CURRENT_DATE)::text AS today,
+         COUNT(*) FILTER (WHERE p.scheduled_for::date > CURRENT_DATE AND p.status IN ('scheduled','rescheduled'))::text AS scheduled,
+         COUNT(*) FILTER (WHERE op.id IS NOT NULL AND p.status IN ('scheduled','rescheduled'))::text AS assigned,
+         COUNT(*) FILTER (WHERE p.status = 'completed')::text AS completed,
+         COUNT(*) FILTER (WHERE p.scheduled_for < now() AND p.status IN ('scheduled','rescheduled'))::text AS missed,
+         COUNT(*) FILTER (WHERE p.status = 'cancelled')::text AS cancelled
+       ${PICKUP_LIST_FROM}`,
+    )
+  ) ?? {
+    today: "0",
+    scheduled: "0",
+    assigned: "0",
+    completed: "0",
+    missed: "0",
+    cancelled: "0",
+  };
+  return {
+    today: parseInt(row.today, 10),
+    scheduled: parseInt(row.scheduled, 10),
+    assigned: parseInt(row.assigned, 10),
+    completed: parseInt(row.completed, 10),
+    missed: parseInt(row.missed, 10),
+    cancelled: parseInt(row.cancelled, 10),
+  };
+}
+
+export async function getAdminPickupDetail(pickupId: string) {
+  const pickup = await queryOne(
+    `${PICKUP_LIST_SELECT}
+     ${PICKUP_LIST_FROM}
+     WHERE p.id = $1`,
+    [pickupId],
+  );
+  if (!pickup) return null;
+
+  const operators = (
+    await query(
+      `SELECT op.id, op.operator_code, u.full_name, u.phone, u.email, op.status
+       FROM operator_societies os
+       JOIN operators op ON op.id = os.operator_id
+       JOIN users u ON u.id = op.user_id
+       WHERE os.society_id = $1
+       ORDER BY os.created_at ASC`,
+      [pickup.society_id],
+    )
+  ).rows;
+
+  const resident = await queryOne(
+    `SELECT r.*, u.full_name, u.phone, u.email, u.status AS user_status, u.last_login_at
+     FROM residents r JOIN users u ON u.id = r.user_id WHERE r.id = $1`,
+    [pickup.resident_id],
+  );
+
+  const order = pickup.order_id
+    ? await queryOne(`SELECT * FROM orders WHERE id = $1`, [pickup.order_id])
+    : await queryOne(`SELECT * FROM orders WHERE pickup_id = $1`, [pickupId]);
+
+  const activity = (
+    await query(
+      `SELECT * FROM audit_logs
+       WHERE entity_id IN ($1, $2, $3)
+       ORDER BY created_at DESC LIMIT 30`,
+      [pickupId, pickup.resident_id, order?.id ?? pickupId],
+    )
+  ).rows;
+
+  return { pickup, resident, operators, order, activity };
+}
+
+export async function updateAdminPickup(
+  pickupId: string,
+  data: { status?: string; specialInstructions?: string },
+) {
+  if (data.status) {
+    return queryOne(
+      `UPDATE pickups SET status = $2, updated_at = now() WHERE id = $1 RETURNING *`,
+      [pickupId, data.status],
+    );
+  }
+  if (data.specialInstructions !== undefined) {
+    return queryOne(
+      `UPDATE pickups SET special_instructions = $2, updated_at = now() WHERE id = $1 RETURNING *`,
+      [pickupId, data.specialInstructions],
+    );
+  }
+  return null;
+}
+
+export type AdminDeliveryFilters = {
+  filter?: string;
+  q?: string;
+  societyId?: string;
+  operatorId?: string;
+};
+
+const DELIVERY_STATUS_MAP: Record<string, string[]> = {
+  ready: ["Ready for Delivery", "Packing", "Packed"],
+  out: ["Out for Delivery"],
+  delivered: ["Delivered"],
+  failed: ["Failed Delivery", "Delivery Failed"],
+};
+
+function deliveryStatusWhere(filter?: string, params: unknown[] = []) {
+  const statuses = filter ? DELIVERY_STATUS_MAP[filter] : null;
+  if (statuses) {
+    params.push(statuses);
+    return `o.status = ANY($${params.length}::text[])`;
+  }
+  return `o.status ILIKE ANY(ARRAY['%ready%','%delivery%','%delivered%','%packed%','%packing%','%failed%'])`;
+}
+
+export async function listAdminDeliveries(filters?: AdminDeliveryFilters | string) {
+  const opts: AdminDeliveryFilters =
+    typeof filters === "string" ? { filter: filters } : (filters ?? {});
+  const params: unknown[] = [];
+  const conditions = [deliveryStatusWhere(opts.filter, params)];
+
+  if (opts.societyId) {
+    params.push(opts.societyId);
+    conditions.push(`s.id = $${params.length}`);
+  }
+  if (opts.operatorId) {
+    params.push(opts.operatorId);
+    conditions.push(`op.id = $${params.length}`);
+  }
+  if (opts.q?.trim()) {
+    params.push(`%${opts.q.trim()}%`);
+    conditions.push(
+      `(o.order_code ILIKE $${params.length} OR u.full_name ILIKE $${params.length} OR u.phone ILIKE $${params.length} OR op.operator_code ILIKE $${params.length} OR ou.full_name ILIKE $${params.length} OR s.name ILIKE $${params.length})`,
+    );
+  }
+
+  return (
+    await query(
+      `SELECT o.id, o.order_code, o.status, o.updated_at, o.created_at, o.pickup_garment_count,
+              o.delivered_garment_count,
+              u.full_name AS resident_name, u.phone, u.email,
+              s.name AS society_name, s.city AS society_city,
+              r.id AS resident_id, s.id AS society_id,
               r.tower_block, r.unit_number,
-              ps.slot_window, ps.start_time::text, ps.end_time::text,
-              o.order_code, o.status AS order_status,
-              (
-                SELECT op.operator_code FROM operator_societies os
-                JOIN operators op ON op.id = os.operator_id
-                WHERE os.society_id = p.society_id LIMIT 1
-              ) AS operator_code
-       FROM pickups p
+              p.scheduled_for, p.special_instructions,
+              op.id AS operator_id, op.operator_code,
+              ou.full_name AS operator_name, ou.phone AS operator_phone,
+              route_info.route_date, route_info.route_id, route_info.stop_status
+       FROM orders o
+       JOIN pickups p ON p.id = o.pickup_id
        JOIN residents r ON r.id = p.resident_id
        JOIN users u ON u.id = r.user_id
        JOIN societies s ON s.id = p.society_id
-       LEFT JOIN pickup_slots ps ON ps.id = p.pickup_slot_id
-       LEFT JOIN orders o ON o.pickup_id = p.id
-       WHERE ${where}
-       ORDER BY p.scheduled_for DESC
+       LEFT JOIN LATERAL (
+         SELECT os.operator_id
+         FROM operator_societies os
+         WHERE os.society_id = p.society_id
+         ORDER BY os.created_at ASC
+         LIMIT 1
+       ) soc_op ON TRUE
+       LEFT JOIN operators op ON op.id = soc_op.operator_id
+       LEFT JOIN users ou ON ou.id = op.user_id
+       LEFT JOIN LATERAL (
+         SELECT dr.id AS route_id, dr.route_date, rs.status AS stop_status
+         FROM route_stops rs
+         JOIN delivery_routes dr ON dr.id = rs.route_id
+         WHERE rs.order_id = o.id
+         ORDER BY dr.created_at DESC
+         LIMIT 1
+       ) route_info ON TRUE
+       WHERE ${conditions.join(" AND ")}
+       ORDER BY o.updated_at DESC
        LIMIT 200`,
       params,
     )
   ).rows;
 }
 
-export async function listAdminDeliveries(filter?: string) {
-  const statusMap: Record<string, string[]> = {
-    ready: ["Ready for Delivery", "Packing", "Packed"],
-    out: ["Out for Delivery"],
-    delivered: ["Delivered"],
-    failed: ["Failed Delivery", "Delivery Failed"],
-  };
-  const statuses = filter ? statusMap[filter] : null;
-  const params: unknown[] = [];
-  let where = `o.status ILIKE ANY(ARRAY['%ready%','%delivery%','%delivered%','%packed%'])`;
-  if (statuses) {
-    params.push(statuses);
-    where = `o.status = ANY($1::text[])`;
-  }
-  return (
-    await query(
-      `SELECT o.order_code, o.status, o.updated_at, o.pickup_garment_count,
-              u.full_name AS resident_name, u.phone, s.name AS society_name,
-              r.id AS resident_id, s.id AS society_id, p.scheduled_for
+export async function assignAdminDeliveryOperator(
+  orderId: string,
+  operatorId: string,
+  actorUserId?: string,
+) {
+  return withTransaction(async (client) => {
+    const orderRes = await client.query<{ id: string; status: string; society_id: string }>(
+      `SELECT o.id, o.status, p.society_id
        FROM orders o
        JOIN pickups p ON p.id = o.pickup_id
-       JOIN residents r ON r.id = p.resident_id
-       JOIN users u ON u.id = r.user_id
-       JOIN societies s ON s.id = p.society_id
-       WHERE ${where}
-       ORDER BY o.updated_at DESC
-       LIMIT 200`,
-      params,
-    )
-  ).rows;
+       WHERE o.id = $1`,
+      [orderId],
+    );
+    const order = orderRes.rows[0];
+    if (!order) throw new Error("Order not found");
+
+    const opRes = await client.query<{ id: string; user_id: string; operator_code: string | null }>(
+      `SELECT o.id, o.user_id, o.operator_code FROM operators o WHERE o.id = $1`,
+      [operatorId],
+    );
+    const op = opRes.rows[0];
+    if (!op) throw new Error("Operator not found");
+
+    await client.query(
+      `INSERT INTO operator_societies (operator_id, society_id)
+       VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [operatorId, order.society_id],
+    );
+
+    let routeRes = await client.query<{ id: string }>(
+      `SELECT id FROM delivery_routes
+       WHERE operator_user_id = $1 AND route_date = CURRENT_DATE AND status = 'active'
+       LIMIT 1`,
+      [op.user_id],
+    );
+    let routeId = routeRes.rows[0]?.id;
+    if (!routeId) {
+      const created = await client.query<{ id: string }>(
+        `INSERT INTO delivery_routes (operator_user_id, route_date)
+         VALUES ($1, CURRENT_DATE) RETURNING id`,
+        [op.user_id],
+      );
+      routeId = created.rows[0]?.id;
+    }
+    if (!routeId) throw new Error("Failed to create delivery route");
+
+    const seqRes = await client.query<{ next_seq: number }>(
+      `SELECT COALESCE(MAX(stop_sequence), 0) + 1 AS next_seq FROM route_stops WHERE route_id = $1`,
+      [routeId],
+    );
+    const stopSeq = seqRes.rows[0]?.next_seq ?? 1;
+
+    const existingStop = await client.query(
+      `SELECT id FROM route_stops WHERE route_id = $1 AND order_id = $2`,
+      [routeId, orderId],
+    );
+    if (!existingStop.rows.length) {
+      await client.query(
+        `INSERT INTO route_stops (route_id, order_id, stop_sequence) VALUES ($1, $2, $3)`,
+        [routeId, orderId, stopSeq],
+      );
+    }
+
+    if (["Ready for Delivery", "Packing", "Packed"].includes(order.status)) {
+      await client.query(
+        `UPDATE orders SET status = 'Out for Delivery', updated_at = now() WHERE id = $1`,
+        [orderId],
+      );
+    }
+
+    await client.query(
+      `INSERT INTO order_events (order_id, event_type, event_payload, actor_user_id)
+       VALUES ($1, 'operator_assigned', $2::jsonb, $3)`,
+      [
+        orderId,
+        JSON.stringify({ operatorId, operatorCode: op.operator_code }),
+        actorUserId ?? null,
+      ],
+    );
+
+    return { routeId, operatorId };
+  });
+}
+
+export async function rescheduleAdminDelivery(
+  orderId: string,
+  scheduledFor: string,
+  actorUserId?: string,
+) {
+  const order = await queryOne<{ pickup_id: string }>(
+    `SELECT pickup_id FROM orders WHERE id = $1`,
+    [orderId],
+  );
+  if (!order) return null;
+
+  await query(
+    `UPDATE pickups SET scheduled_for = $2, status = 'rescheduled', updated_at = now() WHERE id = $1`,
+    [order.pickup_id, scheduledFor],
+  );
+  await query(
+    `INSERT INTO order_events (order_id, event_type, event_payload, actor_user_id)
+     VALUES ($1, 'delivery_rescheduled', $2::jsonb, $3)`,
+    [orderId, JSON.stringify({ scheduledFor }), actorUserId ?? null],
+  );
+  return { ok: true };
+}
+
+export async function addAdminDeliveryNote(
+  orderId: string,
+  note: string,
+  actorUserId?: string,
+) {
+  await query(
+    `INSERT INTO order_events (order_id, event_type, event_payload, actor_user_id)
+     VALUES ($1, 'admin_note', $2::jsonb, $3)`,
+    [orderId, JSON.stringify({ note }), actorUserId ?? null],
+  );
+  return { ok: true };
 }
 
 /* ── Broadcasts ───────────────────────────────────────── */
@@ -663,14 +989,36 @@ export async function listRolesWithUsers() {
   const roles = (await query(`SELECT id, name FROM roles ORDER BY name`)).rows;
   const users = (
     await query(
-      `SELECT u.id, u.phone, u.full_name, u.status,
-              COALESCE(array_agg(DISTINCT ro.name) FILTER (WHERE ro.name IS NOT NULL), '{}') AS roles
+      `SELECT u.id, u.phone, u.full_name, u.email, u.status, u.last_login_at, u.created_at,
+              COALESCE(array_agg(DISTINCT ro.name) FILTER (WHERE ro.name IS NOT NULL), '{}') AS roles,
+              r.id AS resident_id,
+              o.id AS operator_id,
+              COALESCE(
+                (
+                  SELECT array_agg(DISTINCT s.name ORDER BY s.name)
+                  FROM (
+                    SELECT soc.name
+                    FROM residents res
+                    JOIN societies soc ON soc.id = res.society_id
+                    WHERE res.user_id = u.id
+                    UNION
+                    SELECT soc.name
+                    FROM operators op
+                    JOIN operator_societies os ON os.operator_id = op.id
+                    JOIN societies soc ON soc.id = os.society_id
+                    WHERE op.user_id = u.id
+                  ) s
+                ),
+                '{}'
+              ) AS societies
        FROM users u
        LEFT JOIN user_roles ur ON ur.user_id = u.id
        LEFT JOIN roles ro ON ro.id = ur.role_id
-       GROUP BY u.id
+       LEFT JOIN residents r ON r.user_id = u.id
+       LEFT JOIN operators o ON o.user_id = u.id
+       GROUP BY u.id, r.id, o.id
        ORDER BY u.created_at DESC
-       LIMIT 200`,
+       LIMIT 500`,
     )
   ).rows;
   return { roles, users };

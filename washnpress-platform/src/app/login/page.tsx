@@ -54,6 +54,9 @@ export default function LoginPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-8 sm:px-6 lg:px-8">
       <section className="grid w-full gap-6 lg:grid-cols-2">
+        <div className="col-span-full flex justify-center mb-2">
+          <img src="/logo.png" alt="Wash N Press" className="h-16 w-auto object-contain" />
+        </div>
         <div className="order-2 space-y-4 lg:order-1">
           {checking ? (
             <Card>
