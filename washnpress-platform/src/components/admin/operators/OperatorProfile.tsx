@@ -41,7 +41,7 @@ export function OperatorProfile({ data }: { data: Record<string, unknown> }) {
           value={op.last_login_at ? new Date(String(op.last_login_at)).toLocaleString() : "Never"}
         />
       </div>
-      <PermissionsCard status={String(op.status ?? "active")} />
+      {/* <PermissionsCard status={String(op.status ?? "active")} /> */}
     </div>
   );
 }

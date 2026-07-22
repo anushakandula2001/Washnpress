@@ -58,7 +58,7 @@ export function PickupFilters({
           <option value="completed">Completed</option>
           <option value="cancelled">Cancelled</option>
         </select>
-        <input
+        {/* <input
           type="date"
           className={selectClass}
           value={filters.dateFrom}
@@ -71,7 +71,7 @@ export function PickupFilters({
           value={filters.dateTo}
           onChange={(e) => onChange({ dateTo: e.target.value })}
           title="To date"
-        />
+        /> */}
         <select
           className={selectClass}
           value={filters.sortBy}
@@ -82,11 +82,11 @@ export function PickupFilters({
           <option value="resident">Resident A-Z</option>
           <option value="society">Society A-Z</option>
         </select>
-        <div className="flex gap-2 sm:col-span-2">
+        {/* <div className="flex gap-2 sm:col-span-2">
           <Button variant="outline" size="sm" className="flex-1" onClick={onReset}>
             Reset Filters
           </Button>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );

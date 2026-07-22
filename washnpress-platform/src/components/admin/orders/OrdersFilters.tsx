@@ -63,7 +63,7 @@ export function OrdersFilters({
           <option value="Delivered">Delivered</option>
           <option value="Cancelled">Cancelled</option>
         </select>
-        <input
+        {/* <input
           type="date"
           className={selectClass}
           value={filters.dateFrom}
@@ -76,7 +76,7 @@ export function OrdersFilters({
           value={filters.dateTo}
           onChange={(e) => onChange({ dateTo: e.target.value })}
           title="Created to"
-        />
+        /> */}
         <select className={selectClass} value={filters.sortBy} onChange={(e) => onChange({ sortBy: e.target.value })}>
           <option value="newest">Newest</option>
           <option value="oldest">Oldest</option>
@@ -85,11 +85,11 @@ export function OrdersFilters({
           <option value="resident">Resident A-Z</option>
           <option value="society">Society A-Z</option>
         </select>
-        <div className="flex gap-2 sm:col-span-2">
+        {/* <div className="flex gap-2 sm:col-span-2">
           <Button variant="outline" size="sm" className="flex-1" onClick={onReset}>
             Reset Filters
           </Button>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );

@@ -493,12 +493,14 @@ export async function listOperatorsDetailed() {
 
 export async function getOperatorDetail(operatorId: string) {
   const op = await queryOne(
-    `SELECT o.*, u.phone, u.full_name, u.last_login_at, u.status AS user_status, u.email AS user_email
-     FROM operators o
-     JOIN users u ON u.id = o.user_id
-     WHERE o.id = $1 OR o.operator_code = $1 OR u.id = $1`,
-    [operatorId],
-  );
+  `SELECT o.*, u.phone, u.full_name, u.last_login_at, u.status AS user_status, u.email AS user_email
+   FROM operators o
+   JOIN users u ON u.id = o.user_id
+   WHERE o.id::text = $1
+      OR o.operator_code = $1
+      OR u.id::text = $1`,
+  [operatorId],
+);
   if (!op) return null;
 
   const societies = (
@@ -652,7 +654,8 @@ export async function getResidentDetail(residentId: string) {
      LEFT JOIN society_floors fl ON fl.id = f.floor_id
      LEFT JOIN society_towers t ON t.id = fl.tower_id
      LEFT JOIN wallets w ON w.resident_id = r.id
-     WHERE r.id = $1 OR r.resident_code = $1`,
+     WHERE r.id::text = $1
+   OR r.resident_code = $1`,
     [residentId],
   );
   if (!resident) return null;
@@ -887,85 +890,131 @@ export async function listOrdersAdmin(filters?: {
 }
 
 export async function getOrderDetailAdmin(orderCode: string) {
-  const order = await queryOne(
-    `SELECT o.*, p.scheduled_for, p.special_instructions, p.resident_id, p.society_id,
-            u.full_name AS resident_name, u.phone AS resident_phone, r.id AS resident_uuid,
-            r.tower_block, r.unit_number, r.resident_code,
-            s.name AS society_name, s.id AS society_uuid,
-            op.id AS operator_id, op.operator_code,
-            ou.full_name AS operator_name, ou.phone AS operator_phone
-     FROM orders o
-     JOIN pickups p ON p.id = o.pickup_id
-     JOIN residents r ON r.id = p.resident_id
-     JOIN users u ON u.id = r.user_id
-     JOIN societies s ON s.id = p.society_id
-     LEFT JOIN LATERAL (
-       SELECT os.operator_id
-       FROM operator_societies os
-       WHERE os.society_id = p.society_id
-       ORDER BY os.created_at ASC
-       LIMIT 1
-     ) soc_op ON TRUE
-     LEFT JOIN operators op ON op.id = soc_op.operator_id
-     LEFT JOIN users ou ON ou.id = op.user_id
-     WHERE o.order_code = $1 OR o.id::text = $1`,
-    [orderCode],
-  );
-  if (!order) return null;
+  try {
+    const order = await queryOne(
+      `SELECT o.*, p.scheduled_for, p.special_instructions, p.resident_id, p.society_id,
+              u.full_name AS resident_name, u.phone AS resident_phone, r.id AS resident_uuid,
+              r.tower_block, r.unit_number, r.resident_code,
+              s.name AS society_name, s.id AS society_uuid,
+              op.id AS operator_id, op.operator_code,
+              ou.full_name AS operator_name, ou.phone AS operator_phone
+       FROM orders o
+       JOIN pickups p ON p.id = o.pickup_id
+       JOIN residents r ON r.id = p.resident_id
+       JOIN users u ON u.id = r.user_id
+       JOIN societies s ON s.id = p.society_id
+       LEFT JOIN LATERAL (
+         SELECT os.operator_id
+         FROM operator_societies os
+         WHERE os.society_id = p.society_id
+         ORDER BY os.created_at ASC
+         LIMIT 1
+       ) soc_op ON TRUE
+       LEFT JOIN operators op ON op.id = soc_op.operator_id
+       LEFT JOIN users ou ON ou.id = op.user_id
+       WHERE o.order_code = $1 OR o.id::text = $1`,
+      [orderCode],
+    );
 
-  const [events, items, operators, addons, refunds, payments, tickets, auditLogs] = await Promise.all([
-    query(
+    if (!order) return null;
+
+    const events = await query(
       `SELECT id, event_type, event_payload, actor_user_id, created_at
-       FROM order_events WHERE order_id = $1 ORDER BY created_at ASC`,
+       FROM order_events
+       WHERE order_id = $1
+       ORDER BY created_at ASC`,
       [order.id],
-    ).then((r) => r.rows),
-    query(
-      `SELECT id, category, quantity, created_at FROM order_items WHERE order_id = $1 ORDER BY category`,
+    ).then((r) => r.rows);
+    console.log("✓ events");
+
+    const items = await query(
+      `SELECT id, category, quantity, created_at
+       FROM order_items
+       WHERE order_id = $1
+       ORDER BY category`,
       [order.id],
-    ).then((r) => r.rows),
-    query(
+    ).then((r) => r.rows);
+    console.log("✓ items");
+
+    const operators = await query(
       `SELECT o.id, o.operator_code, u.full_name, u.phone
        FROM operator_societies os
        JOIN operators o ON o.id = os.operator_id
        JOIN users u ON u.id = o.user_id
        WHERE os.society_id = $1`,
       [order.society_id],
-    ).then((r) => r.rows),
-    query(
+    ).then((r) => r.rows);
+    console.log("✓ operators");
+
+    const addons = await query(
       `SELECT a.name, oas.quantity, a.price_inr::float AS price_inr
        FROM order_addon_selections oas
        JOIN addon_services a ON a.id = oas.addon_id
        WHERE oas.order_id = $1`,
       [order.id],
-    ).then((r) => r.rows),
-    query(
+    ).then((r) => r.rows);
+    console.log("✓ addons");
+
+    const refunds = await query(
       `SELECT id, amount_inr, reason, status, created_at
-       FROM refunds WHERE order_id = $1 ORDER BY created_at DESC`,
+       FROM refunds
+       WHERE order_id = $1
+       ORDER BY created_at DESC`,
       [order.id],
-    ).then((r) => r.rows),
-    query(
+    ).then((r) => r.rows);
+    console.log("✓ refunds");
+
+    const payments = await query(
       `SELECT id, amount_inr, type, status, gateway_ref, metadata, created_at
        FROM payment_transactions
        WHERE resident_id = $1
-         AND (metadata->>'orderId' = $2 OR metadata->>'order_id' = $2 OR metadata->>'orderCode' = $3)
+         AND (
+           metadata->>'orderId' = $2
+           OR metadata->>'order_id' = $2
+           OR metadata->>'orderCode' = $3
+         )
        ORDER BY created_at DESC`,
       [order.resident_id, order.id, order.order_code],
-    ).then((r) => r.rows),
-    query(
-      `SELECT id, ticket_code, category, description, status, priority, created_at
-       FROM support_tickets WHERE order_id = $1 ORDER BY created_at DESC`,
-      [order.id],
-    ).then((r) => r.rows),
-    query(
-      `SELECT id, action, entity_name, entity_id, metadata, created_at
-       FROM audit_logs
-       WHERE entity_name = 'orders' AND entity_id = $1::text
-       ORDER BY created_at DESC LIMIT 50`,
-      [order.id],
-    ).then((r) => r.rows),
-  ]);
+    ).then((r) => r.rows);
+    console.log("✓ payments");
 
-  return { order, events, items, operators, addons, refunds, payments, tickets, auditLogs };
+    const tickets = await query(
+      `SELECT id, ticket_code, category, description, status, priority, created_at
+       FROM support_tickets
+       WHERE order_id = $1
+       ORDER BY created_at DESC`,
+      [order.id],
+    ).then((r) => r.rows);
+    console.log("✓ tickets");
+
+const auditLogs = await query(
+  `SELECT id, action, entity_name, entity_id, created_at
+   FROM audit_logs
+  WHERE entity_name = 'orders'
+  AND entity_id::text = $1
+   ORDER BY created_at DESC
+   LIMIT 50`,
+  [order.id],
+).then((r) => r.rows);
+
+console.log("✓ auditLogs");
+
+    return {
+      order,
+      events,
+      items,
+      operators,
+      addons,
+      refunds,
+      payments,
+      tickets,
+      auditLogs,
+    };
+  } catch (err) {
+    console.error("===== ORDER DETAIL ERROR =====");
+    console.error(err);
+    throw err;
+  }
 }
 
 export async function listPricingCatalog() {

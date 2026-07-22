@@ -96,7 +96,7 @@ export function SocietyFilters({
 
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 items-end">
           {/* Sort By Dropdown */}
-          <div className="sm:col-span-2">
+          <div className="sm:col-span-1">
             <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
               Sort By
             </label>
@@ -116,7 +116,7 @@ export function SocietyFilters({
             </select>
           </div>
 
-          <div className="lg:col-span-3 flex justify-end">
+          {/* <div className="lg:col-span-3 flex justify-end">
             <Button
               variant="outline"
               size="sm"
@@ -126,7 +126,7 @@ export function SocietyFilters({
               <RotateCcw className="h-3.5 w-3.5" />
               Reset Filters
             </Button>
-          </div>
+          </div> */}
         </div>
       </CardContent>
     </Card>

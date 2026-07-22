@@ -228,7 +228,7 @@ export function ResidentsFilters({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 mt-1">
+        {/* <div className="flex justify-end gap-2 mt-1">
           <Button
             variant="outline"
             size="sm"
@@ -238,7 +238,7 @@ export function ResidentsFilters({
             <RotateCcw className="h-3.5 w-3.5" />
             Reset Filters
           </Button>
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );
