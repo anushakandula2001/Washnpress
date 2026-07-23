@@ -120,7 +120,7 @@ export type PickupSlotDraft = {
 
 export type CreateSocietyForm = {
   name: string;
-  status: "active" | "coming_soon" | "inactive";
+  status: "Pending Setup" | "active" | "coming_soon" | "inactive";
   addressLine1: string;
   city: string;
   state: string;
@@ -135,7 +135,7 @@ export type CreateSocietyForm = {
 
 export const emptyCreateSocietyForm: CreateSocietyForm = {
   name: "",
-  status: "active",
+  status: "Pending Setup",
   addressLine1: "",
   city: "",
   state: "",

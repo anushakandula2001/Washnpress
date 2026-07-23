@@ -79,6 +79,10 @@ export function DialogTitle({ children, className }: { children: React.ReactNode
   return <h2 className={cn("text-lg font-semibold text-foreground", className)}>{children}</h2>;
 }
 
+export function DialogDescription({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <p className={cn("text-sm text-muted-foreground mt-1", className)}>{children}</p>;
+}
+
 export function DialogFooter({ children, className }: { children: React.ReactNode; className?: string }) {
   return <div className={cn("mt-6 flex flex-wrap justify-end gap-2", className)}>{children}</div>;
 }

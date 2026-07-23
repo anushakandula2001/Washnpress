@@ -89,9 +89,11 @@ export default function OnboardingPage() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await api.master.towers(societyId);
+        const res = await fetch(`/api/resident/societies/${societyId}/buildings`, { credentials: "same-origin" });
+        const data = await res.json();
         if (cancelled) return;
-        setTowers(data.towers);
+        const bList = (data.buildings || []).map((b: any) => ({ id: b.id, name: b.name }));
+        setTowers(bList);
         setTowerId("");
         setFloors([]);
         setFloorId("");
@@ -117,9 +119,15 @@ export default function OnboardingPage() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await api.master.floors(towerId);
+        const res = await fetch(`/api/buildings/${towerId}/floors`, { credentials: "same-origin" });
+        const data = await res.json();
         if (cancelled) return;
-        setFloors(data.floors);
+        const fList = (data.floors || []).map((f: any) => ({
+          id: f.id,
+          label: f.label || `Floor ${f.floor_number ?? f.floorNumber}`,
+          floorNumber: f.floor_number ?? f.floorNumber ?? 1,
+        }));
+        setFloors(fList);
         setFloorId("");
         setFlats([]);
         setFlatId("");
@@ -141,9 +149,13 @@ export default function OnboardingPage() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await api.master.flats(floorId);
+        const res = await fetch(`/api/floors/${floorId}/flats`, { credentials: "same-origin" });
+        const data = await res.json();
         if (cancelled) return;
-        setFlats(data.flats.filter((f) => f.status !== "occupied"));
+        const fltList = (data.flats || [])
+          .filter((f: any) => f.status !== "occupied")
+          .map((f: any) => ({ id: f.id, flatNumber: f.flat_number || f.flatNumber, status: f.status }));
+        setFlats(fltList);
         setFlatId("");
       } catch {
         if (!cancelled) setFlats([]);
@@ -322,9 +334,9 @@ export default function OnboardingPage() {
                 </label>
               </div>
               {societyId && towers.length === 0 && (
-                <p className="mt-3 text-xs text-amber-700">
-                  No towers configured for this society yet. Ask Operations to add master data.
-                </p>
+                <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300 font-medium">
+                  No towers or flats have been configured for this society yet. Please contact Operations.
+                </div>
               )}
             </div>
 

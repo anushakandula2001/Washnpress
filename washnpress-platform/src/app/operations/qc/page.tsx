@@ -1,17 +1,5 @@
-"use client";
-
-import { OperationsQueuePage } from "@/components/portal/operations-queue-page";
+import { redirect } from "next/navigation";
 
 export default function Page() {
-  return (
-    <OperationsQueuePage
-      title="QC Queue"
-      description="Quality check holds. Pass to ready for delivery."
-      stageLabel="QC"
-      filterStatuses={["QC Hold"]}
-      nextByStatus={{
-        "QC Hold": { status: "Out for Delivery", label: "QC Pass" },
-      }}
-    />
-  );
+  redirect("/operations/processing-center?stage=qc");
 }

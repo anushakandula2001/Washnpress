@@ -137,6 +137,7 @@ export function CreateSocietyWizard({
             <div>
               <label className="mb-1 block text-sm font-medium">Status</label>
               <select className={selectClass} value={form.status} onChange={(e) => patch({ status: e.target.value as CreateSocietyForm["status"] })}>
+                <option value="Pending Setup">Pending Setup (Handover to Operations)</option>
                 <option value="active">Active</option>
                 <option value="coming_soon">Coming Soon</option>
                 <option value="inactive">Inactive</option>
