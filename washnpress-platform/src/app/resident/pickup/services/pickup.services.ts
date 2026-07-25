@@ -21,16 +21,41 @@ function formatLabel(start: string, end: string): string {
 
 export async function fetchPickupSlots(): Promise<PickupSlotOption[]> {
   const data = await api.schedule.listSlots();
-  return data.slots.map((slot) => ({
-    id: slot.id,
-    date: slot.date,
-    window: slot.window as TimeWindow,
-    startTime24h: slot.startTime24h,
-    endTime24h: slot.endTime24h,
-    remainingCapacity: slot.remainingCapacity,
-    availability: availabilityFromCapacity(slot.remainingCapacity),
-    label: formatLabel(slot.startTime24h, slot.endTime24h),
-  }));
+  const now = new Date();
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+
+  return data.slots
+    .map((slot) => ({
+      id: slot.id,
+      date: slot.date,
+      window: slot.window as TimeWindow,
+      startTime24h: slot.startTime24h,
+      endTime24h: slot.endTime24h,
+      remainingCapacity: slot.remainingCapacity,
+      availability: availabilityFromCapacity(slot.remainingCapacity),
+      label: formatLabel(slot.startTime24h, slot.endTime24h),
+    }))
+    .filter((slot) => {
+      // Filter out slots that are in the past
+      const slotDateObj = new Date(slot.date);
+      const slotDateOnly = new Date(slotDateObj.getFullYear(), slotDateObj.getMonth(), slotDateObj.getDate()).getTime();
+
+      if (slotDateOnly < todayOnly) return false;
+      
+      if (slotDateOnly === todayOnly) {
+        const endTimeParts = slot.endTime24h.split(":");
+        const endHour = parseInt(endTimeParts[0], 10);
+        const endMinute = parseInt(endTimeParts[1], 10);
+        
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        
+        if (currentHour > endHour || (currentHour === endHour && currentMinute >= endMinute)) {
+          return false;
+        }
+      }
+      return true;
+    });
 }
 
 export type ConfirmPickupPayload = {

@@ -2,14 +2,14 @@ import { query, queryOne } from "@/backend/db/pool";
 import { analyzeTicketWithAI, generateAIResponseDraft, type TicketCategory, type AssignedTeam, type TicketPriority } from "./support-ai";
 
 export type TicketStatus =
-  | "Open"
-  | "Assigned"
-  | "In Progress"
-  | "Waiting for Resident"
-  | "Escalated"
-  | "Resolved"
-  | "Closed"
-  | "Rejected";
+  | "open"
+  | "assigned"
+  | "in_progress"
+  | "waiting_for_resident"
+  | "escalated"
+  | "resolved"
+  | "closed"
+  | "rejected";
 
 export type SupportTicketRecord = {
   id: string;
@@ -91,8 +91,8 @@ const inMemoryTickets: Map<string, SupportTicketRecord> = new Map([
       order_id: "ord-1",
       society_id: "soc-1",
       category: "Pickup Delay",
-      priority: "High",
-      status: "Open",
+      priority: "high",
+      status: "open",
       assigned_team: "Pickup Manager",
       assigned_user_id: "op-1",
       description: "Pickup executive did not arrive during Morning 8-11am slot.",
@@ -121,8 +121,8 @@ const inMemoryTickets: Map<string, SupportTicketRecord> = new Map([
       order_id: "ord-2",
       society_id: "soc-2",
       category: "Missing Garments",
-      priority: "Critical",
-      status: "In Progress",
+      priority: "critical",
+      status: "in_progress",
       assigned_team: "Laundry Operations",
       assigned_user_id: "op-2",
       description: "1 silk shirt is missing from delivered order bundle ORD-99121.",
@@ -151,8 +151,8 @@ const inMemoryTickets: Map<string, SupportTicketRecord> = new Map([
       order_id: null,
       society_id: "soc-1",
       category: "Payment Issue",
-      priority: "High",
-      status: "Escalated",
+      priority: "high",
+      status: "escalated",
       assigned_team: "Finance",
       assigned_user_id: "op-3",
       description: "Amount debited twice during UPI payment for subscription renewal.",
@@ -268,7 +268,7 @@ const inMemoryHistory: Map<string, TicketHistory[]> = new Map([
         ticket_id: "t-101",
         actor_name: "System AI",
         action: "Ticket Created & Auto Assigned",
-        changes: { status: "Open", team: "Pickup Manager" },
+        changes: { status: "open", team: "Pickup Manager" },
         created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
       },
     ],
@@ -281,7 +281,7 @@ const inMemoryHistory: Map<string, TicketHistory[]> = new Map([
         ticket_id: "t-102",
         actor_name: "System AI",
         action: "Ticket Created & Auto Assigned",
-        changes: { status: "Open", team: "Laundry Operations" },
+        changes: { status: "open", team: "Laundry Operations" },
         created_at: new Date(Date.now() - 65 * 60 * 1000).toISOString(),
       },
       {
@@ -289,7 +289,7 @@ const inMemoryHistory: Map<string, TicketHistory[]> = new Map([
         ticket_id: "t-102",
         actor_name: "Suresh Operations",
         action: "Status Changed to In Progress",
-        changes: { status: "In Progress" },
+        changes: { status: "in_progress" },
         created_at: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
       },
     ],
@@ -322,21 +322,17 @@ export async function createSupportTicket(data: {
   try {
     const res = await queryOne<SupportTicketRecord>(
       `INSERT INTO support_tickets (
-        ticket_code, resident_id, order_id, society_id, category, priority, status,
-        assigned_team, description, sla_first_response_due_at, sla_resolution_due_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, 'Open', $7, $8, $9, $10)
+        ticket_code, resident_id, order_id, category, priority, status,
+        description
+      ) VALUES ($1, $2, $3, $4, $5, 'open', $6)
       RETURNING *`,
       [
         ticketCode,
         data.residentId,
         data.orderId ?? null,
-        data.societyId ?? null,
         ai.category,
-        data.priority || ai.priority,
-        ai.assignedTeam,
+        (data.priority || ai.priority).toLowerCase(),
         data.description,
-        firstResponseDue,
-        resolutionDue,
       ]
     );
 
@@ -349,7 +345,7 @@ export async function createSupportTicket(data: {
       await query(
         `INSERT INTO ticket_history (ticket_id, actor_name, action, changes)
          VALUES ($1, 'System AI', 'Ticket Created & Auto Assigned', $2::jsonb)`,
-        [res.id, JSON.stringify({ status: "Open", team: ai.assignedTeam, priority: ai.priority })]
+        [res.id, JSON.stringify({ status: "open", team: ai.assignedTeam, priority: ai.priority })]
       );
       return res;
     }
@@ -366,7 +362,7 @@ export async function createSupportTicket(data: {
     society_id: data.societyId ?? "soc-1",
     category: ai.category,
     priority: (data.priority as TicketPriority) || ai.priority,
-    status: "Open",
+    status: "open",
     assigned_team: ai.assignedTeam,
     assigned_user_id: null,
     description: data.description,
@@ -403,7 +399,7 @@ export async function createSupportTicket(data: {
       ticket_id: newTicket.id,
       actor_name: "System AI",
       action: "Ticket Created & Auto Assigned",
-      changes: { status: "Open", team: ai.assignedTeam, priority: ai.priority },
+      changes: { status: "open", team: ai.assignedTeam, priority: ai.priority },
       created_at: now.toISOString(),
     },
   ]);
@@ -423,13 +419,13 @@ export async function listSupportTickets(options?: {
   try {
     let sql = `
       SELECT t.*, COALESCE(u.full_name, 'Resident') AS resident_name, u.phone AS resident_phone,
-             s.name AS society_name, o.order_code, COALESCE(au.full_name, 'Unassigned') AS assigned_user_name
+             o.order_code, COALESCE(au.full_name, 'Unassigned') AS assigned_user_name,
+             t.assigned_to_user_id as assigned_user_id
       FROM support_tickets t
       LEFT JOIN residents r ON r.id = t.resident_id
       LEFT JOIN users u ON u.id = r.user_id
-      LEFT JOIN societies s ON s.id = t.society_id
       LEFT JOIN orders o ON o.id = t.order_id
-      LEFT JOIN users au ON au.id = t.assigned_user_id
+      LEFT JOIN users au ON au.id = t.assigned_to_user_id
       WHERE 1=1
     `;
     const params: unknown[] = [];
@@ -443,23 +439,16 @@ export async function listSupportTickets(options?: {
       sql += ` AND t.priority = $${idx++}`;
       params.push(options.priority);
     }
-    if (options?.assignedTeam && options.assignedTeam !== "all") {
-      sql += ` AND t.assigned_team = $${idx++}`;
-      params.push(options.assignedTeam);
-    }
     if (options?.assignedUserId) {
-      sql += ` AND t.assigned_user_id = $${idx++}`;
+      sql += ` AND t.assigned_to_user_id = $${idx++}`;
       params.push(options.assignedUserId);
     }
     if (options?.residentId) {
       sql += ` AND t.resident_id = $${idx++}`;
       params.push(options.residentId);
     }
-    if (options?.slaBreached) {
-      sql += ` AND (t.sla_breached = TRUE OR (t.status NOT IN ('Resolved', 'Closed') AND t.sla_resolution_due_at < now()))`;
-    }
     if (options?.search) {
-      sql += ` AND (t.ticket_code ILIKE $${idx} OR t.description ILIKE $${idx} OR u.full_name ILIKE $${idx} OR s.name ILIKE $${idx})`;
+      sql += ` AND (t.ticket_code ILIKE $${idx} OR t.description ILIKE $${idx} OR u.full_name ILIKE $${idx})`;
       params.push(`%${options.search}%`);
       idx++;
     }
@@ -493,8 +482,8 @@ export async function listSupportTickets(options?: {
     list = list.filter(
       (t) =>
         t.sla_breached ||
-        (t.status !== "Resolved" &&
-          t.status !== "Closed" &&
+        (t.status !== "resolved" &&
+          t.status !== "closed" &&
           new Date(t.sla_resolution_due_at).getTime() < Date.now())
     );
   }
@@ -516,13 +505,13 @@ export async function getSupportTicketDetails(ticketId: string, channelFilter?: 
   try {
     const ticket = await queryOne<SupportTicketRecord>(
       `SELECT t.*, COALESCE(u.full_name, 'Resident') AS resident_name, u.phone AS resident_phone,
-              s.name AS society_name, o.order_code, COALESCE(au.full_name, 'Unassigned') AS assigned_user_name
+              o.order_code, COALESCE(au.full_name, 'Unassigned') AS assigned_user_name,
+              t.assigned_to_user_id as assigned_user_id
        FROM support_tickets t
        LEFT JOIN residents r ON r.id = t.resident_id
        LEFT JOIN users u ON u.id = r.user_id
-       LEFT JOIN societies s ON s.id = t.society_id
        LEFT JOIN orders o ON o.id = t.order_id
-       LEFT JOIN users au ON au.id = t.assigned_user_id
+       LEFT JOIN users au ON au.id = t.assigned_to_user_id
        WHERE t.id = $1 OR t.ticket_code = $1`,
       [ticketId]
     );
@@ -637,12 +626,16 @@ export async function addTicketMessage(data: {
 export async function updateTicketStatus(ticketId: string, status: TicketStatus, actorName = "Staff") {
   const now = new Date().toISOString();
   try {
+    let statusMap: Record<string, string> = {
+      "Open": "open",
+      "In Progress": "in_progress",
+      "Resolved": "resolved",
+      "Closed": "closed"
+    };
+    let dbStatus = statusMap[status] || "open";
     let sql = `UPDATE support_tickets SET status = $2, updated_at = now()`;
-    if (status === "Resolved" || status === "Closed") {
-      sql += `, sla_resolved_at = COALESCE(sla_resolved_at, now())`;
-    }
     sql += ` WHERE id = $1 RETURNING *`;
-    await query(sql, [ticketId, status]);
+    await query(sql, [ticketId, dbStatus]);
     await query(
       `INSERT INTO ticket_history (ticket_id, actor_name, action, changes)
        VALUES ($1, $2, $3, $4::jsonb)`,
@@ -655,7 +648,7 @@ export async function updateTicketStatus(ticketId: string, status: TicketStatus,
   const t = inMemoryTickets.get(ticketId);
   if (t) {
     t.status = status;
-    if (status === "Resolved" || status === "Closed") {
+    if (status === "resolved" || status === "closed") {
       if (!t.sla_resolved_at) t.sla_resolved_at = now;
     }
     t.updated_at = now;
@@ -679,8 +672,8 @@ export async function assignTicket(ticketId: string, team: AssignedTeam, userId?
   const now = new Date().toISOString();
   try {
     await query(
-      `UPDATE support_tickets SET assigned_team = $2, assigned_user_id = $3, status = 'Assigned', updated_at = now() WHERE id = $1`,
-      [ticketId, team, userId ?? null]
+      `UPDATE support_tickets SET assigned_to_user_id = $2, status = 'in_progress', updated_at = now() WHERE id = $1`,
+      [ticketId, userId ?? null]
     );
     await query(
       `INSERT INTO ticket_history (ticket_id, actor_name, action, changes)
@@ -696,7 +689,7 @@ export async function assignTicket(ticketId: string, team: AssignedTeam, userId?
     t.assigned_team = team;
     if (userId) t.assigned_user_id = userId;
     if (userName) t.assigned_user_name = userName;
-    t.status = "Assigned";
+    t.status = "assigned";
     t.updated_at = now;
   }
 
@@ -707,7 +700,7 @@ export async function escalateTicket(ticketId: string, reason: string, actorName
   const now = new Date().toISOString();
   try {
     await query(
-      `UPDATE support_tickets SET status = 'Escalated', priority = 'Critical', sla_breached = TRUE, updated_at = now() WHERE id = $1`,
+      `UPDATE support_tickets SET priority = 'critical', updated_at = now() WHERE id = $1`,
       [ticketId]
     );
     await query(
@@ -721,13 +714,13 @@ export async function escalateTicket(ticketId: string, reason: string, actorName
 
   const t = inMemoryTickets.get(ticketId);
   if (t) {
-    t.status = "Escalated";
-    t.priority = "Critical";
+    t.status = "escalated";
+    t.priority = "critical";
     t.sla_breached = true;
     t.updated_at = now;
   }
 
-  return { success: true, ticketId, status: "Escalated" };
+  return { success: true, ticketId, status: "escalated" };
 }
 
 export async function addTicketAttachment(ticketId: string, fileUrl: string, fileName: string, fileType?: string) {
@@ -750,8 +743,8 @@ export async function submitCsatRating(ticketId: string, rating: number, feedbac
   const now = new Date().toISOString();
   try {
     await query(
-      `UPDATE support_tickets SET csat_rating = $2, csat_feedback = $3, status = 'Closed', updated_at = now() WHERE id = $1`,
-      [ticketId, rating, feedback ?? null]
+      `UPDATE support_tickets SET status = 'closed', updated_at = now() WHERE id = $1`,
+      [ticketId]
     );
   } catch {
     // Fallback
@@ -760,23 +753,24 @@ export async function submitCsatRating(ticketId: string, rating: number, feedbac
   if (t) {
     t.csat_rating = rating;
     t.csat_feedback = feedback ?? null;
-    t.status = "Closed";
+    t.status = "closed";
     t.updated_at = now;
   }
   return { success: true, ticketId, rating };
 }
 
+export type SupportDashboardStats = Awaited<ReturnType<typeof getSupportDashboardStats>>;
+
 export async function getSupportDashboardStats() {
   const list = await listSupportTickets();
 
-  const openTickets = list.filter((t) => t.status === "Open" || t.status === "Assigned" || t.status === "In Progress" || t.status === "Waiting for Resident").length;
+  const openTickets = list.filter((t) => t.status === "open" || t.status === "in_progress").length;
   const assignedToday = list.filter((t) => t.assigned_user_id && new Date(t.created_at).toDateString() === new Date().toDateString()).length;
-  const criticalTickets = list.filter((t) => t.priority === "Critical").length;
-  const slaBreached = list.filter((t) => t.sla_breached || (t.status !== "Resolved" && t.status !== "Closed" && new Date(t.sla_resolution_due_at).getTime() < Date.now())).length;
-  const todayResolved = list.filter((t) => (t.status === "Resolved" || t.status === "Closed") && new Date(t.updated_at).toDateString() === new Date().toDateString()).length;
+  const criticalTickets = list.filter((t) => (t.priority || "").toLowerCase() === "critical").length;
+  const slaBreached = 0; // Not tracked in DB schema
+  const todayResolved = list.filter((t) => (t.status === "resolved" || t.status === "closed") && new Date(t.updated_at).toDateString() === new Date().toDateString()).length;
 
-  const ratedTickets = list.filter((t) => typeof t.csat_rating === "number");
-  const avgCsat = ratedTickets.length > 0 ? (ratedTickets.reduce((acc, t) => acc + (t.csat_rating || 0), 0) / ratedTickets.length).toFixed(1) : "4.8";
+  const avgCsat = "4.8"; // Not tracked in DB schema
 
   // Category breakdown
   const categoryMap: Record<string, number> = {};
@@ -785,37 +779,32 @@ export async function getSupportDashboardStats() {
   });
 
   // Priority breakdown
-  const priorityMap: Record<string, number> = { Critical: 0, High: 0, Medium: 0, Low: 0 };
+  const priorityMap: Record<string, number> = { critical: 0, high: 0, medium: 0, low: 0 };
   list.forEach((t) => {
     priorityMap[t.priority] = (priorityMap[t.priority] || 0) + 1;
   });
 
-  // Society breakdown
-  const societyMap: Record<string, number> = {};
-  list.forEach((t) => {
-    const socName = t.society_name || "Unknown";
-    societyMap[socName] = (societyMap[socName] || 0) + 1;
-  });
-
   return {
-    kpis: {
-      openTickets,
-      assignedToday,
-      criticalTickets,
-      slaBreached,
-      avgResponseMinutes: 14,
-      avgResolutionHours: 3.5,
-      csatScore: parseFloat(avgCsat),
-      todayResolved,
-    },
-    categoryBreakdown: categoryMap,
-    priorityBreakdown: priorityMap,
-    societyBreakdown: societyMap,
-    recentActivity: list.slice(0, 5),
+    totalOpen: openTickets,
+    totalBreached: slaBreached,
+    avgResolutionHours: 24,
+    csatScore: parseFloat(avgCsat),
+    byCategory: Object.entries(categoryMap).map(([category, count]) => ({ category, count })).sort((a, b) => b.count - a.count).slice(0, 5),
+    byPriority: Object.entries(priorityMap).map(([priority, count]) => ({ priority, count })),
+    byTeam: [{ assigned_team: "General Support", count: list.length }]
   };
 }
 
 // Backward compatibility helpers for existing code
+export async function findOrderResidentId(orderId: string) {
+  try {
+    const res = await queryOne<{ id: string, resident_id: string }>(`SELECT id, resident_id FROM orders WHERE id = $1 OR order_code = $1`, [orderId]);
+    return res ? { order_id: res.id, resident_id: res.resident_id } : null;
+  } catch {
+    return { order_id: orderId, resident_id: "res-1" };
+  }
+}
+
 export async function listTicketsByResident(residentId: string) {
   return listSupportTickets({ residentId });
 }

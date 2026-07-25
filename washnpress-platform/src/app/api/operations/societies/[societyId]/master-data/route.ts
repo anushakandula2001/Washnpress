@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { getSocietyMasterData, updateMasterDataHierarchy } from "@/backend/repositories/society-setup";
+import { getSession } from "@/backend/api/session";
+import { checkExecutiveAssignment, getSocietyMasterData, updateMasterDataHierarchy } from "@/backend/repositories/society-setup";
 
 export async function GET(
   _request: Request,
@@ -7,6 +8,16 @@ export async function GET(
 ) {
   try {
     const { societyId } = await params;
+
+    const session = await getSession();
+    if (!session || !session.userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    const isAssigned = await checkExecutiveAssignment(session.userId, societyId);
+    if (!isAssigned) {
+      return NextResponse.json({ message: "Forbidden: You are not assigned to this society." }, { status: 403 });
+    }
+
     const data = await getSocietyMasterData(societyId);
     return NextResponse.json(data);
   } catch (error) {
@@ -23,6 +34,16 @@ export async function PUT(
 ) {
   try {
     const { societyId } = await params;
+
+    const session = await getSession();
+    if (!session || !session.userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    const isAssigned = await checkExecutiveAssignment(session.userId, societyId);
+    if (!isAssigned) {
+      return NextResponse.json({ message: "Forbidden: You are not assigned to this society." }, { status: 403 });
+    }
+
     const body = await request.json();
     const data = await updateMasterDataHierarchy(societyId, body);
     return NextResponse.json({ message: "Master data updated successfully", data });

@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { getSlaStatusBadge } from "./SupportTicketTable";
 import type { SupportTicketRecord } from "@/backend/repositories/support";
+import { Card, CardContent } from "@/components/ui/card";
 
 type FullTicketData = SupportTicketRecord & {
   messages: any[];
@@ -108,8 +109,8 @@ export function SupportTicketDetailDrawer({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex justify-end bg-black/50 backdrop-blur-sm" aria-modal="true" role="dialog">
-      <div className="w-full max-w-4xl bg-background shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300">
+    <div className="fixed inset-0 z-[100] flex justify-end bg-black/60 backdrop-blur-sm" aria-modal="true" role="dialog">
+      <div className="w-full max-w-4xl bg-background/90 backdrop-blur-xl shadow-2xl h-full flex flex-col animate-in slide-in-from-right duration-300 border-l border-border/50">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-4 bg-muted/20">
           <div className="flex items-center gap-4">
@@ -118,11 +119,11 @@ export function SupportTicketDetailDrawer({
             </h2>
             {data && (
               <div className="flex gap-2">
-                <Badge variant={data.priority === "Critical" ? "destructive" : data.priority === "High" ? "default" : "secondary"}>
-                  {data.priority}
+                <Badge variant={(data.priority || "").toLowerCase() === "critical" ? "destructive" : (data.priority || "").toLowerCase() === "high" ? "default" : "secondary"} className="capitalize">
+                  {data.priority || "Normal"}
                 </Badge>
-                <Badge variant={data.status === "Resolved" || data.status === "Closed" ? "success" : "outline"}>
-                  {data.status}
+                <Badge variant={data.status.toLowerCase() === "resolved" || data.status.toLowerCase() === "closed" ? "success" : "outline"} className="capitalize">
+                  {data.status.replace("_", " ")}
                 </Badge>
                 {getSlaStatusBadge(data)}
               </div>
@@ -142,9 +143,8 @@ export function SupportTicketDetailDrawer({
               <p className="text-xs text-muted-foreground">{data.society_name || "N/A"}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs font-semibold uppercase mb-1">Assigned To</p>
-              <p className="font-medium">{data.assigned_team || "Unassigned"}</p>
-              <p className="text-xs text-muted-foreground">{data.assigned_user_name || "Any Executive"}</p>
+              <p className="text-muted-foreground text-xs font-semibold uppercase mb-1">Assigned Executive</p>
+              <p className="font-medium">{data.assigned_user_name || "Unassigned"}</p>
             </div>
             <div>
               <p className="text-muted-foreground text-xs font-semibold uppercase mb-1">Category</p>
@@ -198,14 +198,14 @@ export function SupportTicketDetailDrawer({
                 <div className="flex flex-col h-full">
                   <div className="flex-1 space-y-4 mb-4">
                     {/* Original Description */}
-                    <div className="flex gap-3">
-                      <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+                    <div className="flex gap-3 mb-6">
+                      <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold shrink-0 mt-1">
                         R
                       </div>
-                      <div className="bg-card border border-border p-3 rounded-2xl rounded-tl-none shadow-sm max-w-[80%]">
-                        <p className="text-xs font-semibold text-primary mb-1">{data.resident_name} (Resident)</p>
-                        <p className="text-sm">{data.description}</p>
-                        <p className="text-[10px] text-muted-foreground mt-2 text-right">
+                      <div className="bg-muted/50 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] border border-border/50 relative group">
+                        <p className="text-xs font-bold text-foreground mb-1">{data.resident_name} <span className="opacity-60 font-normal">via App</span></p>
+                        <p className="text-sm leading-relaxed">{data.description}</p>
+                        <p className="text-[10px] text-muted-foreground mt-2 opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-5 left-2">
                           {new Date(data.created_at).toLocaleString()}
                         </p>
                       </div>
@@ -215,27 +215,27 @@ export function SupportTicketDetailDrawer({
                     {data.messages
                       .filter((m) => m.channel === "customer")
                       .map((msg) => (
-                        <div key={msg.id} className={`flex gap-3 ${msg.sender_type === "support" ? "justify-end" : ""}`}>
+                        <div key={msg.id} className={`flex gap-3 mb-6 ${msg.sender_type === "support" ? "justify-end" : ""}`}>
                           {msg.sender_type !== "support" && (
-                            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold shrink-0 mt-1">
                               {msg.sender_name?.[0] || "U"}
                             </div>
                           )}
                           <div
-                            className={`p-3 rounded-2xl shadow-sm max-w-[80%] ${
+                            className={`p-3.5 rounded-2xl shadow-sm max-w-[80%] relative group ${
                               msg.sender_type === "support"
-                                ? "bg-primary text-primary-foreground rounded-tr-none"
-                                : "bg-card border border-border text-foreground rounded-tl-none"
+                                ? "bg-primary text-primary-foreground rounded-tr-none shadow-primary/20"
+                                : "bg-muted/50 border border-border/50 text-foreground rounded-tl-none"
                             }`}
                           >
-                            <p className="text-xs font-semibold opacity-80 mb-1">{msg.sender_name}</p>
-                            <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
-                            <p className="text-[10px] opacity-60 mt-2 text-right">
+                            <p className="text-xs font-bold opacity-80 mb-1">{msg.sender_name}</p>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                            <p className={`text-[10px] opacity-0 group-hover:opacity-100 transition-opacity absolute -bottom-5 ${msg.sender_type === "support" ? "text-primary right-2" : "text-muted-foreground left-2"}`}>
                               {new Date(msg.created_at).toLocaleString()}
                             </p>
                           </div>
                           {msg.sender_type === "support" && (
-                            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold shrink-0 mt-1 ring-2 ring-background">
                               S
                             </div>
                           )}
@@ -322,21 +322,25 @@ export function SupportTicketDetailDrawer({
                            <CheckCircle2 className="h-4 w-4 text-background bg-muted-foreground rounded-full" />
                          </div>
                          <p className="text-sm font-semibold text-foreground">
-                           {hist.field_changed === "status" ? `Status updated to ${hist.new_value}` :
-                            hist.field_changed === "priority" ? `Priority escalated to ${hist.new_value}` :
-                            hist.field_changed === "assigned_team" ? `Assigned to ${hist.new_value}` :
-                            `${hist.field_changed} updated`}
+                           {hist.action}
                          </p>
-                         <p className="text-xs text-muted-foreground">{new Date(hist.created_at).toLocaleString()} by {hist.actor_name}</p>
+                         <div className="text-xs text-muted-foreground mt-1">
+                           {Object.entries(hist.changes || {}).map(([k, v]) => (
+                             <span key={k} className="inline-block bg-muted px-2 py-0.5 rounded-md mr-2 mt-1">
+                               {k}: <span className="font-semibold text-foreground">{String(v)}</span>
+                             </span>
+                           ))}
+                         </div>
+                         <p className="text-[10px] text-muted-foreground mt-2">{new Date(hist.created_at).toLocaleString()} by {hist.actor_name}</p>
                       </div>
                     ))}
 
-                    {data.status !== "Resolved" && data.status !== "Closed" && (
+                    {data.status.toLowerCase() !== "resolved" && data.status.toLowerCase() !== "closed" && (
                       <div className="relative pl-6 opacity-40">
                          <div className="absolute left-[-9px] top-1 h-4 w-4 rounded-full border-2 border-dashed border-muted-foreground bg-background ring-4 ring-background">
                          </div>
                          <p className="text-sm font-semibold text-muted-foreground">Resolution Pending</p>
-                         <p className="text-xs text-muted-foreground">SLA Target: {new Date(data.sla_resolution_due_at).toLocaleString()}</p>
+                         <p className="text-xs text-muted-foreground">Target: {new Date(new Date(data.created_at).getTime() + 24*60*60*1000).toLocaleString()}</p>
                       </div>
                     )}
                   </div>
@@ -425,8 +429,14 @@ export function SupportTicketDetailDrawer({
                          <tr key={i}>
                            <td className="px-3 py-2 text-xs text-muted-foreground">{new Date(h.created_at).toLocaleString()}</td>
                            <td className="px-3 py-2 font-medium">{h.actor_name}</td>
-                           <td className="px-3 py-2"><Badge variant="outline" className="text-[10px]">{h.action_type}</Badge></td>
-                           <td className="px-3 py-2 text-xs">Changed <span className="font-semibold">{h.field_changed}</span> from <span className="opacity-60">{h.old_value}</span> to <span className="font-semibold">{h.new_value}</span></td>
+                           <td className="px-3 py-2"><Badge variant="outline" className="text-[10px]">{h.action}</Badge></td>
+                           <td className="px-3 py-2 text-xs">
+                             {Object.entries(h.changes || {}).map(([k, v]) => (
+                               <div key={k} className="truncate max-w-[200px]">
+                                 <span className="opacity-70">{k}:</span> <span className="font-semibold">{String(v)}</span>
+                               </div>
+                             ))}
+                           </td>
                          </tr>
                        ))}
                      </tbody>

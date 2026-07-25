@@ -151,7 +151,15 @@ export async function onboardResident(data: {
     }
 
     await query(
-      `UPDATE society_flats SET status = 'occupied' WHERE id = $1 AND status = 'active'`,
+      `UPDATE society_flats SET status = 'Occupied' WHERE id = $1`,
+      [data.flatId],
+    );
+  }
+
+  // Also update if resident was existing
+  if (existing) {
+    await query(
+      `UPDATE society_flats SET status = 'Occupied' WHERE id = $1`,
       [data.flatId],
     );
   }

@@ -8,9 +8,9 @@ export default function Page() {
       title="Ready for Delivery"
       description="Orders packed and waiting for delivery dispatch."
       stageLabel="Ready"
-      filterStatuses={["Out for Delivery"]}
+      filterStatuses={["Ready for Delivery"]}
       nextByStatus={{
-        "Out for Delivery": { status: "Delivered", label: "Confirm Dispatch" },
+        "Ready for Delivery": { status: "Out for Delivery", label: "Confirm Dispatch" },
       }}
     />
   );

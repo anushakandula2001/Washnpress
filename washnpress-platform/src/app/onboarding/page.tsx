@@ -17,7 +17,7 @@ import { api, needsOnboarding, type AuthUser } from "@/frontend/api-client";
 type SocietyOption = { id: string; name: string; city: string; address: string; status: string };
 type TowerOption = { id: string; name: string };
 type FloorOption = { id: string; label: string; floorNumber: number };
-type FlatOption = { id: string; flatNumber: string; status: string };
+type FlatOption = { id: string; label: string; status: string };
 
 const GENDERS = [
   { id: "male", label: "Male" },
@@ -153,8 +153,8 @@ export default function OnboardingPage() {
         const data = await res.json();
         if (cancelled) return;
         const fltList = (data.flats || [])
-          .filter((f: any) => f.status !== "occupied")
-          .map((f: any) => ({ id: f.id, flatNumber: f.flat_number || f.flatNumber, status: f.status }));
+          .filter((f: any) => f.status !== "Occupied" && f.status !== "Blocked" && f.status !== "occupied")
+          .map((f: any) => ({ id: f.id, label: f.flat_number || f.flatNumber, status: f.status }));
         setFlats(fltList);
         setFlatId("");
       } catch {
@@ -327,7 +327,7 @@ export default function OnboardingPage() {
                     <option value="">Select flat</option>
                     {flats.map((f) => (
                       <option key={f.id} value={f.id}>
-                        {f.flatNumber}
+                        {f.label}
                       </option>
                     ))}
                   </select>

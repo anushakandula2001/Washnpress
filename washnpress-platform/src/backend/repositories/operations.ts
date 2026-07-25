@@ -138,3 +138,72 @@ export async function operatorLogin(phone: string) {
     [phone],
   );
 }
+
+export async function getOperationsReports(userId: string, isAdmin: boolean) {
+  let filterClause = "";
+  let params: unknown[] = [];
+
+  if (!isAdmin) {
+    const op = await getOperatorByUserId(userId);
+    if (!op) return { today: {}, weekly: {}, sla: {} };
+
+    const assigned = await query<{ society_id: string }>(
+      `SELECT society_id FROM operator_societies WHERE operator_id = $1`,
+      [op.id],
+    );
+    const ids = assigned.rows.map((r) => r.society_id);
+    if (ids.length === 0 && op.unit_id) {
+      const unit = await queryOne<{ society_id: string }>(
+        `SELECT society_id FROM units WHERE id = $1`,
+        [op.unit_id],
+      );
+      if (unit) ids.push(unit.society_id);
+    }
+    if (ids.length === 0) return { today: {}, weekly: {}, sla: {} };
+
+    filterClause = ` AND p.society_id = ANY($1::uuid[])`;
+    params = [ids];
+  }
+
+  // 1. Today's Revenue and Orders
+  const today = await queryOne(
+    `SELECT
+       COUNT(o.id)::int as total_orders,
+       COALESCE(SUM(o.pickup_garment_count), 0)::int as total_garments,
+       COUNT(o.id) FILTER (WHERE o.status = 'Delivered')::int as delivered_orders
+     FROM orders o
+     JOIN pickups p ON p.id = o.pickup_id
+     WHERE o.created_at::date = CURRENT_DATE ${filterClause}`,
+    params
+  );
+
+  // 2. Weekly Trend (Last 7 days)
+  const weekly = await query(
+    `SELECT
+       o.created_at::date as date,
+       COUNT(o.id)::int as orders
+     FROM orders o
+     JOIN pickups p ON p.id = o.pickup_id
+     WHERE o.created_at >= CURRENT_DATE - INTERVAL '6 days' ${filterClause}
+     GROUP BY o.created_at::date
+     ORDER BY o.created_at::date ASC`,
+    params
+  );
+
+  // 3. SLA Metrics
+  const sla = await queryOne(
+    `SELECT
+       COUNT(o.id) FILTER (WHERE p.scheduled_for < now() - INTERVAL '4 hours' AND o.status NOT IN ('Delivered', 'Cancelled'))::int as delayed_pickups,
+       COUNT(o.id) FILTER (WHERE o.status IN ('Delivered') AND o.updated_at > p.scheduled_for + INTERVAL '48 hours')::int as breached_delivery
+     FROM orders o
+     JOIN pickups p ON p.id = o.pickup_id
+     WHERE 1=1 ${filterClause}`,
+    params
+  );
+
+  return {
+    today: today || { total_orders: 0, total_garments: 0, delivered_orders: 0 },
+    weekly: weekly.rows,
+    sla: sla || { delayed_pickups: 0, breached_delivery: 0 }
+  };
+}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createBuildingAndGenerateStructure } from "@/backend/repositories/society-setup";
+import { getSession } from "@/backend/api/session";
+import { checkExecutiveAssignment, createBuildingAndGenerateStructure } from "@/backend/repositories/society-setup";
 
 export async function POST(
   request: Request,
@@ -7,6 +8,16 @@ export async function POST(
 ) {
   try {
     const { societyId } = await params;
+    
+    const session = await getSession();
+    if (!session || !session.userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    const isAssigned = await checkExecutiveAssignment(session.userId, societyId);
+    if (!isAssigned) {
+      return NextResponse.json({ message: "Forbidden: You are not assigned to this society." }, { status: 403 });
+    }
+
     const body = await request.json();
 
     const { buildingName, floors, flatsPerFloor, numberingFormat, customPrefix } = body;

@@ -21,27 +21,27 @@ import { Checkbox } from "@/components/ui/checkbox";
 import type { SupportTicketRecord } from "@/backend/repositories/support";
 
 export function getSlaStatusBadge(ticket: SupportTicketRecord) {
-  if (ticket.status === "Resolved" || ticket.status === "Closed") {
+  const status = ticket.status.toLowerCase();
+  if (status === "resolved" || status === "closed") {
     return <Badge variant="success" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Met SLA</Badge>;
   }
-  if (ticket.status === "Escalated" || ticket.sla_breached) {
-    return <Badge variant="destructive" className="gap-1 animate-pulse"><AlertTriangle className="h-3 w-3" /> SLA Breached</Badge>;
+  if (status === "escalated") {
+    return <Badge variant="destructive" className="gap-1 animate-pulse"><AlertTriangle className="h-3 w-3" /> Escalated</Badge>;
   }
 
-  const due = new Date(ticket.sla_resolution_due_at).getTime();
+  // Compute SLA based on created_at + 24 hours
+  const created = new Date(ticket.created_at).getTime();
+  const due = created + (24 * 60 * 60 * 1000); // 24 hours
   const now = Date.now();
   const diffMinutes = Math.floor((due - now) / 60000);
 
   if (diffMinutes < 0) {
-    return <Badge variant="destructive" className="gap-1 animate-pulse"><AlertTriangle className="h-3 w-3" /> Breached ({Math.abs(diffMinutes)}m ago)</Badge>;
-  }
-  if (diffMinutes <= 30) {
-    return <Badge className="bg-amber-500 text-white gap-1"><Clock className="h-3 w-3" /> {diffMinutes}m remaining</Badge>;
+    return <Badge variant="destructive" className="gap-1 animate-pulse shadow-sm shadow-destructive/50"><AlertTriangle className="h-3 w-3" /> Breached ({Math.abs(diffMinutes)}m ago)</Badge>;
   }
   if (diffMinutes <= 120) {
-    return <Badge className="bg-yellow-500 text-slate-900 gap-1"><Clock className="h-3 w-3" /> {Math.floor(diffMinutes / 60)}h {diffMinutes % 60}m</Badge>;
+    return <Badge className="bg-amber-500 text-white gap-1 shadow-sm shadow-amber-500/50"><Clock className="h-3 w-3 animate-pulse" /> {Math.floor(diffMinutes / 60)}h {diffMinutes % 60}m</Badge>;
   }
-  return <Badge variant="secondary" className="gap-1"><Clock className="h-3 w-3 text-emerald-600" /> {Math.floor(diffMinutes / 60)}h remaining</Badge>;
+  return <Badge variant="secondary" className="gap-1 bg-muted/50 border-border"><Clock className="h-3 w-3 text-emerald-500" /> {Math.floor(diffMinutes / 60)}h remaining</Badge>;
 }
 
 export function SupportTicketTable({
@@ -68,7 +68,6 @@ export function SupportTicketTable({
     society: true,
     order: true,
     category: true,
-    team: true,
     executive: true,
     sla: true,
   });
@@ -84,10 +83,9 @@ export function SupportTicketTable({
       (t.society_name && t.society_name.toLowerCase().includes(q));
 
     const matchesStatus = statusFilter === "all" ? true : t.status.toLowerCase() === statusFilter.toLowerCase();
-    const matchesPriority = priorityFilter === "all" ? true : t.priority.toLowerCase() === priorityFilter.toLowerCase();
-    const matchesTeam = teamFilter === "all" ? true : t.assigned_team.toLowerCase() === teamFilter.toLowerCase();
+    const matchesPriority = priorityFilter === "all" ? true : (t.priority || "").toLowerCase() === priorityFilter.toLowerCase();
 
-    return matchesSearch && matchesStatus && matchesPriority && matchesTeam;
+    return matchesSearch && matchesStatus && matchesPriority;
   });
 
   // Sorting
@@ -156,13 +154,13 @@ export function SupportTicketTable({
               className="h-9 rounded-md border border-input bg-background px-2.5 font-medium"
             >
               <option value="all">All Statuses</option>
-              <option value="Open">Open</option>
-              <option value="Assigned">Assigned</option>
-              <option value="In Progress">In Progress</option>
-              <option value="Waiting for Resident">Waiting for Resident</option>
-              <option value="Escalated">Escalated</option>
-              <option value="Resolved">Resolved</option>
-              <option value="Closed">Closed</option>
+              <option value="open">Open</option>
+              <option value="assigned">Assigned</option>
+              <option value="in_progress">In Progress</option>
+              <option value="waiting_for_resident">Waiting for Resident</option>
+              <option value="escalated">Escalated</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
             </select>
 
             <select
@@ -173,22 +171,8 @@ export function SupportTicketTable({
               <option value="all">All Priorities</option>
               <option value="Critical">Critical</option>
               <option value="High">High</option>
-              <option value="Medium">Medium</option>
-              <option value="Low">Low</option>
-            </select>
-
-            <select
-              value={teamFilter}
-              onChange={(e) => setTeamFilter(e.target.value)}
-              className="h-9 rounded-md border border-input bg-background px-2.5 font-medium"
-            >
-              <option value="all">All Teams</option>
-              <option value="Pickup Manager">Pickup Manager</option>
-              <option value="Delivery Manager">Delivery Manager</option>
-              <option value="Laundry Operations">Laundry Operations</option>
-              <option value="Finance">Finance</option>
-              <option value="Technical Team">Technical Team</option>
-              <option value="Customer Support">Customer Support</option>
+              <option value="medium">Medium</option>
+              <option value="low">Low</option>
             </select>
 
             <div className="relative">
@@ -284,7 +268,6 @@ export function SupportTicketTable({
                     {visibleCols.order && <th className="px-4 py-3">Order</th>}
                     {visibleCols.category && <th className="px-4 py-3">Category</th>}
                     <th className="px-4 py-3">Priority</th>
-                    {visibleCols.team && <th className="px-4 py-3">Assigned Team</th>}
                     {visibleCols.executive && <th className="px-4 py-3">Executive</th>}
                     {visibleCols.sla && <th className="px-4 py-3">SLA Status</th>}
                     <th className="px-4 py-3">Status</th>
@@ -295,8 +278,8 @@ export function SupportTicketTable({
                   {sorted.map((t) => (
                     <tr
                       key={t.id}
-                      className={`hover:bg-muted/30 transition cursor-pointer ${
-                        t.priority === "Critical" ? "bg-destructive/5" : ""
+                      className={`hover:bg-muted/50 hover:shadow-[inset_4px_0_0_0] transition-all duration-200 cursor-pointer ${
+                        (t.priority || "").toLowerCase() === "critical" ? "bg-destructive/5 hover:shadow-destructive/50" : "hover:shadow-primary/50"
                       }`}
                       onClick={() => onSelectTicket(t)}
                     >
@@ -324,20 +307,18 @@ export function SupportTicketTable({
                       )}
                       <td className="px-4 py-3">
                         <Badge
+                          className="capitalize"
                           variant={
-                            t.priority === "Critical"
+                            (t.priority || "").toLowerCase() === "critical"
                               ? "destructive"
-                              : t.priority === "High"
+                              : (t.priority || "").toLowerCase() === "high"
                               ? "default"
                               : "secondary"
                           }
                         >
-                          {t.priority}
+                          {t.priority || "Normal"}
                         </Badge>
                       </td>
-                      {visibleCols.team && (
-                        <td className="px-4 py-3 text-xs font-medium text-muted-foreground">{t.assigned_team}</td>
-                      )}
                       {visibleCols.executive && (
                         <td className="px-4 py-3 text-xs font-medium">
                           {t.assigned_user_name || "Unassigned"}
@@ -346,17 +327,18 @@ export function SupportTicketTable({
                       {visibleCols.sla && <td className="px-4 py-3">{getSlaStatusBadge(t)}</td>}
                       <td className="px-4 py-3">
                         <Badge
+                          className="capitalize whitespace-nowrap"
                           variant={
-                            t.status === "Resolved" || t.status === "Closed"
+                            t.status.toLowerCase() === "resolved" || t.status.toLowerCase() === "closed"
                               ? "success"
-                              : t.status === "Escalated"
+                              : t.status.toLowerCase() === "escalated"
                               ? "destructive"
-                              : t.status === "In Progress"
+                              : t.status.toLowerCase() === "in_progress"
                               ? "default"
                               : "outline"
                           }
                         >
-                          {t.status}
+                          {t.status.replace("_", " ")}
                         </Badge>
                       </td>
                       <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>

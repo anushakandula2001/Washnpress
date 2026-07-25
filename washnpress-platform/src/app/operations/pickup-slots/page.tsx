@@ -87,6 +87,35 @@ export default function PickupSlotsPage() {
       return;
     }
     const times = WINDOW_TIMES[slotWindow];
+    
+    // Validation: Block past dates and times
+    const slotDateObj = new Date(slotDate);
+    const now = new Date();
+    
+    // Reset time components for date-only comparison
+    const slotDateOnly = new Date(slotDateObj.getFullYear(), slotDateObj.getMonth(), slotDateObj.getDate());
+    const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    if (slotDateOnly.getTime() < todayOnly.getTime()) {
+      setError("Pickup slots cannot be created for past dates or expired time windows.");
+      return;
+    }
+    
+    if (slotDateOnly.getTime() === todayOnly.getTime()) {
+      // Check if the end time has already passed
+      const endTimeParts = times.end.split(":"); // e.g. "11:00"
+      const endHour = parseInt(endTimeParts[0], 10);
+      const endMinute = parseInt(endTimeParts[1], 10);
+      
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      
+      if (currentHour > endHour || (currentHour === endHour && currentMinute >= endMinute)) {
+        setError("Pickup slots cannot be created for past dates or expired time windows.");
+        return;
+      }
+    }
+
     try {
       await slotsApi("POST", {
         societyId,

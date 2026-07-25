@@ -79,22 +79,12 @@ export const PIPELINE_STAGES = [
     nextAction: "Complete Ironing",
   },
   {
-    id: "dry-cleaning",
-    label: "Dry Cleaning",
-    icon: Sparkles,
-    color: "#ec4899",
-    bgLight: "rgba(236,72,153,0.12)",
-    statuses: ["Dry Clean"],
-    nextStatus: "Quality Check",
-    nextAction: "Complete Dry Cleaning",
-  },
-  {
     id: "qc",
     label: "Quality Check",
     icon: CheckCircle2,
     color: "#10b981",
     bgLight: "rgba(16,185,129,0.12)",
-    statuses: ["Quality Check", "QC Hold"],
+    statuses: ["Quality Check", "QC Hold", "QC"],
     nextStatus: "Packing",
     nextAction: "Pass QC",
   },
@@ -105,7 +95,7 @@ export const PIPELINE_STAGES = [
     color: "#f97316",
     bgLight: "rgba(249,115,22,0.12)",
     statuses: ["Packing"],
-    nextStatus: "Out for Delivery",
+    nextStatus: "Ready for Delivery",
     nextAction: "Mark Packed",
   },
   {
@@ -161,17 +151,11 @@ function mapRawOrder(row: Record<string, unknown>): ProcessingOrder {
   const stage = getStageForStatus(status);
   const flatParts = [row.tower_block, row.unit_number].filter(Boolean);
 
-  // Deterministic mock extras (based on order code hash) for demo richness
   const code = String(row.order_code ?? "");
-  const hash = code.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const priorities: Priority[] = ["normal", "urgent", "express"];
-  const priority = priorities[hash % 3] ?? "normal";
-  const operators = ["Priya S.", "Kavita R.", "Meena D.", "Sona T.", "Lakshmi V."];
-  const operator = operators[hash % operators.length] ?? "Unassigned";
-  const servicesList = [["Wash & Fold", "Ironing"], ["Wash & Iron"], ["Dry Cleaning"], ["Wash & Fold"]][hash % 4] ?? ["Wash & Fold"];
-  const hoursAhead = 2 + (hash % 6);
-  const eta = new Date(Date.now() + hoursAhead * 60 * 60 * 1000);
-  const etaStr = eta.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const priority: Priority = "normal";
+  const operator = "Unassigned";
+  const servicesList: string[] = [];
+  const etaStr = "TBD";
 
   return {
     id: code,

@@ -24,7 +24,7 @@ export type AssignedTeam =
   | "Technical Team"
   | "Customer Support";
 
-export type TicketPriority = "Low" | "Medium" | "High" | "Critical";
+export type TicketPriority = "low" | "medium" | "high" | "critical";
 
 export const CATEGORY_TEAM_MAP: Record<TicketCategory, AssignedTeam> = {
   "Pickup Delay": "Pickup Manager",
@@ -49,22 +49,22 @@ export const CATEGORY_SLA_MAP: Record<
   TicketCategory,
   { responseMinutes: number; resolutionMinutes: number; defaultPriority: TicketPriority }
 > = {
-  "Pickup Delay": { responseMinutes: 15, resolutionMinutes: 60, defaultPriority: "High" },
-  "Pickup Executive Behaviour": { responseMinutes: 30, resolutionMinutes: 240, defaultPriority: "Medium" },
-  "Delivery Delay": { responseMinutes: 15, resolutionMinutes: 120, defaultPriority: "High" },
-  "Wrong Delivery": { responseMinutes: 30, resolutionMinutes: 360, defaultPriority: "High" },
-  "Missing Garments": { responseMinutes: 30, resolutionMinutes: 1440, defaultPriority: "Critical" },
-  "Damaged Clothes": { responseMinutes: 30, resolutionMinutes: 2880, defaultPriority: "Critical" },
-  "Poor Washing Quality": { responseMinutes: 60, resolutionMinutes: 1440, defaultPriority: "Medium" },
-  "Poor Ironing Quality": { responseMinutes: 60, resolutionMinutes: 1440, defaultPriority: "Medium" },
-  "Dry Cleaning Issue": { responseMinutes: 60, resolutionMinutes: 1440, defaultPriority: "Medium" },
-  "Payment Issue": { responseMinutes: 30, resolutionMinutes: 1440, defaultPriority: "High" },
-  "Refund Request": { responseMinutes: 30, resolutionMinutes: 1440, defaultPriority: "High" },
-  "Subscription Issue": { responseMinutes: 60, resolutionMinutes: 1440, defaultPriority: "Medium" },
-  "Account/Login Issue": { responseMinutes: 120, resolutionMinutes: 2880, defaultPriority: "Medium" },
-  "App Bug": { responseMinutes: 120, resolutionMinutes: 2880, defaultPriority: "Low" },
-  "General Query": { responseMinutes: 120, resolutionMinutes: 1440, defaultPriority: "Low" },
-  Other: { responseMinutes: 120, resolutionMinutes: 1440, defaultPriority: "Low" },
+  "Pickup Delay": { responseMinutes: 15, resolutionMinutes: 60, defaultPriority: "high" },
+  "Pickup Executive Behaviour": { responseMinutes: 30, resolutionMinutes: 240, defaultPriority: "medium" },
+  "Delivery Delay": { responseMinutes: 15, resolutionMinutes: 120, defaultPriority: "high" },
+  "Wrong Delivery": { responseMinutes: 30, resolutionMinutes: 360, defaultPriority: "high" },
+  "Missing Garments": { responseMinutes: 30, resolutionMinutes: 1440, defaultPriority: "critical" },
+  "Damaged Clothes": { responseMinutes: 30, resolutionMinutes: 2880, defaultPriority: "critical" },
+  "Poor Washing Quality": { responseMinutes: 60, resolutionMinutes: 1440, defaultPriority: "medium" },
+  "Poor Ironing Quality": { responseMinutes: 60, resolutionMinutes: 1440, defaultPriority: "medium" },
+  "Dry Cleaning Issue": { responseMinutes: 60, resolutionMinutes: 1440, defaultPriority: "medium" },
+  "Payment Issue": { responseMinutes: 30, resolutionMinutes: 1440, defaultPriority: "high" },
+  "Refund Request": { responseMinutes: 30, resolutionMinutes: 1440, defaultPriority: "high" },
+  "Subscription Issue": { responseMinutes: 60, resolutionMinutes: 1440, defaultPriority: "medium" },
+  "Account/Login Issue": { responseMinutes: 120, resolutionMinutes: 2880, defaultPriority: "medium" },
+  "App Bug": { responseMinutes: 120, resolutionMinutes: 2880, defaultPriority: "low" },
+  "General Query": { responseMinutes: 120, resolutionMinutes: 1440, defaultPriority: "low" },
+  Other: { responseMinutes: 120, resolutionMinutes: 1440, defaultPriority: "low" },
 };
 
 /**
@@ -123,11 +123,11 @@ export function analyzeTicketWithAI(description: string, selectedCategory?: stri
   }
 
   const team = CATEGORY_TEAM_MAP[detectedCategory] || "Customer Support";
-  const slaInfo = CATEGORY_SLA_MAP[detectedCategory] || { responseMinutes: 30, resolutionMinutes: 1440, defaultPriority: "Medium" };
+  const slaInfo = CATEGORY_SLA_MAP[detectedCategory] || { responseMinutes: 30, resolutionMinutes: 1440, defaultPriority: "medium" };
 
   let priority = slaInfo.defaultPriority;
   if (text.includes("urgent") || text.includes("emergency") || text.includes("wedding") || text.includes("flight")) {
-    priority = "Critical";
+    priority = "critical";
   }
 
   return {

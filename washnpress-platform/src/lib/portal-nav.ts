@@ -37,29 +37,6 @@ export type PortalNavItem = {
   section?: string;
 };
 
-// export const operationsNav: PortalNavItem[] = [
-//   { href: "/operations/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true, section: "Overview" },
-//   { href: "/operations/pickup-slots", label: "Pickup Slots", icon: CalendarClock, section: "Pickups" },
-//   { href: "/operations/master-data", label: "Master Data", icon: Building2, section: "Master Data" },
-//   { href: "/operations/service-areas", label: "Service Areas", icon: MapPin, section: "Master Data" },
-//   { href: "/operations/executive-assignments", label: "Executives", icon: Bike, section: "Master Data" },
-//   { href: "/operations/pickups", label: "Today's Pickups", icon: CalendarClock, section: "Pickups" },
-//   { href: "/operations/pickup-assignment", label: "Pickup Assignment", icon: UserPlus, section: "Pickups" },
-//   { href: "/operations/pickup-queue", label: "Pickup Queue", icon: ListOrdered, section: "Pickups" },
-//   { href: "/operations/washing", label: "Washing Queue", icon: Droplets, section: "Processing" },
-//   { href: "/operations/drying", label: "Drying Queue", icon: Wind, section: "Processing" },
-//   { href: "/operations/ironing", label: "Ironing Queue", icon: Shirt, section: "Processing" },
-//   { href: "/operations/qc", label: "Quality Check", icon: CheckCircle2, section: "Processing" },
-//   { href: "/operations/packing", label: "Packing Queue", icon: Package, section: "Processing" },
-//   { href: "/operations/ready-delivery", label: "Ready For Delivery", icon: PackageCheck, section: "Delivery" },
-//   { href: "/operations/out-for-delivery", label: "Out For Delivery", icon: Truck, section: "Delivery" },
-//   { href: "/operations/completed", label: "Completed Orders", icon: CircleCheck, section: "Delivery" },
-//   { href: "/operations/customers", label: "Customers", icon: Users, section: "People" },
-//   { href: "/operations/executives", label: "Executives Roster", icon: Bike, section: "People" },
-//   { href: "/operations/reports", label: "Reports", icon: BarChart3, section: "System" },
-//   { href: "/operations/notifications", label: "Notifications", icon: Bell, section: "System" },
-//   { href: "/operations/settings", label: "Settings", icon: Settings, section: "System" },
-// ];
 
 export const operationsNav: PortalNavItem[] = [
   {
@@ -75,12 +52,7 @@ export const operationsNav: PortalNavItem[] = [
     icon: Headphones,
     section: "Support Center",
   },
-  {
-    href: "/operations/society-setup",
-    label: "Society Setup",
-    icon: Building2,
-    section: "Societies",
-  },
+
   {
     href: "/operations/assigned-societies",
     label: "Assigned Societies",

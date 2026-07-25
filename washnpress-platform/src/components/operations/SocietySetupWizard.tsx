@@ -18,6 +18,10 @@ export type SocietyItem = {
   pincode: string | null;
   status: string;
   building_count: number;
+  resident_count: number;
+  today_orders_count: number;
+  today_pickups_count: number;
+  today_deliveries_count: number;
   last_updated: string;
 };
 
@@ -39,7 +43,8 @@ export type BuildingItem = {
   floors: FloorItem[];
 };
 
-const STEPS = ["Select Society", "Add Building", "Preview Hierarchy", "Complete Setup"];
+const ALL_STEPS = ["Select Society", "Add Building", "Preview Hierarchy", "Complete Setup"];
+const DIRECT_STEPS = ["Add Building", "Preview Hierarchy", "Complete Setup"];
 
 export function SocietySetupWizard({
   open,
@@ -81,6 +86,10 @@ export function SocietySetupWizard({
     if (!open) return;
     if (initialSocietyId) {
       setSelectedSocietyId(initialSocietyId);
+      // Skip Select Society step
+      setStep(1); 
+    } else {
+      setStep(0);
     }
     loadSocieties();
   }, [open, initialSocietyId]);
@@ -115,7 +124,13 @@ export function SocietySetupWizard({
       const res = await fetch(`/api/operations/societies/${socId}/master-data`, { credentials: "same-origin" });
       const data = await res.json();
       if (res.ok) {
+        const hasBuildings = data.buildings && data.buildings.length > 0;
         setHierarchy(data.buildings || []);
+        
+        // If launched directly for editing and buildings exist, jump to preview
+        if (initialSocietyId && hasBuildings) {
+          setStep(2);
+        }
       }
     } catch {
       // ignore
@@ -188,8 +203,8 @@ export function SocietySetupWizard({
           id: `flr-${bId}-${nextFloorNum}-${Date.now()}`,
           floor_number: nextFloorNum,
           flats: [
-            { id: `flt-new-1-${Date.now()}`, flat_number: `${nextFloorNum}01`, status: "active" },
-            { id: `flt-new-2-${Date.now()}`, flat_number: `${nextFloorNum}02`, status: "active" },
+            { id: `flt-new-1-${Date.now()}`, flat_number: `${nextFloorNum}01`, status: "Vacant" },
+            { id: `flt-new-2-${Date.now()}`, flat_number: `${nextFloorNum}02`, status: "Vacant" },
           ],
         };
         return { ...b, floors: [...b.floors, newFloor] };
@@ -219,7 +234,7 @@ export function SocietySetupWizard({
             const newFlat: FlatItem = {
               id: `flt-${floorId}-${Date.now()}-${nextFlatIndex}`,
               flat_number: flatNum,
-              status: "active",
+              status: "Vacant",
             };
             return { ...fl, flats: [...fl.flats, newFlat] };
           }),
@@ -264,6 +279,26 @@ export function SocietySetupWizard({
     );
   }
 
+  function handleEditFlatStatus(bId: string, floorId: string, flatId: string, newStatus: string) {
+    setHierarchy((prev) =>
+      prev.map((b) => {
+        if (b.id !== bId) return b;
+        return {
+          ...b,
+          floors: b.floors.map((fl) => {
+            if (fl.id !== floorId) return fl;
+            return {
+              ...fl,
+              flats: fl.flats.map((flat) =>
+                flat.id === flatId ? { ...flat, status: newStatus } : flat
+              ),
+            };
+          }),
+        };
+      })
+    );
+  }
+
   async function handleMarkComplete() {
     if (!selectedSocietyId) return;
     setSubmittingComplete(true);
@@ -297,7 +332,7 @@ export function SocietySetupWizard({
   }
 
   function resetForm() {
-    setStep(0);
+    setStep(initialSocietyId ? 1 : 0);
     setSelectedSocietyId(initialSocietyId || "");
     setBuildingName("A Block");
     setFloorsCount(10);
@@ -319,9 +354,11 @@ export function SocietySetupWizard({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" title="Society Setup Wizard">
         {/* Step Indicator Header */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-border pb-4">
-          {STEPS.map((label, index) => {
-            const isCurrent = index === step;
-            const isCompleted = index < step;
+          {(initialSocietyId ? DIRECT_STEPS : ALL_STEPS).map((label, index) => {
+            // If skipping first step, the internal step is offset by 1
+            const visualStep = initialSocietyId ? step - 1 : step;
+            const isCurrent = index === visualStep;
+            const isCompleted = index < visualStep;
             return (
               <div key={label} className="flex items-center gap-2">
                 <div
@@ -338,7 +375,7 @@ export function SocietySetupWizard({
                 <span className={`text-xs font-medium ${isCurrent ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
                   {label}
                 </span>
-                {index < STEPS.length - 1 && <ChevronRight className="h-3 w-3 text-muted-foreground" />}
+                {index < (initialSocietyId ? DIRECT_STEPS.length - 1 : ALL_STEPS.length - 1) && <ChevronRight className="h-3 w-3 text-muted-foreground" />}
               </div>
             );
           })}
@@ -422,14 +459,16 @@ export function SocietySetupWizard({
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold">Step 2: Add Building for {selectedSociety?.name}</h3>
+                <h3 className="text-lg font-semibold">Step {initialSocietyId ? "1" : "2"}: Add Building for {selectedSociety?.name || (initialSocietyId && "Selected Society")}</h3>
                 <p className="text-sm text-muted-foreground">
                   Specify physical structure parameters to automatically generate floors and flat numbers.
                 </p>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setStep(0)} className="gap-1">
-                <ArrowLeft className="h-3.5 w-3.5" /> Back
-              </Button>
+              {!initialSocietyId && (
+                <Button variant="outline" size="sm" onClick={() => setStep(0)} className="gap-1">
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back
+                </Button>
+              )}
             </div>
 
             <Card className="border-border/80 shadow-sm">
@@ -587,9 +626,9 @@ export function SocietySetupWizard({
           <div className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg font-semibold">Step 3: Preview Generated Hierarchy</h3>
+                <h3 className="text-lg font-semibold">Step {initialSocietyId ? "2" : "3"}: Preview Generated Hierarchy</h3>
                 <p className="text-sm text-muted-foreground">
-                  Society: <strong className="text-foreground">{selectedSociety?.name}</strong>. Operations can rename buildings, add/delete floors, and edit flat numbers.
+                  Society: <strong className="text-foreground">{selectedSociety?.name || (initialSocietyId && "Selected Society")}</strong>. Operations can rename buildings, add/delete floors, and edit flat numbers.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -680,12 +719,24 @@ export function SocietySetupWizard({
                                 key={flat.id}
                                 className="group relative flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium hover:border-primary/50"
                               >
-                                <input
-                                  type="text"
-                                  value={flat.flat_number}
-                                  onChange={(e) => handleEditFlatNumber(b.id, fl.id, flat.id, e.target.value)}
-                                  className="w-16 bg-transparent text-center font-mono font-semibold text-foreground outline-none focus:bg-muted focus:ring-1 focus:ring-primary rounded"
-                                />
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="text"
+                                    value={flat.flat_number}
+                                    onChange={(e) => handleEditFlatNumber(b.id, fl.id, flat.id, e.target.value)}
+                                    className="w-14 bg-transparent text-center font-mono font-semibold text-foreground outline-none focus:bg-muted focus:ring-1 focus:ring-primary rounded"
+                                  />
+                                  <select
+                                    value={flat.status || "Vacant"}
+                                    onChange={(e) => handleEditFlatStatus(b.id, fl.id, flat.id, e.target.value)}
+                                    className="bg-transparent text-[10px] uppercase font-bold tracking-wider outline-none cursor-pointer appearance-none text-muted-foreground hover:text-foreground"
+                                  >
+                                    <option value="Vacant">VACANT</option>
+                                    <option value="Occupied">OCCUPIED</option>
+                                    <option value="Reserved">RESERVED</option>
+                                    <option value="Blocked">BLOCKED</option>
+                                  </select>
+                                </div>
                                 <button
                                   onClick={() => handleDeleteFlat(b.id, fl.id, flat.id)}
                                   className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive/80 transition"
@@ -719,9 +770,9 @@ export function SocietySetupWizard({
         {step === 3 && (
           <div className="space-y-6">
             <div>
-              <h3 className="text-lg font-semibold">Step 4: Complete Setup</h3>
+              <h3 className="text-lg font-semibold">Step {initialSocietyId ? "3" : "4"}: Complete Setup</h3>
               <p className="text-sm text-muted-foreground">
-                Review setup summary for <strong className="text-foreground">{selectedSociety?.name}</strong> and mark as Completed.
+                Review setup summary for <strong className="text-foreground">{selectedSociety?.name || (initialSocietyId && "Selected Society")}</strong> and mark as Completed.
               </p>
             </div>
 

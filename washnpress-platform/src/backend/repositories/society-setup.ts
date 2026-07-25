@@ -41,29 +41,13 @@ export type PendingSocietyItem = {
   pincode: string | null;
   status: string;
   building_count: number;
+  resident_count: number;
+  today_orders_count: number;
+  today_pickups_count: number;
+  today_deliveries_count: number;
   last_updated: string;
 };
 
-// In-memory store for dev/testing fallbacks
-type MockBuilding = { id: string; society_id: string; name: string; created_at: string; updated_at: string };
-type MockFloor = { id: string; building_id: string; floor_number: number; created_at: string; updated_at: string };
-type MockFlat = { id: string; building_id: string; floor_id: string; flat_number: string; status: string; created_at: string; updated_at: string };
-
-const inMemoryStore: {
-  societies: Map<string, { id: string; name: string; address_line_1: string | null; city: string; state: string; pincode: string | null; status: string; updated_at: string }>;
-  buildings: MockBuilding[];
-  floors: MockFloor[];
-  flats: MockFlat[];
-} = {
-  societies: new Map([
-    ["soc-1", { id: "soc-1", name: "Bhanu Ventures", address_line_1: "Gachibowli Main Rd", city: "Hyderabad", state: "Telangana", pincode: "500032", status: "Pending Setup", updated_at: new Date().toISOString() }],
-    ["soc-2", { id: "soc-2", name: "Green Valley Heights", address_line_1: "Hitec City", city: "Hyderabad", state: "Telangana", pincode: "500081", status: "In Progress", updated_at: new Date().toISOString() }],
-    ["soc-3", { id: "soc-3", name: "Cyber Residency", address_line_1: "Kondapur", city: "Hyderabad", state: "Telangana", pincode: "500084", status: "Completed", updated_at: new Date().toISOString() }],
-  ]),
-  buildings: [],
-  floors: [],
-  flats: [],
-};
 
 // Helper for generating flat numbers according to specified format
 export function generateFlatNumber(
@@ -91,52 +75,69 @@ export function generateFlatNumber(
   return baseNum;
 }
 
-export async function listPendingSocieties(): Promise<PendingSocietyItem[]> {
+export async function listPendingSocieties(opsExecutiveId?: string): Promise<PendingSocietyItem[]> {
   try {
-    const res = await query<PendingSocietyItem>(`
-      SELECT s.id, s.name, s.address_line_1, s.city, s.state, s.pincode, s.status,
-             COALESCE(b.b_count, st.t_count, 0)::int AS building_count,
-             COALESCE(s.updated_at, s.created_at, now()) AS last_updated
-      FROM societies s
-      LEFT JOIN (
-        SELECT society_id, COUNT(*) AS b_count FROM buildings GROUP BY society_id
-      ) b ON b.society_id = s.id
-      LEFT JOIN (
-        SELECT society_id, COUNT(*) AS t_count FROM society_towers GROUP BY society_id
-      ) st ON st.society_id = s.id
-      ORDER BY
-        CASE s.status
-          WHEN 'Pending Setup' THEN 1
-          WHEN 'In Progress' THEN 2
-          ELSE 3
-        END,
-        s.name ASC
-    `);
-    if (res.rows.length > 0) return res.rows;
-  } catch {
-    // Database query failed, use in-memory store fallback
-  }
+    if (!opsExecutiveId) {
+      return [];
+    }
 
-  // Fallback to in-memory store
-  const items: PendingSocietyItem[] = [];
-  for (const s of inMemoryStore.societies.values()) {
-    const bCount = inMemoryStore.buildings.filter((b) => b.society_id === s.id).length;
-    items.push({
-      id: s.id,
-      name: s.name,
-      address_line_1: s.address_line_1,
-      city: s.city,
-      state: s.state,
-      pincode: s.pincode,
-      status: s.status,
-      building_count: bCount,
-      last_updated: s.updated_at,
-    });
+    const res = await query<PendingSocietyItem>(`
+      SELECT
+        s.id,
+        s.name,
+        s.address_line_1,
+        s.city,
+        s.state,
+        s.pincode,
+        CASE 
+          WHEN (SELECT COUNT(id) FROM society_towers WHERE society_id = s.id) > 0 
+               AND (SELECT COUNT(sf.id) FROM society_flats sf JOIN society_floors fl ON sf.floor_id = fl.id JOIN society_towers st ON fl.tower_id = st.id WHERE st.society_id = s.id) > 0 THEN 'Completed'
+          WHEN (SELECT COUNT(id) FROM society_towers WHERE society_id = s.id) > 0 THEN 'In Progress'
+          ELSE 'Pending Setup'
+        END AS status,
+        (SELECT COUNT(id) FROM society_towers WHERE society_id = s.id)::int AS building_count,
+        (SELECT COUNT(id) FROM residents WHERE society_id = s.id)::int AS resident_count,
+        (
+          SELECT COUNT(o.id) FROM orders o 
+          JOIN pickups p ON p.id = o.pickup_id 
+          JOIN residents r ON r.id = p.resident_id 
+          WHERE r.society_id = s.id AND DATE(o.created_at) = CURRENT_DATE
+        )::int AS today_orders_count,
+        (
+          SELECT COUNT(p.id) FROM pickups p 
+          JOIN residents r ON r.id = p.resident_id 
+          WHERE r.society_id = s.id AND DATE(p.scheduled_for) = CURRENT_DATE
+        )::int AS today_pickups_count,
+        (
+          SELECT COUNT(o.id) FROM orders o 
+          JOIN pickups p ON p.id = o.pickup_id 
+          JOIN residents r ON r.id = p.resident_id 
+          WHERE r.society_id = s.id AND DATE(o.updated_at) = CURRENT_DATE AND o.status = 'delivered'
+        )::int AS today_deliveries_count,
+        COALESCE(s.updated_at, s.created_at, NOW()) AS last_updated
+      FROM societies s
+      INNER JOIN operator_societies os ON os.society_id = s.id
+      INNER JOIN operators op ON op.id = os.operator_id
+      WHERE op.user_id = $1 AND op.status = 'active'
+      ORDER BY s.name ASC
+    `, [opsExecutiveId]);
+
+    return res.rows;
+  } catch (err) {
+    console.error("listPendingSocieties:", err);
+    return [];
   }
-  return items.sort((a, b) => {
-    const order: Record<string, number> = { "Pending Setup": 1, "In Progress": 2, Completed: 3 };
-    return (order[a.status] ?? 4) - (order[b.status] ?? 4);
-  });
+}
+
+export async function checkExecutiveAssignment(executiveUserId: string, societyId: string): Promise<boolean> {
+  const res = await queryOne<{ id: string }>(
+    `SELECT os.society_id as id 
+     FROM operator_societies os
+     JOIN operators op ON op.id = os.operator_id
+     WHERE op.user_id = $1 AND os.society_id = $2 AND op.status = 'active'`,
+    [executiveUserId, societyId]
+  );
+  return !!res;
 }
 
 export async function createBuildingAndGenerateStructure(data: {
@@ -152,206 +153,94 @@ export async function createBuildingAndGenerateStructure(data: {
   const flatsCount = Math.max(1, data.flatsPerFloor);
 
   try {
-    // Try Postgres DB transaction / queries
-    const bRes = await queryOne<BuildingRecord>(
-      `INSERT INTO buildings (society_id, name) VALUES ($1, $2)
-       ON CONFLICT (society_id, name) DO UPDATE SET updated_at = now()
-       RETURNING *`,
-      [data.societyId, buildingName]
-    );
+    let buildingId: string | undefined;
 
-    let buildingId = bRes?.id;
-    if (!buildingId) {
-      const existing = await queryOne<BuildingRecord>(
-        `SELECT * FROM buildings WHERE society_id = $1 AND name = $2`,
+    // Use current schema: society_towers
+    try {
+      const tRes = await queryOne<{id: string}>(
+        `INSERT INTO society_towers (society_id, name, status) VALUES ($1, $2, 'active')
+         RETURNING id`,
         [data.societyId, buildingName]
       );
-      buildingId = existing?.id;
-    }
+      buildingId = tRes?.id;
+    } catch (err) { console.error("DB Error society_towers:", err); }
 
     if (buildingId) {
-      // Also try to mirror into legacy society_towers for compatibility
-      try {
-        await query(
-          `INSERT INTO society_towers (id, society_id, name) VALUES ($1, $2, $3)
-           ON CONFLICT (society_id, name) DO NOTHING`,
-          [buildingId, data.societyId, buildingName]
-        );
-      } catch {
-        // ignore legacy table errors
-      }
-
       for (let f = 1; f <= floorsCount; f++) {
-        const floorRes = await queryOne<FloorRecord>(
-          `INSERT INTO floors (building_id, floor_number) VALUES ($1, $2)
-           ON CONFLICT (building_id, floor_number) DO UPDATE SET updated_at = now()
-           RETURNING *`,
-          [buildingId, f]
-        );
-        const floorId = floorRes?.id;
+        let floorId: string | undefined;
+
+        try {
+          const sfRes = await queryOne<{id: string}>(
+            `INSERT INTO society_floors (tower_id, floor_number, label, status) VALUES ($1, $2, $3, 'active')
+             RETURNING id`,
+            [buildingId, f, `Floor ${f}`]
+          );
+          floorId = sfRes?.id;
+        } catch (err) { console.error("DB Error society_floors:", err); }
 
         if (floorId) {
-          // Legacy floor insert if table exists
-          try {
-            await query(
-              `INSERT INTO society_floors (id, tower_id, floor_number, label) VALUES ($1, $2, $3, $4)
-               ON CONFLICT (tower_id, floor_number) DO NOTHING`,
-              [floorId, buildingId, f, `Floor ${f}`]
-            );
-          } catch {
-            // ignore legacy table errors
-          }
-
           for (let i = 1; i <= flatsCount; i++) {
             const flatNum = generateFlatNumber(buildingName, f, i, data.numberingFormat, data.customPrefix);
-            const flatRes = await queryOne<FlatRecord>(
-              `INSERT INTO flats (building_id, floor_id, flat_number, status)
-               VALUES ($1, $2, $3, 'active')
-               ON CONFLICT (floor_id, flat_number) DO UPDATE SET updated_at = now()
-               RETURNING *`,
-              [buildingId, floorId, flatNum]
-            );
-
-            if (flatRes?.id) {
-              try {
-                await query(
-                  `INSERT INTO society_flats (id, floor_id, flat_number, status) VALUES ($1, $2, $3, 'active')
-                   ON CONFLICT (floor_id, flat_number) DO NOTHING`,
-                  [flatRes.id, floorId, flatNum]
-                );
-              } catch {
-                // ignore
-              }
-            }
+            
+            try {
+              await query(
+                `INSERT INTO society_flats (floor_id, flat_number, status, label) VALUES ($1, $2, 'Vacant', $3)`,
+                [floorId, flatNum, flatNum]
+              );
+            } catch (err) { console.error("DB Error society_flats:", err); }
           }
         }
       }
 
-      // Update society status to 'In Progress' if 'Pending Setup'
-      await query(
-        `UPDATE societies SET status = 'In Progress', updated_at = now()
-         WHERE id = $1 AND status = 'Pending Setup'`,
-        [data.societyId]
-      );
+      try {
+        await query(
+          `UPDATE societies SET status = 'In Progress', updated_at = now() WHERE id = $1 AND status = 'Pending Setup'`,
+          [data.societyId]
+        );
+      } catch {}
+      
       return getSocietyMasterData(data.societyId);
     }
-  } catch {
-    // Database query failed, fallback to in-memory store
+  } catch (err) {
+    console.error("Critical DB error in generation:", err);
   }
 
-  // Fallback to in-memory store
-  let building = inMemoryStore.buildings.find((b) => b.society_id === data.societyId && b.name === buildingName);
-  if (!building) {
-    building = {
-      id: `bld-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      society_id: data.societyId,
-      name: buildingName,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    inMemoryStore.buildings.push(building);
-  }
-
-  for (let f = 1; f <= floorsCount; f++) {
-    let floor = inMemoryStore.floors.find((fl) => fl.building_id === building!.id && fl.floor_number === f);
-    if (!floor) {
-      floor = {
-        id: `flr-${building.id}-${f}`,
-        building_id: building.id,
-        floor_number: f,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      inMemoryStore.floors.push(floor);
-    }
-
-    for (let i = 1; i <= flatsCount; i++) {
-      const flatNum = generateFlatNumber(buildingName, f, i, data.numberingFormat, data.customPrefix);
-      const existingFlat = inMemoryStore.flats.find((flt) => flt.floor_id === floor!.id && flt.flat_number === flatNum);
-      if (!existingFlat) {
-        inMemoryStore.flats.push({
-          id: `flt-${floor.id}-${i}`,
-          building_id: building.id,
-          floor_id: floor.id,
-          flat_number: flatNum,
-          status: "active",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        });
-      }
-    }
-  }
-
-  const soc = inMemoryStore.societies.get(data.societyId);
-  if (soc && soc.status === "Pending Setup") {
-    soc.status = "In Progress";
-    soc.updated_at = new Date().toISOString();
-  }
-
-  return getSocietyMasterData(data.societyId);
+  throw new Error("Failed to create building structure in PostgreSQL");
 }
 
 export async function getSocietyMasterData(societyId: string) {
   try {
-    const soc = await queryOne<{ id: string; name: string; address_line_1: string; city: string; state: string; pincode: string; status: string }>(
-      `SELECT id, name, address_line_1, city, state, pincode, status FROM societies WHERE id = $1`,
-      [societyId]
-    );
+    const res = await query<{
+      id: string;
+      name: string;
+      address_line_1: string;
+      city: string;
+      state: string;
+      pincode: string;
+      status: string;
+      updated_at: string;
+    }>(`SELECT id, name, address_line_1, city, state, pincode, status, updated_at FROM societies WHERE id = $1`, [societyId]);
 
+    const soc = res.rows[0];
     if (soc) {
-      let bRows = (
-        await query<BuildingRecord>(
-          `SELECT id, society_id, name FROM buildings WHERE society_id = $1 ORDER BY name ASC`,
-          [societyId]
-        )
-      ).rows;
-
-      if (bRows.length === 0) {
-        // Check legacy society_towers table
-        const tRows = (
-          await query<BuildingRecord>(
-            `SELECT id, society_id, name FROM society_towers WHERE society_id = $1 ORDER BY name ASC`,
-            [societyId]
-          )
-        ).rows;
-        bRows = tRows;
-      }
+      let bRows: BuildingRecord[] = [];
+      try {
+        bRows = (await query<BuildingRecord>(`SELECT id, society_id, name FROM society_towers WHERE society_id = $1 ORDER BY name ASC`, [societyId])).rows;
+      } catch {}
 
       const buildings: FullBuildingHierarchy[] = [];
       for (const b of bRows) {
-        let fRows = (
-          await query<FloorRecord>(
-            `SELECT id, building_id, floor_number FROM floors WHERE building_id = $1 ORDER BY floor_number ASC`,
-            [b.id]
-          )
-        ).rows;
-
-        if (fRows.length === 0) {
-          fRows = (
-            await query<FloorRecord>(
-              `SELECT id, tower_id AS building_id, floor_number FROM society_floors WHERE tower_id = $1 ORDER BY floor_number ASC`,
-              [b.id]
-            )
-          ).rows;
-        }
+        let fRows: FloorRecord[] = [];
+        try {
+          fRows = (await query<FloorRecord>(`SELECT id, tower_id AS building_id, floor_number FROM society_floors WHERE tower_id = $1 ORDER BY floor_number ASC`, [b.id])).rows;
+        } catch {}
 
         const floors: FullBuildingHierarchy["floors"] = [];
         for (const fl of fRows) {
-          let flatRows = (
-            await query<FlatRecord>(
-              `SELECT id, building_id, floor_id, flat_number, status FROM flats WHERE floor_id = $1 ORDER BY flat_number ASC`,
-              [fl.id]
-            )
-          ).rows;
-
-          if (flatRows.length === 0) {
-            flatRows = (
-              await query<FlatRecord>(
-                `SELECT id, '${b.id}' AS building_id, floor_id, flat_number, status FROM society_flats WHERE floor_id = $1 ORDER BY flat_number ASC`,
-                [fl.id]
-              )
-            ).rows;
-          }
+          let flatRows: FlatRecord[] = [];
+          try {
+            flatRows = (await query<FlatRecord>(`SELECT id, '${b.id}' AS building_id, floor_id, flat_number, status FROM society_flats WHERE floor_id = $1 ORDER BY flat_number ASC`, [fl.id])).rows;
+          } catch {}
 
           floors.push({ ...fl, flats: flatRows });
         }
@@ -360,37 +249,11 @@ export async function getSocietyMasterData(societyId: string) {
 
       return { society: soc, buildings };
     }
-  } catch {
-    // Database query failed, fallback to in-memory store
+  } catch (err) {
+    console.error("getSocietyMasterData failed:", err);
   }
 
-  // Fallback to in-memory store
-  let soc = inMemoryStore.societies.get(societyId);
-  if (!soc) {
-    soc = {
-      id: societyId,
-      name: "Sample Society",
-      address_line_1: "Sector 1",
-      city: "Hyderabad",
-      state: "Telangana",
-      pincode: "500001",
-      status: "Pending Setup",
-      updated_at: new Date().toISOString(),
-    };
-    inMemoryStore.societies.set(societyId, soc);
-  }
-
-  const bList = inMemoryStore.buildings.filter((b) => b.society_id === societyId);
-  const buildings: FullBuildingHierarchy[] = bList.map((b) => {
-    const fList = inMemoryStore.floors.filter((f) => f.building_id === b.id);
-    const floors = fList.map((fl) => {
-      const flats = inMemoryStore.flats.filter((flt) => flt.floor_id === fl.id);
-      return { ...fl, flats };
-    });
-    return { ...b, floors };
-  });
-
-  return { society: soc, buildings };
+  return { society: undefined, buildings: [] };
 }
 
 export async function markSocietySetupComplete(societyId: string) {
@@ -402,88 +265,69 @@ export async function markSocietySetupComplete(societyId: string) {
   } catch {
     // ignore DB error
   }
-  let soc = inMemoryStore.societies.get(societyId);
-  if (soc) {
-    soc.status = "Completed";
-    soc.updated_at = new Date().toISOString();
-  } else {
-    soc = {
-      id: societyId,
-      name: "Sample Society",
-      address_line_1: "Sector 1",
-      city: "Hyderabad",
-      state: "Telangana",
-      pincode: "500001",
-      status: "Completed",
-      updated_at: new Date().toISOString(),
-    };
-    inMemoryStore.societies.set(societyId, soc);
-  }
   return { success: true, societyId, status: "Completed" };
 }
 
 // Cascading helper queries for Resident registration
 export async function getBuildingsBySociety(societyId: string) {
   try {
-    let res = await query<BuildingRecord>(
-      `SELECT id, society_id, name FROM buildings WHERE society_id = $1 ORDER BY name ASC`,
+    const res = await query<BuildingRecord>(
+      `
+      SELECT
+        id,
+        society_id,
+        name
+      FROM society_towers
+      WHERE society_id = $1
+      ORDER BY name ASC
+      `,
       [societyId]
     );
-    if (res.rows.length === 0) {
-      res = await query<BuildingRecord>(
-        `SELECT id, society_id, name FROM society_towers WHERE society_id = $1 AND status = 'active' ORDER BY name ASC`,
-        [societyId]
-      );
-    }
-    if (res.rows.length > 0) return res.rows;
-  } catch {
-    // DB fallback
+
+    console.log("Society:", societyId);
+    console.log("Buildings:", res.rows);
+
+    return res.rows;
+  } catch (err) {
+    console.error("getBuildingsBySociety()", err);
+    return [];
   }
-  return inMemoryStore.buildings
-    .filter((b) => b.society_id === societyId)
-    .map((b) => ({ id: b.id, society_id: b.society_id, name: b.name }));
 }
 
 export async function getFloorsByBuilding(buildingId: string) {
   try {
-    let res = await query<FloorRecord>(
-      `SELECT id, building_id, floor_number FROM floors WHERE building_id = $1 ORDER BY floor_number ASC`,
+    const res = await query<FloorRecord>(
+      `SELECT id, tower_id AS building_id, floor_number FROM society_floors WHERE tower_id = $1 AND status = 'active' ORDER BY floor_number ASC`,
       [buildingId]
     );
-    if (res.rows.length === 0) {
-      res = await query<FloorRecord>(
-        `SELECT id, tower_id AS building_id, floor_number FROM society_floors WHERE tower_id = $1 AND status = 'active' ORDER BY floor_number ASC`,
-        [buildingId]
-      );
-    }
-    if (res.rows.length > 0) return res.rows;
-  } catch {
-    // DB fallback
+    return res.rows;
+  } catch (err) {
+    console.error("getFloorsByBuilding()", err);
+    return [];
   }
-  return inMemoryStore.floors
-    .filter((f) => f.building_id === buildingId)
-    .map((f) => ({ id: f.id, building_id: f.building_id, floor_number: f.floor_number }));
 }
 
 export async function getFlatsByFloor(floorId: string) {
   try {
-    let res = await query<FlatRecord>(
-      `SELECT id, building_id, floor_id, flat_number, status FROM flats WHERE floor_id = $1 AND status IN ('active', 'occupied') ORDER BY flat_number ASC`,
+    console.log("Selected Floor:", floorId);
+    const res = await query<FlatRecord>(
+      `SELECT
+          id,
+          floor_id,
+          flat_number,
+          status
+      FROM society_flats
+      WHERE floor_id = $1
+      AND status = 'active'
+      ORDER BY flat_number;`,
       [floorId]
     );
-    if (res.rows.length === 0) {
-      res = await query<FlatRecord>(
-        `SELECT id, floor_id, flat_number, status FROM society_flats WHERE floor_id = $1 AND status IN ('active', 'occupied') ORDER BY flat_number ASC`,
-        [floorId]
-      );
-    }
-    if (res.rows.length > 0) return res.rows;
-  } catch {
-    // DB fallback
+    console.log("Returned Flats:", res.rows);
+    return res.rows;
+  } catch (err) {
+    console.error("getFlatsByFloor()", err);
+    return [];
   }
-  return inMemoryStore.flats
-    .filter((f) => f.floor_id === floorId && (f.status === "active" || f.status === "occupied"))
-    .map((f) => ({ id: f.id, building_id: f.building_id, floor_id: f.floor_id, flat_number: f.flat_number, status: f.status }));
 }
 
 export async function updateMasterDataHierarchy(societyId: string, payload: {
@@ -496,28 +340,101 @@ export async function updateMasterDataHierarchy(societyId: string, payload: {
       flats?: {
         id: string;
         flat_number: string;
+        status?: string;
       }[];
     }[];
   }[];
 }) {
   if (payload.buildings) {
+    // 1. Gather all incoming IDs to handle deletions
+    const incomingBuildingIds = new Set<string>();
+    const incomingFloorIds = new Set<string>();
+    const incomingFlatIds = new Set<string>();
+
     for (const b of payload.buildings) {
-      // Update building name
-      try {
-        await query(`UPDATE buildings SET name = $2, updated_at = now() WHERE id = $1`, [b.id, b.name]);
-      } catch {
-        const memB = inMemoryStore.buildings.find((x) => x.id === b.id);
-        if (memB) memB.name = b.name;
-      }
+      if (!b.id.startsWith("bld-")) incomingBuildingIds.add(b.id);
       if (b.floors) {
         for (const fl of b.floors) {
+          if (!fl.id.startsWith("flr-")) incomingFloorIds.add(fl.id);
           if (fl.flats) {
             for (const flt of fl.flats) {
-              try {
-                await query(`UPDATE flats SET flat_number = $2, updated_at = now() WHERE id = $1`, [flt.id, flt.flat_number]);
-              } catch {
-                const memFlt = inMemoryStore.flats.find((x) => x.id === flt.id);
-                if (memFlt) memFlt.flat_number = flt.flat_number;
+              if (!flt.id.startsWith("flt-")) incomingFlatIds.add(flt.id);
+            }
+          }
+        }
+      }
+    }
+
+    try {
+      // 2. Fetch current data to figure out what to delete
+      const currentData = await getSocietyMasterData(societyId);
+      if (currentData.buildings) {
+        for (const cb of currentData.buildings) {
+          if (!incomingBuildingIds.has(cb.id)) {
+            await query(`DELETE FROM society_towers WHERE id = $1`, [cb.id]);
+            continue; // Cascade handles floors and flats if DB has it, otherwise we'd need to manually delete
+          }
+          if (cb.floors) {
+            for (const cfl of cb.floors) {
+              if (!incomingFloorIds.has(cfl.id)) {
+                await query(`DELETE FROM society_floors WHERE id = $1`, [cfl.id]);
+                continue;
+              }
+              if (cfl.flats) {
+                for (const cflt of cfl.flats) {
+                  if (!incomingFlatIds.has(cflt.id)) {
+                    await query(`DELETE FROM society_flats WHERE id = $1`, [cflt.id]);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // ignore DB errors during delete phase
+    }
+
+    // 3. Upsert operations
+    for (const b of payload.buildings) {
+      let buildingId = b.id;
+      
+      if (buildingId.startsWith("bld-")) {
+        try {
+          const res = await queryOne<{ id: string }>(`INSERT INTO society_towers (society_id, name, status) VALUES ($1, $2, 'active') RETURNING id`, [societyId, b.name]);
+          if (res) buildingId = res.id;
+        } catch (err) { console.error("DB Insert society_towers failed:", err); }
+      } else {
+        try {
+          await query(`UPDATE society_towers SET name = $2 WHERE id = $1`, [buildingId, b.name]);
+        } catch (err) { console.error("DB Update society_towers failed:", err); }
+      }
+
+      if (b.floors) {
+        for (const fl of b.floors) {
+          let floorId = fl.id;
+
+          if (floorId.startsWith("flr-")) {
+            try {
+              const res = await queryOne<{ id: string }>(`INSERT INTO society_floors (tower_id, floor_number, status, label) VALUES ($1, $2, 'active', $3) RETURNING id`, [buildingId, fl.floor_number, `Floor ${fl.floor_number}`]);
+              if (res) floorId = res.id;
+            } catch (err) { console.error("DB Insert society_floors failed:", err); }
+          } else {
+            try {
+              await query(`UPDATE society_floors SET floor_number = $2 WHERE id = $1`, [floorId, fl.floor_number]);
+            } catch (err) { console.error("DB Update society_floors failed:", err); }
+          }
+
+          if (fl.flats) {
+            for (const flt of fl.flats) {
+              if (flt.id.startsWith("flt-")) {
+                try {
+                  await query(`INSERT INTO society_flats (floor_id, flat_number, status, label) VALUES ($1, $2, $3, $4)`, [floorId, flt.flat_number, flt.status || 'Vacant', flt.flat_number]);
+                } catch (err) { console.error("DB Insert society_flats failed:", err); }
+              } else {
+                try {
+                  await query(`UPDATE society_flats SET flat_number = $2, status = $3 WHERE id = $1`, [flt.id, flt.flat_number, flt.status || 'Vacant']);
+                } catch (err) { console.error("DB Update society_flats failed:", err); }
               }
             }
           }
