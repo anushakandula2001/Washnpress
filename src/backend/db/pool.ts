@@ -8,7 +8,7 @@ function createPool() {
     console.warn("[db] DATABASE_URL is not set — database queries will fail");
   }
   return new Pool({
-    connectionString: connectionString ?? "postgresql://localhost:5432/washnpress",
+    connectionString: connectionString ?? "postgresql://localhost:5434/washnpress",
     max: 20,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 5_000,
