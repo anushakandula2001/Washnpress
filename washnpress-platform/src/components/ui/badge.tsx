@@ -1,13 +1,14 @@
 import * as React from "react";
 import { cn } from "@/lib/utils/cn";
 
-type BadgeVariant = "default" | "secondary" | "destructive" | "success";
+type BadgeVariant = "default" | "secondary" | "destructive" | "success" | "outline";
 
 const variants: Record<BadgeVariant, string> = {
   default: "bg-primary/10 text-primary",
   secondary: "bg-muted text-muted-foreground",
   destructive: "bg-destructive/10 text-destructive",
   success: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  outline: "border border-border text-foreground",
 };
 
 export function Badge({

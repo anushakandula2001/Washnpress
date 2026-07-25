@@ -1,35 +1,67 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ResidentShell } from "@/components/resident/resident-shell";
+import { useResident } from "@/components/resident/resident-provider";
+import { api } from "@/frontend/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { residentProfile } from "@/lib/resident-data";
+import type { ResidentProfile } from "@/lib/resident-data";
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState(residentProfile);
-  const [notifications, setNotifications] = useState({
-    pickup: true,
-    delivery: true,
-    billing: false,
-    promotions: true,
+  const { profile: ctxProfile, refresh } = useResident();
+  const [profile, setProfile] = useState<ResidentProfile>({
+    name: "",
+    flatNumber: "",
+    tower: "",
+    floor: null,
+    mobile: "",
+    society: "",
+    residentCode: null,
+    email: null,
+    gender: null,
   });
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
-  function handleSave(e: React.FormEvent) {
+  useEffect(() => {
+    if (ctxProfile) setProfile(ctxProfile);
+  }, [ctxProfile]);
+
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSaving(true);
+    setError(null);
+    try {
+      await api.profile.update({
+        fullName: profile.name,
+      });
+      await refresh();
+      setSaved(true);
+      window.setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save profile");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <ResidentShell greeting="Profile" subtitle="Manage your account settings">
-      <form onSubmit={handleSave} className="grid gap-4 lg:grid-cols-2">
+    <ResidentShell greeting="Profile" subtitle="Your account — address comes from Operations master data">
+      <form onSubmit={(e) => void handleSave(e)} className="grid gap-4 lg:grid-cols-2">
+        {error && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive lg:col-span-2">
+            {error}
+          </div>
+        )}
         <Card>
           <CardHeader>
             <CardTitle>Personal Details</CardTitle>
-            <CardDescription>Update your contact information</CardDescription>
+            <CardDescription>
+              {profile.residentCode ? `Resident ID ${profile.residentCode}` : "Resident account"}
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <label className="block text-sm">
@@ -42,72 +74,46 @@ export default function ProfilePage() {
             </label>
             <label className="block text-sm">
               <span className="text-muted-foreground">Mobile Number</span>
-              <Input
-                value={profile.mobile}
-                onChange={(e) => setProfile({ ...profile, mobile: e.target.value })}
-                className="mt-1"
-              />
+              <Input value={profile.mobile} readOnly className="mt-1" />
             </label>
             <label className="block text-sm">
-              <span className="text-muted-foreground">Society</span>
-              <Input value={profile.society} readOnly className="mt-1" />
+              <span className="text-muted-foreground">Email</span>
+              <Input value={profile.email ?? ""} readOnly className="mt-1" />
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block text-sm">
-                <span className="text-muted-foreground">Tower</span>
-                <Input
-                  value={profile.tower}
-                  onChange={(e) => setProfile({ ...profile, tower: e.target.value })}
-                  className="mt-1"
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="text-muted-foreground">Flat Number</span>
-                <Input
-                  value={profile.flatNumber}
-                  onChange={(e) => setProfile({ ...profile, flatNumber: e.target.value })}
-                  className="mt-1"
-                />
-              </label>
-            </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>Notification Preferences</CardTitle>
-            <CardDescription>Choose how you want to be notified</CardDescription>
+            <CardTitle>Address (master data)</CardTitle>
+            <CardDescription>
+              Linked by Flat ID — updates when Operations changes the catalog
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {(
-              [
-                ["pickup", "Pickup reminders"],
-                ["delivery", "Delivery updates"],
-                ["billing", "Billing & invoices"],
-                ["promotions", "Promotions & offers"],
-              ] as const
-            ).map(([key, label]) => (
-              <label
-                key={key}
-                className="flex cursor-pointer items-center justify-between rounded-lg border border-border p-3"
-              >
-                <span className="text-sm font-medium">{label}</span>
-                <input
-                  type="checkbox"
-                  checked={notifications[key]}
-                  onChange={(e) =>
-                    setNotifications({ ...notifications, [key]: e.target.checked })
-                  }
-                  className="h-4 w-4 accent-primary"
-                />
-              </label>
-            ))}
+          <CardContent className="space-y-3 text-sm">
+            <div className="rounded-xl border border-border p-4 space-y-2">
+              <p>
+                <span className="text-muted-foreground">Society:</span> {profile.society || "—"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Tower:</span> {profile.tower || "—"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Floor:</span> {profile.floor || "—"}
+              </p>
+              <p>
+                <span className="text-muted-foreground">Flat:</span> {profile.flatNumber || "—"}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              To change flat, contact Operations. Residents cannot free-type society addresses.
+            </p>
           </CardContent>
         </Card>
 
         <div className="lg:col-span-2">
-          <Button type="submit">
-            {saved ? "Saved!" : "Save Changes"}
+          <Button type="submit" disabled={saving}>
+            {saving ? "Saving…" : saved ? "Saved!" : "Save Name"}
           </Button>
         </div>
       </form>

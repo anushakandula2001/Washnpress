@@ -17,36 +17,32 @@ import {
   X,
   Bell,
   Gift,
+  MapPin,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
-import { residentNotifications } from "@/lib/resident-data";
+import { useLogout } from "@/components/auth/use-logout";
+import { useResident } from "@/components/resident/resident-provider";
 
 const navItems = [
-  { href: "/resident", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/resident/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/resident/subscription", label: "Subscription", icon: CreditCard },
   { href: "/resident/pickup", label: "Schedule Pickup", icon: CalendarClock },
   { href: "/resident/orders", label: "My Orders", icon: Package },
+  { href: "/resident/track", label: "Track Order", icon: MapPin },
   { href: "/resident/wallet", label: "Wallet", icon: Wallet },
   { href: "/resident/addons", label: "Add-on Services", icon: Puzzle },
   { href: "/resident/support", label: "Support", icon: Headphones },
+  { href: "/resident/notifications", label: "Notifications", icon: Bell },
+  { href: "/resident/addresses", label: "Addresses", icon: MapPin },
   { href: "/resident/impact", label: "Impact", icon: Leaf },
   { href: "/resident/profile", label: "Profile", icon: User },
 ];
 
 function Logo() {
   return (
-    <div className="flex items-center gap-2.5 px-2">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
-        <svg viewBox="0 0 32 32" className="h-6 w-6 text-primary" fill="currentColor">
-          <path d="M4 20c4-8 8-12 12-12s8 4 12 12c-2 2-6 4-12 4S6 22 4 20z" opacity="0.3" />
-          <path d="M6 22c3-6 7-9 10-9s7 3 10 9c-1.5 1.5-4 2.5-10 2.5S7.5 23.5 6 22z" />
-        </svg>
-      </div>
-      <div>
-        <p className="text-sm font-bold tracking-wide text-foreground">WASH N PRESS</p>
-        <p className="text-[10px] leading-tight text-muted-foreground">Clean Clothes, Clear Water</p>
-      </div>
+    <div className="flex items-center px-2">
+      <img src="/logo.png" alt="Wash N Press" className="h-10 w-auto object-contain" />
     </div>
   );
 }
@@ -73,6 +69,7 @@ function ReferCard() {
 
 function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { logout, loggingOut } = useLogout();
 
   return (
     <nav className="flex flex-1 flex-col gap-1 px-3">
@@ -98,21 +95,26 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         );
       })}
-      <Link
-        href="/login"
-        onClick={onNavigate}
-        className="mt-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
+      <button
+        type="button"
+        disabled={loggingOut}
+        onClick={() => {
+          onNavigate?.();
+          void logout();
+        }}
+        className="mt-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:opacity-50"
       >
         <LogOut className="h-4.5 w-4.5 shrink-0" />
-        Logout
-      </Link>
+        {loggingOut ? "Signing out…" : "Logout"}
+      </button>
     </nav>
   );
 }
 
 export function NotificationsBell() {
   const [open, setOpen] = useState(false);
-  const unread = residentNotifications.filter((n) => n.unread).length;
+  const { notifications } = useResident();
+  const unread = notifications.filter((n) => n.unread).length;
 
   return (
     <div className="relative">
@@ -132,18 +134,22 @@ export function NotificationsBell() {
           <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card p-3 shadow-xl">
             <p className="mb-2 text-sm font-semibold">Notifications</p>
             <div className="max-h-64 space-y-2 overflow-auto">
-              {residentNotifications.map((n) => (
-                <div
-                  key={n.id}
-                  className={cn(
-                    "rounded-lg border border-border p-3",
-                    n.unread ? "bg-primary/5" : "bg-background",
-                  )}
-                >
-                  <p className="text-sm font-medium">{n.title}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>
-                </div>
-              ))}
+              {notifications.length === 0 ? (
+                <p className="p-3 text-sm text-muted-foreground">No notifications yet.</p>
+              ) : (
+                notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className={cn(
+                      "rounded-lg border border-border p-3",
+                      n.unread ? "bg-primary/5" : "bg-background",
+                    )}
+                  >
+                    <p className="text-sm font-medium">{n.title}</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">{n.body}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </>

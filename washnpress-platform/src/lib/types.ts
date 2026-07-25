@@ -29,7 +29,8 @@ export type OrderStatus =
   | "Iron"
   | "QC Hold"
   | "Out for Delivery"
-  | "Delivered";
+  | "Delivered"
+  | "Cancelled";
 
 export type Order = {
   id: string;

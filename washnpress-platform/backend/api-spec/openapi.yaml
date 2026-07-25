@@ -1,0 +1,5 @@
+# This file is deprecated. Use openapi.json instead.
+# Regenerate with: npm run openapi:generate
+#
+# Interactive docs: http://localhost:3000/docs/swagger
+# Full spec: backend/api-spec/openapi.json

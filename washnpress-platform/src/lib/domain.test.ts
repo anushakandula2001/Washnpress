@@ -33,6 +33,18 @@ describe("domain rules", () => {
     expect(result.reason).toContain("Too many attempts");
   });
 
+  it("rejects mismatched OTP", () => {
+    const result = isOtpUsable(
+      "123456",
+      new Date().toISOString(),
+      0,
+      new Date(),
+      "654321",
+    );
+    expect(result.ok).toBe(false);
+    expect(result.reason).toContain("Invalid OTP");
+  });
+
   it("falls back to next available slot when preferred window is unavailable", () => {
     const slots: PickupSlot[] = [
       {

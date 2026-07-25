@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import {
   Shirt,
   Footprints,
@@ -14,7 +14,8 @@ import { useResident } from "@/components/resident/resident-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { addonServices } from "@/lib/resident-data";
+import { api } from "@/frontend/api-client";
+import type { AddonService } from "@/lib/resident-data";
 
 const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   shirt: Shirt,
@@ -26,10 +27,29 @@ const iconMap: Record<string, ComponentType<{ className?: string }>> = {
 
 export default function AddonsPage() {
   const { balance } = useResident();
+  const [addons, setAddons] = useState<AddonService[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [added, setAdded] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const total = addonServices
+  useEffect(() => {
+    void api.addons()
+      .then((data) => {
+        setAddons(
+          data.addons.map((a) => ({
+            id: String(a.id),
+            name: String(a.name),
+            description: String(a.description ?? ""),
+            priceInr: Number(a.priceInr ?? 0),
+            icon: String(a.icon ?? "sparkles"),
+          })),
+        );
+      })
+      .catch(() => setAddons([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const total = addons
     .filter((a) => selected.has(a.id))
     .reduce((sum, a) => sum + a.priceInr, 0);
 
@@ -48,70 +68,57 @@ export default function AddonsPage() {
   }
 
   return (
-    <ResidentShell greeting="Add-on Services" subtitle="Enhance your laundry experience">
-      {added ? (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
-              <Check className="h-8 w-8" />
-            </div>
-            <h2 className="text-xl font-bold">Add-ons Added!</h2>
-            <p className="mt-2 text-muted-foreground">
-              {selected.size} service(s) will be applied to your next pickup.
-            </p>
-            <p className="text-sm font-medium text-primary">Total: ₹{total}</p>
-            <Button className="mt-4" onClick={() => { setAdded(false); setSelected(new Set()); }}>
-              Add More Services
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {addonServices.map((addon) => {
-              const Icon = iconMap[addon.icon] ?? Sparkles;
-              const isSelected = selected.has(addon.id);
-              return (
-                <button
-                  key={addon.id}
-                  onClick={() => toggleAddon(addon.id)}
-                  className={`rounded-xl border p-5 text-left transition ${
-                    isSelected
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                      : "border-border bg-card hover:bg-muted/40"
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    {isSelected && <Badge variant="success">Selected</Badge>}
-                  </div>
-                  <p className="mt-3 font-semibold">{addon.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">{addon.description}</p>
-                  <p className="mt-2 text-sm font-bold text-primary">₹{addon.priceInr}</p>
-                </button>
-              );
-            })}
-          </div>
+    <ResidentShell greeting="Add-on Services" subtitle="Enhance your laundry with optional extras">
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">Wallet balance: ₹{balance.toFixed(2)}</p>
+        {added && <Badge variant="success">Added to next order</Badge>}
+      </div>
 
-          {selected.size > 0 && (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-                <CardDescription>Wallet balance: ₹{balance.toFixed(2)}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">{selected.size} service(s) selected</p>
-                  <p className="text-xl font-bold">₹{total}</p>
-                </div>
-                <Button onClick={handleAddToOrder}>Add to Next Pickup</Button>
-              </CardContent>
-            </Card>
-          )}
-        </>
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Loading add-ons…</p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {addons.map((addon) => {
+            const Icon = iconMap[addon.icon] ?? Sparkles;
+            const isSelected = selected.has(addon.id);
+            return (
+              <Card
+                key={addon.id}
+                className={isSelected ? "border-primary/50 bg-primary/5" : undefined}
+              >
+                <CardHeader>
+                  <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <CardTitle className="text-base">{addon.name}</CardTitle>
+                  <CardDescription>{addon.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center justify-between">
+                  <p className="font-semibold">₹{addon.priceInr}</p>
+                  <Button
+                    size="sm"
+                    variant={isSelected ? "default" : "outline"}
+                    onClick={() => toggleAddon(addon.id)}
+                    className="gap-1"
+                  >
+                    {isSelected && <Check className="h-3.5 w-3.5" />}
+                    {isSelected ? "Selected" : "Select"}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       )}
+
+      <div className="mt-6 flex items-center justify-between rounded-xl border border-border bg-card p-4">
+        <p className="text-sm">
+          Selected total: <span className="font-semibold">₹{total}</span>
+        </p>
+        <Button onClick={handleAddToOrder} disabled={selected.size === 0}>
+          Add to Order
+        </Button>
+      </div>
     </ResidentShell>
   );
 }

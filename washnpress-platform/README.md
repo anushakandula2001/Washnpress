@@ -1,87 +1,70 @@
-# Wash N Press Platform
+# WashNPress Platform
 
-Women-led, water-conscious, community-first laundry platform.
+Full-stack laundry management platform — resident portal, operations dashboard, and admin console.
 
-This repository now includes a full engineering handover package intended for a professional software team to continue development through production launch.
+## Project structure
 
-## Current Implementation Status
-- Frontend-rich investor/demo experience implemented for Dashboard, Resident, Operations, Admin, and Login routes.
-- Domain validation rules implemented and tested in `src/lib/domain.ts` and `src/lib/domain.test.ts`.
-- API stubs implemented for scheduling, QC validation, and sustainability summary.
-- Authentication, RBAC, persistence, and transactional workflows are not fully implemented yet.
+```
+washnpress-platform/
+├── backend/          # Database, migrations, API spec, server logic
+├── frontend/         # UI docs + Next.js pages/components
+├── docker/           # Docker Compose, Dockerfile, env templates
+├── src/
+│   ├── app/          # Next.js routes (pages + API handlers)
+│   ├── backend/      # DB, repositories, services (imported by API routes)
+│   ├── frontend/     # API client (imported by pages)
+│   ├── components/   # React UI components
+│   └── lib/          # Shared domain logic & mock data
+├── docs/             # Architecture, deployment, user guides
+├── deployment/       # Azure Bicep, CI/CD env docs
+├── tests/            # Test plans
+└── public/           # Static assets
+```
 
-## Tech Stack
-- Next.js 16 (App Router)
-- React 19
-- TypeScript
-- Tailwind CSS v4
-- Zod
-- Vitest
+## Quick start
 
-## Quick Start
-1. Install dependencies
-	- `npm ci`
-2. Run development server
-	- `npm run dev`
-3. Run quality checks
-	- `npm run lint`
-	- `npm test`
-	- `npm run build`
+```bash
+# Install dependencies
+npm install
 
-## Handover Package Structure
+# Start Postgres + Redis
+npm run db:up
 
-### Documentation
-- `docs/Audit-Report.md`
-- `docs/Requirements-Traceability-Matrix.md`
-- `docs/Architecture.md`
-- `docs/Database-Design.md`
-- `docs/API-Specification.md`
-- `docs/Frontend-Architecture.md`
-- `docs/Deployment-Guide.md`
-- `docs/Developer-Onboarding.md`
-- `docs/Environment-Setup.md`
-- `docs/Security-Guide.md`
-- `docs/Security-Review.md`
-- `docs/Testing-Guide.md`
-- `docs/Launch-Readiness-Score.md`
+# Run database migrations + seeds
+cp .env.example .env.local
+npm run db:setup
 
-### Database
-- `database/migrations/*.sql`
-- `database/seeds/*.sql`
-- `database/run-migrations.sql`
+# Start development server
+npm run dev
+```
 
-### API
-- `api/openapi.yaml`
+Open [http://localhost:3000](http://localhost:3000). Resident APIs work in dev without login (demo user auto-session).
 
-### Frontend
-- `frontend/Component-Inventory.md`
-- `frontend/Routing-Map.md`
+Health check: `GET /api/health`
 
-### Tests Planning
-- `tests/Unit-Test-Plan.md`
-- `tests/Integration-Test-Plan.md`
-- `tests/API-Test-Plan.md`
-- `tests/UAT-Scripts.md`
-- `tests/Regression-Suite.md`
-- `tests/Performance-Test-Scenarios.md`
+## Scripts
 
-### Deployment
-- `Dockerfile`
-- `docker-compose.yml`
-- `.github/workflows/ci-cd.yml`
-- `deployment/.env.example`
-- `deployment/ENVIRONMENT_VARIABLES.md`
-- `deployment/azure-webapp.bicep`
-- `deployment/azure.parameters.example.json`
-- `deployment/CI-CD-Workflow.md`
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Production build |
+| `npm run test` | Run Vitest tests |
+| `npm run db:up` | Start Postgres + Redis (Docker) |
+| `npm run db:setup` | Run migrations + seeds |
+| `npm run db:down` | Stop database containers |
+| `npm run docker:up` | Start full stack (web + db + redis) |
+| `npm run docker:down` | Stop all containers |
 
-### Backlog
-- `backlog/Development-Backlog.md`
+## Tech stack
 
-## Production Readiness Summary
-- Architecture: foundational but incomplete for production operations.
-- Security: major controls pending (auth, RBAC, rate limiting, audit trail).
-- Testing: domain rules covered; integration/E2E/performance pending implementation.
-- Database and deployment artifacts provided in this handover package.
+- **Frontend:** Next.js 16, React 19, Tailwind CSS v4, TypeScript
+- **Backend:** Next.js API routes, PostgreSQL (`pg`), Redis (`ioredis`)
+- **Infra:** Docker Compose, GitHub Actions CI/CD
 
-See `docs/Launch-Readiness-Score.md` for scoring and recommendation.
+## Documentation
+
+- [Backend](./backend/README.md) — database, API routes, server logic
+- [Frontend](./frontend/README.md) — pages, components, routing
+- [Docker](./docker/README.md) — container setup
+- [Architecture](./docs/Architecture.md) — system design
+- [API docs](./docs/API_Documentation.md) — endpoint reference

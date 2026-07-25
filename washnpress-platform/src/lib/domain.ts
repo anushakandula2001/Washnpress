@@ -17,6 +17,7 @@ export function isOtpUsable(
   issuedAtIso: string,
   attempts: number,
   now = new Date(),
+  expectedOtp?: string,
 ): { ok: boolean; reason?: string } {
   if (!otpSchema.safeParse(otp).success) {
     return { ok: false, reason: "Invalid OTP format" };
@@ -32,6 +33,10 @@ export function isOtpUsable(
 
   if (ageMs > maxAgeMs) {
     return { ok: false, reason: "OTP expired" };
+  }
+
+  if (expectedOtp !== undefined && otp !== expectedOtp) {
+    return { ok: false, reason: "Invalid OTP" };
   }
 
   return { ok: true };

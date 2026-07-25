@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useResident } from "@/components/resident/resident-provider";
-import { pickupSlots } from "@/lib/mock-data";
-import { choosePickupSlot } from "@/lib/domain";
+import { api } from "@/frontend/api-client";
 import type { ResidentPickup } from "@/lib/resident-data";
+import type { TimeWindow } from "@/lib/types";
+
+type SlotOption = {
+  id: string;
+  date: string;
+  window: TimeWindow;
+  startTime24h: string;
+  endTime24h: string;
+  remainingCapacity: number;
+};
 
 function formatSlotLabel(date: string, start: string, end: string): string {
   const d = new Date(`${date}T${start}:00`);
@@ -27,51 +36,72 @@ export function RescheduleModal({
   open: boolean;
   onClose: () => void;
 }) {
-  const { reschedulePickup } = useResident();
+  const { reschedulePickup, refresh } = useResident();
   const [loading, setLoading] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<string | null>(null);
+  const [slots, setSlots] = useState<SlotOption[]>([]);
 
-  const availableSlots = pickupSlots.filter((s) => s.remainingCapacity > 0);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setLoadingSlots(true);
+    setError(null);
+    setSelectedSlotId(null);
+    (async () => {
+      try {
+        const data = await api.schedule.listSlots();
+        if (cancelled) return;
+        setSlots(
+          data.slots.filter((s) => s.remainingCapacity > 0).map((s) => ({
+            ...s,
+            window: s.window as TimeWindow,
+          })),
+        );
+      } catch (err) {
+        if (!cancelled) {
+          setSlots([]);
+          setError(err instanceof Error ? err.message : "Failed to load slots");
+        }
+      } finally {
+        if (!cancelled) setLoadingSlots(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
 
   if (!open) return null;
 
   async function handleConfirm() {
-    const slot = availableSlots.find((s) => s.id === selectedSlotId);
+    const slot = slots.find((s) => s.id === selectedSlotId);
     if (!slot) return;
 
     setLoading(true);
+    setError(null);
     try {
-      const res = await fetch("/api/schedule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferredWindows: [slot.window] }),
-      });
-      const data = await res.json();
-      const confirmed = data.slot ?? slot;
+      const data = (await api.schedule.book({
+        slotId: slot.id,
+        book: true,
+        preferredWindows: [slot.window],
+      })) as { slot?: Partial<SlotOption>; pickup?: { id: string } };
 
+      const confirmed = data.slot ?? slot;
       const newPickup: ResidentPickup = {
-        id: `pickup-${Date.now()}`,
-        date: confirmed.date,
-        startTime: confirmed.startTime24h,
-        endTime: confirmed.endTime24h,
-        window: confirmed.window,
+        id: data.pickup?.id ?? `pickup-${Date.now()}`,
+        date: confirmed.date ?? slot.date,
+        startTime: confirmed.startTime24h ?? slot.startTime24h,
+        endTime: confirmed.endTime24h ?? slot.endTime24h,
+        window: (confirmed.window as string) ?? slot.window,
         status: "scheduled",
       };
       reschedulePickup(newPickup);
+      await refresh();
       onClose();
-    } catch {
-      const fallback = choosePickupSlot(pickupSlots, ["Morning", "Evening"]);
-      if (fallback) {
-        reschedulePickup({
-          id: `pickup-${Date.now()}`,
-          date: fallback.date,
-          startTime: fallback.startTime24h,
-          endTime: fallback.endTime24h,
-          window: fallback.window,
-          status: "scheduled",
-        });
-      }
-      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Reschedule failed");
     } finally {
       setLoading(false);
     }
@@ -87,25 +117,36 @@ export function RescheduleModal({
           </button>
         </div>
         <p className="mb-4 text-sm text-muted-foreground">Select a new pickup slot:</p>
-        <div className="mb-4 space-y-2">
-          {availableSlots.map((slot) => (
-            <button
-              key={slot.id}
-              onClick={() => setSelectedSlotId(slot.id)}
-              className={`w-full rounded-lg border p-3 text-left text-sm transition ${
-                selectedSlotId === slot.id
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:bg-muted"
-              }`}
-            >
-              <p className="font-medium">
-                {formatSlotLabel(slot.date, slot.startTime24h, slot.endTime24h)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {slot.window} · {slot.remainingCapacity} slots left
-              </p>
-            </button>
-          ))}
+        {error && (
+          <p className="mb-3 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        )}
+        <div className="mb-4 max-h-64 space-y-2 overflow-auto">
+          {loadingSlots ? (
+            <p className="text-sm text-muted-foreground">Loading slots…</p>
+          ) : slots.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No available slots right now.</p>
+          ) : (
+            slots.map((slot) => (
+              <button
+                key={slot.id}
+                onClick={() => setSelectedSlotId(slot.id)}
+                className={`w-full rounded-lg border p-3 text-left text-sm transition ${
+                  selectedSlotId === slot.id
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:bg-muted"
+                }`}
+              >
+                <p className="font-medium">
+                  {formatSlotLabel(slot.date, slot.startTime24h, slot.endTime24h)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {slot.window} · {slot.remainingCapacity} slots left
+                </p>
+              </button>
+            ))
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="flex-1" onClick={onClose}>
@@ -114,7 +155,7 @@ export function RescheduleModal({
           <Button
             className="flex-1"
             onClick={handleConfirm}
-            disabled={!selectedSlotId || loading}
+            disabled={!selectedSlotId || loading || loadingSlots}
           >
             {loading ? "Confirming..." : "Confirm"}
           </Button>

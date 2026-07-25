@@ -109,3 +109,30 @@ tr th {
 .fade-up {
   animation: fade-up 320ms ease-out;
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--muted) 100%, transparent) 0%,
+    color-mix(in oklab, var(--card) 90%, #ffffff 10%) 50%,
+    color-mix(in oklab, var(--muted) 100%, transparent) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up,
+  .skeleton-shimmer {
+    animation: none !important;
+  }
+}

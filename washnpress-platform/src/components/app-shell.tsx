@@ -10,9 +10,9 @@ import { notificationCenter } from "@/lib/experience-data";
 
 const nav = [
   { href: "/", label: "Dashboard" },
-  { href: "/resident", label: "Resident" },
-  { href: "/operations", label: "Operations" },
-  { href: "/admin", label: "Admin" },
+  { href: "/resident/dashboard", label: "Resident" },
+  { href: "/operations/dashboard", label: "Operations" },
+  { href: "/admin/dashboard", label: "Admin" },
 ];
 
 export function AppShell({
@@ -50,9 +50,9 @@ export function AppShell({
     () =>
       [
         { href: "/", label: "Go to Mission Dashboard" },
-        { href: "/resident", label: "Open Resident Portal" },
-        { href: "/operations", label: "Open Operator Portal" },
-        { href: "/admin", label: "Open Admin Console" },
+        { href: "/resident/dashboard", label: "Open Resident Portal" },
+        { href: "/operations/dashboard", label: "Open Operator Portal" },
+        { href: "/admin/dashboard", label: "Open Admin Console" },
         { href: "/login", label: "Open Login" },
       ].filter((item) => item.label.toLowerCase().includes(query.toLowerCase())),
     [query],
