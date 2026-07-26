@@ -302,10 +302,9 @@ export default function OperatorsAdminPage() {
 
       <OperatorStats rows={rows} loading={loading} onFilter={handleStatFilter} />
       <OperatorToolbar
-        onRefresh={() => void load()}
-        onExport={handleExport}
+       
         onCreate={() => setWizardOpen(true)}
-        loading={loading}
+    
       />
       <OperatorFilters
         filters={filters}

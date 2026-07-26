@@ -231,12 +231,8 @@ export default function AdminSocietiesPage() {
       <SocietyToolbar
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-        onRefresh={() => void load()}
-        onExport={handleExport}
-        onImport={() => toast("Import: upload society CSV via support or bulk import tool", "info")}
-        onAdd={() => setWizardOpen(true)}
-        loading={loading}
-      />
+    
+         />
       <SocietyFiltersPanel
         filters={filters}
         rows={rows}

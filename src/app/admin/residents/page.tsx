@@ -21,10 +21,8 @@ import {
   type ResidentRow,
   type SocietyOpt,
 } from "@/components/admin/residents/types";
-import { Plus, Upload, UserPlus } from "lucide-react";
-
 function applyClientFilters(rows: ResidentRow[], filters: ResidentFilters): ResidentRow[] {
-  let result = [...rows];
+  const result = [...rows];
 
   switch (filters.sortBy) {
     case "oldest":
@@ -204,11 +202,6 @@ export default function AdminResidentsPage() {
 
       <ResidentsStats rows={rows} loading={loading} onFilter={handleStatFilter} />
       <ResidentsToolbar
-        onRefresh={() => void load()}
-        onExport={handleExport}
-        onImport={() => toast("Import: upload CSV via Societies import or contact support", "info")}
-        onAdd={() => toast("Residents register via the Resident Portal OTP flow", "info")}
-        loading={loading}
       />
       <ResidentsFilters
         filters={filters}
@@ -235,12 +228,7 @@ export default function AdminResidentsPage() {
         <EmptyState
           title="No residents found"
           description="Try adjusting your search or filters, or register a new resident."
-          actions={
-            <>
-              <Button size="sm" className="gap-1.5"><UserPlus className="h-4 w-4" />Register Resident</Button>
-              <Button size="sm" variant="outline" className="gap-1.5"><Upload className="h-4 w-4" />Import Residents</Button>
-            </>
-          }
+          actions={null}
         />
       ) : (
         <>
