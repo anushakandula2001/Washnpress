@@ -234,10 +234,7 @@ export default function OperatorsAdminPage() {
       r.last_login_at ? new Date(r.last_login_at).toLocaleDateString() : "",
       r.created_at ? new Date(r.created_at).toLocaleDateString() : "",
     ]);
-    if (format === "csv") exportToCsv("operators.csv", headers, data);
-    else if (format === "excel") exportToExcel("operators.xls", headers, data);
-    else exportToPdf("operators.pdf", "Operators", headers, data);
-    toast("Export started", "success");
+    
   }
 
   function handleAction(action: string, row: OperatorRow) {
@@ -323,9 +320,6 @@ export default function OperatorsAdminPage() {
             </Button>
             <Button size="sm" variant="outline" onClick={() => void bulkStatus("active")}>
               Activate
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => handleExport("csv")}>
-              Export Selected
             </Button>
           </>
         }
