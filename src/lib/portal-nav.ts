@@ -47,17 +47,16 @@ export const operationsNav: PortalNavItem[] = [
     section: "Overview",
   },
   {
-    href: "/operations/support-center",
-    label: "Support Center",
-    icon: Headphones,
-    section: "Support Center",
+    href: "/operations/pickup-slots",
+    label: "Pickup Slots",
+    icon: CalendarClock,
+    section: "Pickups",
   },
-
   {
-    href: "/operations/assigned-societies",
-    label: "Assigned Societies",
-    icon: Building2,
-    section: "Societies",
+    href: "/operations/pickups",
+    label: "Today's Pickups",
+    icon: CalendarClock,
+    section: "Pickups",
   },
   {
     href: "/operations/processing-center",
@@ -77,18 +76,7 @@ export const operationsNav: PortalNavItem[] = [
     icon: BarChart3,
     section: "System",
   },
-  {
-    href: "/operations/pickup-slots",
-    label: "Pickup Slots",
-    icon: CalendarClock,
-    section: "Pickups",
-  },
-  {
-    href: "/operations/pickups",
-    label: "Today's Pickups",
-    icon: CalendarClock,
-    section: "Pickups",
-  },
+  
   {
     href: "/operations/customers",
     label: "Residents",
@@ -100,6 +88,18 @@ export const operationsNav: PortalNavItem[] = [
     label: "Executives",
     icon: Bike,
     section: "People",
+  },
+  {
+    href: "/operations/assigned-societies",
+    label: "Assigned Societies",
+    icon: Building2,
+    section: "Societies",
+  },
+  {
+    href: "/operations/support-center",
+    label: "Support Center",
+    icon: Headphones,
+    section: "Support Center",
   },
   {
     href: "/operations/settings",

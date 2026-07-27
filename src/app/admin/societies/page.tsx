@@ -247,19 +247,6 @@ export default function AdminSocietiesPage() {
           <>
             <Button size="sm" variant="outline" onClick={() => void bulkStatus("active")}>Activate</Button>
             <Button size="sm" variant="outline" onClick={() => void bulkStatus("inactive")}>Deactivate</Button>
-            <Button size="sm" variant="outline" onClick={() => void bulkStatus("coming_soon")}>Coming Soon</Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                const first = [...selected][0];
-                const row = rows.find((r) => r.id === first);
-                if (row) { setAssignSociety(row); setAssignOpen(true); }
-              }}
-            >
-              Assign Operator
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => handleExport("csv")}>Export Selected</Button>
           </>
         }
       />
