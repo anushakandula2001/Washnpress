@@ -29,11 +29,7 @@ export type ResidentFilters = {
   floor: string;
   subscription: string;
   status: string;
-  walletMin: string;
-  walletMax: string;
-  regFrom: string;
-  regTo: string;
-  gender: string;
+
   sortBy: string;
 };
 
@@ -44,10 +40,5 @@ export const defaultResidentFilters: ResidentFilters = {
   floor: "",
   subscription: "",
   status: "",
-  walletMin: "",
-  walletMax: "",
-  regFrom: "",
-  regTo: "",
-  gender: "",
   sortBy: "newest",
 };

@@ -83,10 +83,10 @@ function applyClientFilters(rows: SocietyRow[], filters: SocietyFilters): Societ
     case "oldest":
       result.sort((a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? ""));
       break;
-    case "revenue":
-    case "wallet":
-      result.sort((a, b) => Number(b.wallet_revenue ?? 0) - Number(a.wallet_revenue ?? 0));
-      break;
+    // case "revenue":
+    // case "wallet":
+    //   result.sort((a, b) => Number(b.wallet_revenue ?? 0) - Number(a.wallet_revenue ?? 0));
+    //   break;
     default:
       result.sort((a, b) => a.name.localeCompare(b.name));
   }

@@ -10,7 +10,6 @@ import { usePagination } from "@/lib/admin/use-pagination";
 import { exportToCsv, exportToExcel, exportToPdf } from "@/lib/admin/export-utils";
 import { BulkActionBar } from "@/components/admin/shared/BulkActionBar";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
-import { OrderStats } from "@/components/admin/orders/OrderStats";
 import { OrdersToolbar } from "@/components/admin/orders/OrdersToolbar";
 import { OrdersFilters } from "@/components/admin/orders/OrdersFilters";
 import { OrdersTable } from "@/components/admin/orders/OrdersTable";
@@ -304,11 +303,6 @@ function AdminOrdersContent() {
     >
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
-      <OrderStats
-        rows={statsRows}
-        loading={loading && statsRows.length === 0}
-        onTabChange={setTab}
-      />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {ORDER_TABS.map((f) => (
