@@ -8,16 +8,12 @@ import {
   CalendarClock,
   Package,
   Wallet,
-  Puzzle,
   Headphones,
-  Leaf,
   User,
   LogOut,
   Menu,
   X,
   Bell,
-  Gift,
-  MapPin,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
@@ -26,16 +22,11 @@ import { useResident } from "@/components/resident/resident-provider";
 
 const navItems = [
   { href: "/resident/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/resident/subscription", label: "Subscription", icon: CreditCard },
   { href: "/resident/pickup", label: "Schedule Pickup", icon: CalendarClock },
   { href: "/resident/orders", label: "My Orders", icon: Package },
-  { href: "/resident/track", label: "Track Order", icon: MapPin },
+  { href: "/resident/subscription", label: "Subscription", icon: CreditCard },
   { href: "/resident/wallet", label: "Wallet", icon: Wallet },
-  { href: "/resident/addons", label: "Add-on Services", icon: Puzzle },
   { href: "/resident/support", label: "Support", icon: Headphones },
-  { href: "/resident/notifications", label: "Notifications", icon: Bell },
-  { href: "/resident/addresses", label: "Addresses", icon: MapPin },
-  { href: "/resident/impact", label: "Impact", icon: Leaf },
   { href: "/resident/profile", label: "Profile", icon: User },
 ];
 
@@ -43,26 +34,6 @@ function Logo() {
   return (
     <div className="flex items-center px-2">
       <img src="/logo.png" alt="Wash N Press" className="h-10 w-auto object-contain" />
-    </div>
-  );
-}
-
-function ReferCard() {
-  return (
-    <div className="relative overflow-hidden rounded-xl bg-primary p-4 text-primary-foreground">
-      <div className="relative z-10">
-        <p className="text-sm font-bold">Refer & Earn</p>
-        <p className="mt-1 text-xs leading-relaxed opacity-90">
-          Refer a friend and get ₹100 wallet credits.
-        </p>
-        <Link
-          href="/resident/wallet"
-          className="mt-2 inline-flex items-center text-xs font-semibold text-primary-foreground hover:underline"
-        >
-          Learn More →
-        </Link>
-      </div>
-      <Gift className="absolute -bottom-1 -right-1 h-16 w-16 opacity-20" />
     </div>
   );
 }
@@ -84,9 +55,9 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             href={item.href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all",
               isActive
-                ? "bg-primary/10 text-primary"
+                ? "bg-primary/10 text-primary shadow-sm"
                 : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
             )}
           >
@@ -102,7 +73,7 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           onNavigate?.();
           void logout();
         }}
-        className="mt-2 flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground disabled:opacity-50"
+        className="mt-3 flex items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-sm font-medium text-muted-foreground transition-all hover:bg-muted/60 hover:text-foreground disabled:opacity-50"
       >
         <LogOut className="h-4.5 w-4.5 shrink-0" />
         {loggingOut ? "Signing out…" : "Logout"}
@@ -131,7 +102,7 @@ export function NotificationsBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card p-3 shadow-xl">
+          <div className="absolute right-0 z-50 mt-2 w-80 rounded-2xl border border-border bg-card p-3 shadow-xl">
             <p className="mb-2 text-sm font-semibold">Notifications</p>
             <div className="max-h-64 space-y-2 overflow-auto">
               {notifications.length === 0 ? (
@@ -141,7 +112,7 @@ export function NotificationsBell() {
                   <div
                     key={n.id}
                     className={cn(
-                      "rounded-lg border border-border p-3",
+                      "rounded-xl border border-border p-3",
                       n.unread ? "bg-primary/5" : "bg-background",
                     )}
                   >
@@ -170,44 +141,35 @@ export function ResidentShell({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card lg:flex">
-        <div className="p-5">
+    <div className="flex min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(31,106,91,0.06),_transparent_40%)] bg-background">
+      <aside className="hidden w-72 shrink-0 flex-col border-r border-border bg-card/80 px-3 py-5 backdrop-blur lg:flex">
+        <div className="mb-5 px-2">
           <Logo />
         </div>
         <SidebarNav />
-        <div className="mt-auto p-4">
-          <ReferCard />
-        </div>
       </aside>
 
-      {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
-          <aside className="relative flex h-full w-72 flex-col bg-card shadow-xl">
-            <div className="flex items-center justify-between p-5">
+          <aside className="relative flex h-full w-72 flex-col bg-card px-3 py-5 shadow-xl">
+            <div className="mb-4 flex items-center justify-between px-2">
               <Logo />
               <button onClick={() => setSidebarOpen(false)} aria-label="Close menu">
                 <X className="h-5 w-5" />
               </button>
             </div>
             <SidebarNav onNavigate={() => setSidebarOpen(false)} />
-            <div className="mt-auto p-4">
-              <ReferCard />
-            </div>
           </aside>
         </div>
       )}
 
-      {/* Main content */}
       <div className="flex flex-1 flex-col">
         <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur-xl">
           <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <button
-                className="rounded-lg border border-border p-2 lg:hidden"
+                className="rounded-xl border border-border p-2 lg:hidden"
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Open menu"
               >
@@ -215,7 +177,7 @@ export function ResidentShell({
               </button>
               {greeting && (
                 <div>
-                  <h1 className="text-xl font-bold text-foreground">{greeting}</h1>
+                  <h1 className="text-xl font-semibold text-foreground">{greeting}</h1>
                   {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
                 </div>
               )}

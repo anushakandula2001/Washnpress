@@ -11,6 +11,7 @@ import type {
 export const PICKUP_STEPS: PickupStepMeta[] = [
   { id: "slot", label: "Pickup Slot", shortLabel: "Slot" },
   { id: "garments", label: "Garments", shortLabel: "Items" },
+  { id: "other-clothes", label: "Other Clothes", shortLabel: "Other" },
   { id: "addons", label: "Services", shortLabel: "Extras" },
   { id: "review", label: "Review", shortLabel: "Review" },
 ];
@@ -18,12 +19,12 @@ export const PICKUP_STEPS: PickupStepMeta[] = [
 export const STEP_ORDER = [...PICKUP_STEPS.map((s) => s.id), "success"] as const;
 
 export const GARMENT_OPTIONS: GarmentOption[] = [
-  { id: "shirts", name: "Shirts & Tops", description: "Casual & formal tops", icon: "shirt", weightKg: 0.25 },
-  { id: "trousers", name: "Trousers & Jeans", description: "Pants, denim, chinos", icon: "pants", weightKg: 0.4 },
-  { id: "dresses", name: "Dresses & Kurtas", description: "Ethnic & western wear", icon: "dress", weightKg: 0.35 },
-  { id: "bedding", name: "Bedding", description: "Sheets, covers, pillowcases", icon: "bed", weightKg: 0.8 },
-  { id: "towels", name: "Towels", description: "Bath & hand towels", icon: "towel", weightKg: 0.45 },
-  { id: "others", name: "Other Items", description: "Misc. garments & soft goods", icon: "package", weightKg: 0.3 },
+  { id: "shirts", name: "Shirts & Tops", description: "Casual & formal tops", icon: "shirt", weightKg: 0.25, priceInr: 70 },
+  { id: "trousers", name: "Trousers & Jeans", description: "Pants, denim, chinos", icon: "pants", weightKg: 0.4, priceInr: 90 },
+  { id: "dresses", name: "Dresses & Kurtas", description: "Ethnic & western wear", icon: "dress", weightKg: 0.35, priceInr: 110 },
+  { id: "bedding", name: "Bedding", description: "Sheets, covers, pillowcases", icon: "bed", weightKg: 0.8, priceInr: 140 },
+  { id: "towels", name: "Towels", description: "Bath & hand towels", icon: "towel", weightKg: 0.45, priceInr: 85 },
+  { id: "others", name: "Other Items", description: "Misc. garments & soft goods", icon: "package", weightKg: 0.3, priceInr: 95 },
 ];
 
 export const SERVICE_OPTIONS: ServiceOption[] = [
@@ -169,10 +170,16 @@ export function computeCharges(
   options: ServiceOption[] = SERVICE_OPTIONS,
   taxRate = TAX_RATE,
   deliveryFee = BASE_PICKUP_FEE,
+  garmentCounts: Record<string, number> = {},
+  garmentOptions: GarmentOption[] = GARMENT_OPTIONS,
 ) {
   const services = servicesTotal(selectedServiceIds, options);
-  const subtotal = deliveryFee + services;
+  const garmentSubtotal = garmentOptions.reduce(
+    (sum, garment) => sum + (garmentCounts[garment.id] ?? 0) * (garment.priceInr ?? 0),
+    0,
+  );
+  const subtotal = deliveryFee + services + garmentSubtotal;
   const tax = Math.round(subtotal * taxRate);
   const grandTotal = subtotal + tax;
-  return { services, subtotal, tax, grandTotal, deliveryFee };
+  return { services, garmentSubtotal, subtotal, tax, grandTotal, deliveryFee };
 }

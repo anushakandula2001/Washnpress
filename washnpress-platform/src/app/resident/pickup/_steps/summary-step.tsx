@@ -61,7 +61,7 @@ export function SummaryStep() {
 
   const garmentLines = garmentOptions.filter((g) => (garments[g.id] ?? 0) > 0);
   const services = serviceOptions.filter((s) => selectedServiceIds.includes(s.id));
-  const charges = computeCharges(selectedServiceIds, serviceOptions, taxRate, deliveryFee);
+  const charges = computeCharges(selectedServiceIds, serviceOptions, taxRate, deliveryFee, garments, garmentOptions);
   const itemCount = totalGarmentCount(garments);
 
   return (

@@ -96,6 +96,8 @@ export function BookingSummary({
     serviceOptions.length ? serviceOptions : undefined,
     taxRate,
     deliveryFee,
+    garments,
+    garmentOptions.length ? garmentOptions : undefined,
   );
   const selectedServices = serviceOptions.filter((s) => selectedServiceIds.includes(s.id));
 

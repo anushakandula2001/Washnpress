@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { ResidentShell } from "@/components/resident/resident-shell";
@@ -15,7 +16,7 @@ import type { TrackingEvent } from "@/lib/resident-data";
 type FilterTab = "all" | "active" | "completed" | "cancelled";
 type SortKey = "newest" | "oldest";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 6;
 
 function isActiveStatus(status: string) {
   return status !== "Delivered" && status !== "Cancelled";
@@ -41,12 +42,7 @@ function OrdersContent() {
     if (tab === "cancelled") list = list.filter((o) => o.status === "Cancelled");
 
     if (q) {
-      list = list.filter(
-        (o) =>
-          o.id.toLowerCase().includes(q) ||
-          o.displayStatus.toLowerCase().includes(q) ||
-          o.status.toLowerCase().includes(q),
-      );
+      list = list.filter((o) => o.id.toLowerCase().includes(q) || o.displayStatus.toLowerCase().includes(q) || o.status.toLowerCase().includes(q));
     }
 
     list.sort((a, b) => {
@@ -65,11 +61,7 @@ function OrdersContent() {
   }, [tab, query, sort]);
 
   const activeId = highlightId ?? selectedOrderId;
-  const activeOrder =
-    filtered.find((o) => o.id === activeId) ??
-    pageItems.find((o) => o.id === activeId) ??
-    pageItems[0] ??
-    filtered[0];
+  const activeOrder = filtered.find((o) => o.id === activeId) ?? pageItems[0] ?? filtered[0];
 
   useEffect(() => {
     if (activeOrder?.id) setSelectedOrderId(activeOrder.id);
@@ -97,32 +89,18 @@ function OrdersContent() {
   ];
 
   return (
-    <ResidentShell greeting="My Orders" subtitle="Track and manage your laundry orders">
+    <ResidentShell greeting="My Orders" subtitle="Track progress, manage recent pickups, and revisit old orders">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-wrap gap-2">
           {tabs.map((t) => (
-            <Button
-              key={t.id}
-              size="sm"
-              variant={tab === t.id ? "default" : "outline"}
-              onClick={() => setTab(t.id)}
-            >
+            <Button key={t.id} size="sm" variant={tab === t.id ? "default" : "outline"} onClick={() => setTab(t.id)}>
               {t.label}
             </Button>
           ))}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by order id or status"
-            className="w-full sm:w-64"
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setSort((s) => (s === "newest" ? "oldest" : "newest"))}
-          >
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search orders" className="w-full sm:w-64" />
+          <Button size="sm" variant="outline" onClick={() => setSort((s) => (s === "newest" ? "oldest" : "newest"))}>
             Sort: {sort === "newest" ? "Newest" : "Oldest"}
           </Button>
         </div>
@@ -132,35 +110,19 @@ function OrdersContent() {
         <div className="space-y-3 lg:col-span-2">
           {pageItems.length === 0 ? (
             <Card>
-              <CardContent className="p-8 text-center text-sm text-muted-foreground">
-                No orders match this filter.
-              </CardContent>
+              <CardContent className="p-8 text-center text-sm text-muted-foreground">No orders match this filter.</CardContent>
             </Card>
           ) : (
             pageItems.map((order) => (
-              <button
-                key={order.id}
-                onClick={() => setSelectedOrderId(order.id)}
-                className={`w-full rounded-xl border bg-card p-4 text-left transition ${
-                  activeOrder?.id === order.id
-                    ? "border-primary/50 shadow-sm"
-                    : "border-border hover:bg-muted/40"
-                }`}
-              >
-                <div className="flex items-start justify-between">
+              <button key={order.id} onClick={() => setSelectedOrderId(order.id)} className={`w-full rounded-2xl border bg-card p-4 text-left transition ${activeOrder?.id === order.id ? "border-primary/40 shadow-sm" : "border-border hover:bg-muted/40"}`}>
+                <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold">#{order.id}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Placed: {order.placedDate} · {order.garments} items
-                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">Placed {order.placedDate} · {order.garments} items</p>
                   </div>
                   <Badge variant={order.badgeVariant}>{order.displayStatus}</Badge>
                 </div>
-                {order.addons.length > 0 && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Add-ons: {order.addons.join(", ")}
-                  </p>
-                )}
+                {order.addons.length > 0 && <p className="mt-2 text-xs text-muted-foreground">Add-ons: {order.addons.join(", ")}</p>}
                 <div className="mt-3">
                   <OrderHorizontalStepper stages={order.stages} currentStage={order.currentStage} />
                 </div>
@@ -170,55 +132,30 @@ function OrdersContent() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                Next
-              </Button>
+              <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</Button>
+              <span className="text-xs text-muted-foreground">Page {page} of {totalPages}</span>
+              <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</Button>
             </div>
           )}
         </div>
 
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>
-              {activeOrder ? `Order #${activeOrder.id}` : "Order details"}
-            </CardTitle>
-            {activeOrder && (
-              <p className="text-sm text-muted-foreground">
-                Pickup: {activeOrder.pickupDate} · {activeOrder.pickupTime}
-              </p>
-            )}
+            <CardTitle>{activeOrder ? `Order #${activeOrder.id}` : "Order details"}</CardTitle>
+            {activeOrder && <p className="text-sm text-muted-foreground">Pickup: {activeOrder.pickupDate} · {activeOrder.pickupTime}</p>}
           </CardHeader>
           <CardContent>
             {activeOrder ? (
               <>
                 <OrderVerticalTimeline events={trackingEvents} />
-                <div className="mt-6 flex gap-2">
-                  <Button variant="outline" size="sm">
-                    Download Receipt
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    Report Issue
-                  </Button>
-                  {activeOrder.status !== "Delivered" && (
-                    <Button variant="outline" size="sm">
-                      Cancel Order
-                    </Button>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <Link href="/resident/pickup" className="inline-flex">
+                    <Button variant="outline" size="sm">Reorder</Button>
+                  </Link>
+                  <Button variant="outline" size="sm">Download Receipt</Button>
+                  <Button variant="outline" size="sm">Report Issue</Button>
+                  {activeOrder.status !== "Delivered" && activeOrder.status !== "Cancelled" && (
+                    <Button variant="outline" size="sm">Cancel Order</Button>
                   )}
                 </div>
               </>

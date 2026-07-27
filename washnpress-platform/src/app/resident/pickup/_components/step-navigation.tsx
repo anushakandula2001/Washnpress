@@ -27,6 +27,7 @@ export function StepNavigation({
 
   const isFirst = step === "slot";
   const isReview = step === "review";
+  const isFinalStep = step === "review";
 
   return (
     <div
@@ -60,7 +61,7 @@ export function StepNavigation({
         loadingText="Confirming…"
         onClick={onNext}
       >
-        {isReview ? (
+        {isFinalStep ? (
           "Confirm Pickup"
         ) : (
           <>

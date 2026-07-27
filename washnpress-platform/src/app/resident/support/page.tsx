@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Phone, MessageCircle } from "lucide-react";
+import { Phone, MessageCircle, Sparkles, CheckCircle2 } from "lucide-react";
 import { ResidentShell } from "@/components/resident/resident-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ type Ticket = {
 export default function SupportPage() {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [customReason, setCustomReason] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -51,16 +52,21 @@ export default function SupportPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!category || description.trim().length < 10) {
-      setError("Select a category and enter at least 10 characters.");
+    const resolvedDescription = category === "Other"
+      ? `${description.trim()} ${customReason.trim()}`.trim()
+      : description.trim();
+
+    if (!category || resolvedDescription.length < 10) {
+      setError("Select a category and describe your issue in at least 10 characters.");
       return;
     }
     setError(null);
     try {
-      await api.support.create({ category, description: description.trim() });
+      await api.support.create({ category, description: resolvedDescription });
       setSubmitted(true);
       setCategory("");
       setDescription("");
+      setCustomReason("");
       await loadTickets();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create ticket");
@@ -82,14 +88,20 @@ export default function SupportPage() {
               </p>
             )}
             {submitted ? (
-              <div className="rounded-xl bg-emerald-500/10 p-6 text-center">
-                <p className="font-semibold text-emerald-700">Ticket Submitted!</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  We&apos;ll get back to you within 6 hours.
-                </p>
-                <Button className="mt-3" variant="outline" size="sm" onClick={() => setSubmitted(false)}>
-                  Submit Another
-                </Button>
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                  <CheckCircle2 className="h-6 w-6" />
+                </div>
+                <p className="mt-4 font-semibold text-emerald-700">Ticket submitted successfully</p>
+                <p className="mt-2 text-sm text-muted-foreground">A care specialist will reply shortly. You can continue the chat while waiting.</p>
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                  <Button className="gap-1" variant="outline" size="sm" onClick={() => setSubmitted(false)}>
+                    <Sparkles className="h-4 w-4" /> Open another ticket
+                  </Button>
+                  <Button className="gap-1" size="sm">
+                    <MessageCircle className="h-4 w-4" /> Continue chat
+                  </Button>
+                </div>
               </div>
             ) : (
               <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
@@ -121,6 +133,17 @@ export default function SupportPage() {
                     placeholder="Minimum 10 characters"
                   />
                 </label>
+                {category === "Other" && (
+                  <label className="block text-sm">
+                    <span className="text-muted-foreground">Tell us more</span>
+                    <Input
+                      value={customReason}
+                      onChange={(e) => setCustomReason(e.target.value)}
+                      className="mt-1"
+                      placeholder="Share the specific issue"
+                    />
+                  </label>
+                )}
                 <Button type="submit">Submit Ticket</Button>
               </form>
             )}
@@ -149,9 +172,6 @@ export default function SupportPage() {
               ))
             )}
             <div className="flex gap-2 pt-2">
-              <Button variant="outline" size="sm" className="gap-1">
-                <Phone className="h-3.5 w-3.5" /> Call
-              </Button>
               <Button variant="outline" size="sm" className="gap-1">
                 <MessageCircle className="h-3.5 w-3.5" /> Chat
               </Button>

@@ -41,6 +41,7 @@ type PickupContextValue = PickupBookingState & {
   setDate: (iso: string) => void;
   setSlot: (id: string) => void;
   setGarmentQty: (id: string, qty: number) => void;
+  addCustomGarment: (name: string, qty: number) => void;
   toggleService: (id: string) => void;
   setInstructions: (value: string) => void;
   goNext: () => void;
@@ -54,6 +55,10 @@ const PickupContext = createContext<PickupContextValue | null>(null);
 const initialGarments = Object.fromEntries(
   ["shirts", "trousers", "dresses", "bedding", "towels", "others"].map((id) => [id, 0]),
 );
+
+function buildDefaultGarments(options: GarmentOption[]) {
+  return Object.fromEntries(options.map((option) => [option.id, 0]));
+}
 
 function createInitialState(): PickupBookingState {
   const dates = buildDateOptions();
@@ -184,6 +189,8 @@ export function PickupProvider({ children }: { children: ReactNode }) {
         return Boolean(state.selectedSlotId);
       case "garments":
         return totalGarmentCount(state.garments) > 0;
+      case "other-clothes":
+        return true;
       case "addons":
         return state.selectedServiceIds.length > 0;
       case "review":
@@ -201,7 +208,7 @@ export function PickupProvider({ children }: { children: ReactNode }) {
     if (state.step === "review" || state.step === "success") return;
     const idx = STEP_ORDER.indexOf(state.step);
     const next = STEP_ORDER[idx + 1];
-    if (next && next !== "success") setStep(next, 1);
+    if (next) setStep(next, 1);
   }, [state.step, setStep]);
 
   const goBack = useCallback(() => {
@@ -233,6 +240,31 @@ export function PickupProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const addCustomGarment = useCallback((name: string, qty: number) => {
+    const cleaned = name.trim();
+    if (!cleaned || qty <= 0) return;
+    const slug = `custom-${cleaned.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}`;
+    setGarmentOptions((prev) => {
+      const exists = prev.some((option) => option.id === slug);
+      if (exists) return prev;
+      return [
+        ...prev,
+        {
+          id: slug,
+          name: cleaned,
+          description: "Custom garment",
+          icon: "package",
+          weightKg: 0.35,
+          priceInr: 95,
+        },
+      ];
+    });
+    setState((s) => ({
+      ...s,
+      garments: { ...s.garments, [slug]: Math.max(0, Math.min(50, qty)) },
+    }));
+  }, []);
+
   const toggleService = useCallback((id: string) => {
     setState((s) => {
       const exists = s.selectedServiceIds.includes(id);
@@ -252,6 +284,8 @@ export function PickupProvider({ children }: { children: ReactNode }) {
     const next = createInitialState();
     setBookingError(null);
     setState({ ...next, slotsLoading: false });
+    setGarmentOptions(GARMENT_OPTIONS);
+    setServiceOptions(SERVICE_OPTIONS);
   }, []);
 
   const confirmBooking = useCallback(async () => {
@@ -302,6 +336,7 @@ export function PickupProvider({ children }: { children: ReactNode }) {
       setDate,
       setSlot,
       setGarmentQty,
+      addCustomGarment,
       toggleService,
       setInstructions,
       goNext,
@@ -323,6 +358,7 @@ export function PickupProvider({ children }: { children: ReactNode }) {
       setDate,
       setSlot,
       setGarmentQty,
+      addCustomGarment,
       toggleService,
       setInstructions,
       goNext,

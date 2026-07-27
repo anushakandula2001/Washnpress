@@ -2,7 +2,7 @@
 
 import type { ComponentType } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Shirt, Minus, Plus, Package, BedDouble, Bath, Layers } from "lucide-react";
+import { Shirt, Minus, Plus, Package, BedDouble, Bath, Layers, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { estimateWeightKg, totalGarmentCount } from "../_data/pickup-constants";
 import { usePickup } from "../hooks/use-pickup";
@@ -29,7 +29,7 @@ export function GarmentStep() {
           What are we picking up?
         </h2>
         <p className="mt-2 max-w-xl text-sm text-muted-foreground md:text-base">
-          Prices are managed by Admin. Add approximate quantities for this pickup.
+          Add your garments and any other soft goods for this pickup. Prices update as you refine the basket.
         </p>
       </div>
 
@@ -127,9 +127,12 @@ export function GarmentStep() {
           </motion.p>
         </div>
         <div className="rounded-2xl border border-border bg-gradient-to-br from-secondary/10 to-transparent p-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Estimated laundry weight
-          </p>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Estimated laundry weight
+            </p>
+          </div>
           <motion.p
             key={weight.toFixed(1)}
             initial={{ opacity: 0, y: 6 }}

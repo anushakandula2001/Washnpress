@@ -1,6 +1,6 @@
 import type { TimeWindow } from "@/lib/types";
 
-export type PickupStepId = "slot" | "garments" | "addons" | "review" | "success";
+export type PickupStepId = "slot" | "garments" | "other-clothes" | "addons" | "review" | "success";
 
 export type SlotAvailability = "available" | "few" | "booked";
 
@@ -31,6 +31,7 @@ export type GarmentOption = {
   description: string;
   icon: string;
   weightKg: number;
+  priceInr?: number;
 };
 
 export type ServiceOption = {

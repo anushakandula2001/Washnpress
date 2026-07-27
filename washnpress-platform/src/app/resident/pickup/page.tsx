@@ -12,6 +12,7 @@ import { GarmentStep } from "./_steps/garnment-step";
 import { AddonsStep } from "./_steps/addons-step";
 import { SummaryStep } from "./_steps/summary-step";
 import { SuccessStep } from "./_steps/success-step";
+import { OtherClothesStep } from "./_steps/other-clothes-step";
 
 function PickupFlow() {
   const {
@@ -45,54 +46,38 @@ function PickupFlow() {
   return (
     <ResidentShell
       greeting="Schedule Pickup"
-      subtitle="A premium, guided booking experience for doorstep laundry"
+      subtitle="A guided flow for your next pickup, available in one simple journey"
     >
-      <div className="space-y-6 pb-28 lg:pb-8">
+      <div className="mx-auto max-w-4xl space-y-6 pb-24 lg:pb-8">
         {bookingError && (
-          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {bookingError}
           </div>
         )}
         {step !== "success" && <PickupStepper current={step} />}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.85fr)] lg:items-start">
-          <div className="min-w-0 space-y-6">
-            <div
-              className={
-                step === "success"
-                  ? "min-w-0"
-                  : "rounded-[24px] border border-border/80 bg-card p-5 shadow-sm md:p-8"
-              }
+        <div className="rounded-[28px] border border-border/80 bg-card p-4 shadow-sm sm:p-6 lg:p-8">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={step}
+              custom={direction}
+              variants={stepVariants(direction)}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={transition}
             >
-              <AnimatePresence mode="wait" custom={direction}>
-                <motion.div
-                  key={step}
-                  custom={direction}
-                  variants={stepVariants(direction)}
-                  initial="enter"
-                  animate="center"
-                  exit="exit"
-                  transition={transition}
-                >
-                  {step === "slot" && <SlotStep />}
-                  {step === "garments" && <GarmentStep />}
-                  {step === "addons" && <AddonsStep />}
-                  {step === "review" && <SummaryStep />}
-                  {step === "success" && <SuccessStep />}
-                </motion.div>
-              </AnimatePresence>
-            </div>
+              {step === "slot" && <SlotStep />}
+              {step === "garments" && <GarmentStep />}
+              {step === "other-clothes" && <OtherClothesStep />}
+              {step === "addons" && <AddonsStep />}
+              {step === "review" && <SummaryStep />}
+              {step === "success" && <SuccessStep />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-            <StepNavigation
-              step={step}
-              canContinue={canContinue}
-              submitting={submitting}
-              onBack={goBack}
-              onNext={handleNext}
-              className="hidden lg:flex"
-            />
-          </div>
-
+        {step === "review" && (
           <BookingSummary
             step={step}
             selectedSlot={selectedSlot}
@@ -103,23 +88,9 @@ function PickupFlow() {
             serviceOptions={serviceOptions}
             taxRate={taxRate}
             deliveryFee={deliveryFee}
-            className="hidden lg:block"
+            className="w-full"
           />
-        </div>
-
-        {/* Mobile summary (collapses above sticky CTA) */}
-        <BookingSummary
-          step={step}
-          selectedSlot={selectedSlot}
-          garments={garments}
-          selectedServiceIds={selectedServiceIds}
-          instructions={instructions}
-          garmentOptions={garmentOptions}
-          serviceOptions={serviceOptions}
-          taxRate={taxRate}
-          deliveryFee={deliveryFee}
-          className="lg:hidden"
-        />
+        )}
 
         <StepNavigation
           step={step}
@@ -127,7 +98,7 @@ function PickupFlow() {
           submitting={submitting}
           onBack={goBack}
           onNext={handleNext}
-          className="lg:hidden"
+          className="w-full"
         />
       </div>
     </ResidentShell>
