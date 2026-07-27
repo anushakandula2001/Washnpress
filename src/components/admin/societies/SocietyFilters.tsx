@@ -57,7 +57,7 @@ export function SocietyFilters({
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="coming_soon">Upcoming</option>
+              
             </select>
           </div>
 
@@ -77,24 +77,10 @@ export function SocietyFilters({
             </select>
           </div>
 
-          {/* State Dropdown */}
-          <div>
-            <select
-              className={selectClass}
-              value={filters.state}
-              onChange={(e) => onChange({ state: e.target.value })}
-            >
-              <option value="">All States</option>
-              {states.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+         
+        
 
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 items-end">
+        
           {/* Sort By Dropdown */}
           <div className="sm:col-span-1">
             <label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 block">
@@ -109,10 +95,7 @@ export function SocietyFilters({
               <option value="name_desc">Name Z → A</option>
               <option value="newest">Newest</option>
               <option value="oldest">Oldest</option>
-              <option value="residents">Most Residents</option>
-              <option value="orders">Most Orders</option>
-              <option value="revenue">Highest Revenue</option>
-              <option value="wallet">Highest Wallet</option>
+              
             </select>
           </div>
 

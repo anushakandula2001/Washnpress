@@ -9,7 +9,7 @@ import { usePagination } from "@/lib/admin/use-pagination";
 import { exportToCsv, exportToExcel, exportToPdf } from "@/lib/admin/export-utils";
 import { BulkActionBar } from "@/components/admin/shared/BulkActionBar";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
-import { OperatorStats } from "@/components/admin/operators/OperatorStats";
+
 import { OperatorToolbar } from "@/components/admin/operators/OperatorToolbar";
 import { OperatorFilters } from "@/components/admin/operators/OperatorFilters";
 import { OperatorTable } from "@/components/admin/operators/OperatorTable";
@@ -297,7 +297,7 @@ export default function OperatorsAdminPage() {
       )}
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
-      <OperatorStats rows={rows} loading={loading} onFilter={handleStatFilter} />
+      
       <OperatorToolbar
        
         onCreate={() => setWizardOpen(true)}

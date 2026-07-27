@@ -67,13 +67,11 @@ export function SocietyProfile({
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="residents">Residents</TabsTrigger>
           <TabsTrigger value="operators">Operators</TabsTrigger>
-          <TabsTrigger value="executives">Executives</TabsTrigger>
+          
           <TabsTrigger value="slots">Pickup Slots</TabsTrigger>
           <TabsTrigger value="orders">Orders</TabsTrigger>
           <TabsTrigger value="subscriptions">Subscriptions</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="audit">Audit Logs</TabsTrigger>
+          
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 

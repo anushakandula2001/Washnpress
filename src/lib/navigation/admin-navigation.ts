@@ -127,8 +127,8 @@ export const adminNavGroups: AdminNavGroup[] = [
 export const adminQuickActions = [
   { href: "/admin/societies?create=1", label: "Create Society", icon: Plus },
   { href: "/admin/operators?create=1", label: "Create Operator", icon: Plus },
-  { href: "/admin/residents", label: "Create Resident", icon: UserPlus },
-  { href: "/admin/orders?create=1", label: "Create Order", icon: ShoppingBag },
+  // { href: "/admin/residents", label: "Create Resident", icon: UserPlus },
+  // { href: "/admin/orders?create=1", label: "Create Order", icon: ShoppingBag },
 ] as const;
 
 export function flattenAdminNav(groups: AdminNavGroup[] = adminNavGroups): AdminNavItem[] {

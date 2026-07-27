@@ -10,7 +10,6 @@ import { usePagination } from "@/lib/admin/use-pagination";
 import { exportToCsv, exportToExcel, exportToPdf } from "@/lib/admin/export-utils";
 import { BulkActionBar } from "@/components/admin/shared/BulkActionBar";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
-import { SocietyStats } from "@/components/admin/societies/SocietyStats";
 import { SocietyToolbar } from "@/components/admin/societies/SocietyToolbar";
 import { SocietyFilters as SocietyFiltersPanel } from "@/components/admin/societies/SocietyFilters";
 import { SocietyCards } from "@/components/admin/societies/SocietyCards";
@@ -227,7 +226,7 @@ export default function AdminSocietiesPage() {
     >
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
-      <SocietyStats rows={rows} loading={loading} onFilter={handleStatFilter} />
+      {/* <SocietyStats rows={rows} loading={loading} onFilter={handleStatFilter} /> */}
       <SocietyToolbar
         viewMode={viewMode}
         onViewModeChange={setViewMode}
