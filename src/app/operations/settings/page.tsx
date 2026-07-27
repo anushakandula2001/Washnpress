@@ -235,9 +235,26 @@ export default function SettingsPage() {
                       </div>
                       <Badge variant="success">Active Now</Badge>
                     </div>
-                    <Button variant="ghost" className="text-destructive w-full justify-start hover:text-destructive hover:bg-destructive/10">
-                      Sign out of all other sessions
-                    </Button>
+                    <Button
+                        variant="ghost"
+                        className="text-destructive w-full justify-start hover:text-destructive hover:bg-destructive/10"
+                        onClick={async () => {
+                          const res = await fetch("/api/operations/settings/logout-all", {
+                            method: "POST",
+                            credentials: "include",
+                          });
+
+                          const data = await res.json();
+
+                          if (res.ok) {
+                            toast("All other sessions have been signed out.", "success");
+                          } else {
+                            toast(data.message ?? "Failed to sign out sessions.", "error");
+                          }
+                        }}
+                      >
+                        Sign out of all other sessions
+                      </Button>
                   </div>
                 </CardContent>
               </Card>
