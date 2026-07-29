@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Menu, X, Bell, Moon, Sun, User } from "lucide-react";
+import { Menu, X, Bell, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { cn } from "@/lib/utils/cn";
+import { ProfileDropdown } from "@/components/admin/ProfileDropdown";
+import { LogoutModal } from "@/components/admin/LogoutModal";
 import { api } from "@/frontend/api-client";
 
 export function AdminShell({
@@ -17,7 +18,8 @@ export function AdminShell({
   subtitle?: string;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [userName, setUserName] = useState("Admin");
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const [userName, setUserName] = useState("Platform Admin");
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -76,10 +78,6 @@ export function AdminShell({
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <div className="hidden text-right sm:block">
-                <p className="text-sm font-medium text-foreground">{userName}</p>
-                <p className="text-xs text-muted-foreground">Administrator</p>
-              </div>
               <button
                 type="button"
                 className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-muted"
@@ -97,19 +95,21 @@ export function AdminShell({
                   {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </button>
               )}
-              <button
-                type="button"
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-full border border-border bg-primary/10 text-primary",
-                )}
-                aria-label="Profile"
-              >
-                <User className="h-4 w-4" />
-              </button>
+              <ProfileDropdown
+                userName={userName || "Platform Admin"}
+                roleTitle="Administrator"
+                email="admin@washnpress.com"
+                onLogoutClick={() => setLogoutModalOpen(true)}
+              />
             </div>
           </div>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+
+        <LogoutModal
+          isOpen={logoutModalOpen}
+          onClose={() => setLogoutModalOpen(false)}
+        />
       </div>
     </div>
   );
