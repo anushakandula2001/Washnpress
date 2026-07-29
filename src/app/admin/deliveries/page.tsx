@@ -9,7 +9,6 @@ import { usePagination } from "@/lib/admin/use-pagination";
 import { exportToCsv, exportToExcel, exportToPdf } from "@/lib/admin/export-utils";
 import { BulkActionBar } from "@/components/admin/shared/BulkActionBar";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
-import { DeliveryStats } from "@/components/admin/deliveries/DeliveryStats";
 import { DeliveryToolbar } from "@/components/admin/deliveries/DeliveryToolbar";
 import { DeliveryFilters } from "@/components/admin/deliveries/DeliveryFilters";
 import { DeliveryTable } from "@/components/admin/deliveries/DeliveryTable";
@@ -236,8 +235,6 @@ export default function AdminDeliveriesPage() {
       subtitle="Manage delivery pipeline — ready, out for delivery, delivered, and failed orders"
     >
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
-
-      <DeliveryStats rows={statsRows} loading={loading && statsRows.length === 0} onTabChange={setTab} />
 
       <div className="mb-4 flex flex-wrap gap-2">
         {DELIVERY_TABS.map((f) => (

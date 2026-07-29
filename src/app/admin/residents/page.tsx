@@ -9,7 +9,7 @@ import { usePagination } from "@/lib/admin/use-pagination";
 import { exportToCsv, exportToExcel, exportToPdf } from "@/lib/admin/export-utils";
 import { BulkActionBar } from "@/components/admin/shared/BulkActionBar";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
-import { ResidentsStats } from "@/components/admin/residents/ResidentsStats";
+
 import { ResidentsToolbar } from "@/components/admin/residents/ResidentsToolbar";
 import { ResidentsFilters } from "@/components/admin/residents/ResidentsFilters";
 import { ResidentsTable } from "@/components/admin/residents/ResidentsTable";
@@ -34,9 +34,7 @@ function applyClientFilters(rows: ResidentRow[], filters: ResidentFilters): Resi
     case "z-a":
       result.sort((a, b) => (b.full_name ?? "").localeCompare(a.full_name ?? ""));
       break;
-    case "wallet":
-      result.sort((a, b) => Number(b.wallet_balance) - Number(a.wallet_balance));
-      break;
+
     case "orders":
       result.sort((a, b) => b.orders_count - a.orders_count);
       break;
@@ -151,10 +149,6 @@ export default function AdminResidentsPage() {
       String(r.orders_count),
       r.status,
     ]);
-    if (format === "csv") exportToCsv("residents.csv", headers, data);
-    else if (format === "excel") exportToExcel("residents.xls", headers, data);
-    else exportToPdf("residents.pdf", "Residents", headers, data);
-    toast("Export started", "success");
   }
 
   function handleAction(action: string, row: ResidentRow) {
@@ -200,7 +194,6 @@ export default function AdminResidentsPage() {
     >
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
-      <ResidentsStats rows={rows} loading={loading} onFilter={handleStatFilter} />
       <ResidentsToolbar
       />
       <ResidentsFilters

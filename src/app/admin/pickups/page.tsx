@@ -7,7 +7,6 @@ import { adminNav } from "@/lib/portal-nav";
 import { usePagination } from "@/lib/admin/use-pagination";
 import { exportToCsv, exportToExcel, exportToPdf } from "@/lib/admin/export-utils";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
-import { PickupStats } from "@/components/admin/pickups/PickupStats";
 import { PickupToolbar } from "@/components/admin/pickups/PickupToolbar";
 import { PickupFilters } from "@/components/admin/pickups/PickupFilters";
 import { PickupTable } from "@/components/admin/pickups/PickupTable";
@@ -220,7 +219,6 @@ export default function AdminPickupsPage() {
       greeting="Pickups"
       subtitle={`${filtered.length} pickups · ${tabLabel}`}
     >
-      <PickupStats stats={stats} loading={loading && !stats} onTabChange={setTab} />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as PickupTab)} className="mb-4">
         <TabsList>

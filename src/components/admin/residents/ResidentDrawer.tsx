@@ -83,7 +83,7 @@ export function ResidentDrawer({
             <SheetBody className="pt-0">
               <Tabs value={tab} onValueChange={setTab}>
                 <TabsList className="mb-2">
-                  {["profile", "orders", "wallet", "subscription", "addresses", "activity", "support", "notifications", "insights"].map((t) => (
+                  {["profile", "orders",  "subscription", "addresses", "activity", "support", "notifications", "insights"].map((t) => (
                     <TabsTrigger key={t} value={t} className="capitalize">
                       {t === "insights" ? "AI Insights" : t}
                     </TabsTrigger>
@@ -91,7 +91,7 @@ export function ResidentDrawer({
                 </TabsList>
                 <TabsContent value="profile"><ResidentProfile data={data} /></TabsContent>
                 <TabsContent value="orders"><ResidentOrders data={data} /></TabsContent>
-                <TabsContent value="wallet"><ResidentWallet data={data} residentId={residentId!} onRefresh={loadDetail} /></TabsContent>
+            
                 <TabsContent value="subscription"><ResidentSubscription data={data} /></TabsContent>
                 <TabsContent value="addresses"><ResidentProfile data={data} showAddresses /></TabsContent>
                 <TabsContent value="activity"><ResidentActivity data={data} /></TabsContent>

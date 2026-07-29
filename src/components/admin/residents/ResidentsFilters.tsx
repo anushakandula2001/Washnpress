@@ -205,7 +205,6 @@ export function ResidentsFilters({
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="pending">Pending Verification</option>
               <option value="blocked">Blocked</option>
             </select>
           </div>
@@ -217,28 +216,18 @@ export function ResidentsFilters({
               value={filters.sortBy}
               onChange={(e) => onChange({ sortBy: e.target.value })}
             >
+              <option value="">Sort By</option>
               <option value="newest">Newest</option>
               <option value="oldest">Oldest</option>
               <option value="name">A → Z</option>
               <option value="z-a">Z → A</option>
               <option value="orders">Most Orders</option>
-              <option value="wallet">Highest Wallet</option>
-              <option value="premium">Premium First</option>
+
             </select>
           </div>
         </div>
 
-        {/* <div className="flex justify-end gap-2 mt-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5"
-            onClick={handleReset}
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Reset Filters
-          </Button>
-        </div> */}
+
       </CardContent>
     </Card>
   );

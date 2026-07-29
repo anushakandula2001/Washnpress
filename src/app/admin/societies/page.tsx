@@ -10,7 +10,6 @@ import { usePagination } from "@/lib/admin/use-pagination";
 import { exportToCsv, exportToExcel, exportToPdf } from "@/lib/admin/export-utils";
 import { BulkActionBar } from "@/components/admin/shared/BulkActionBar";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
-import { SocietyStats } from "@/components/admin/societies/SocietyStats";
 import { SocietyToolbar } from "@/components/admin/societies/SocietyToolbar";
 import { SocietyFilters as SocietyFiltersPanel } from "@/components/admin/societies/SocietyFilters";
 import { SocietyCards } from "@/components/admin/societies/SocietyCards";
@@ -83,10 +82,10 @@ function applyClientFilters(rows: SocietyRow[], filters: SocietyFilters): Societ
     case "oldest":
       result.sort((a, b) => (a.created_at ?? "").localeCompare(b.created_at ?? ""));
       break;
-    case "revenue":
-    case "wallet":
-      result.sort((a, b) => Number(b.wallet_revenue ?? 0) - Number(a.wallet_revenue ?? 0));
-      break;
+    // case "revenue":
+    // case "wallet":
+    //   result.sort((a, b) => Number(b.wallet_revenue ?? 0) - Number(a.wallet_revenue ?? 0));
+    //   break;
     default:
       result.sort((a, b) => a.name.localeCompare(b.name));
   }
@@ -227,7 +226,7 @@ export default function AdminSocietiesPage() {
     >
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
-      <SocietyStats rows={rows} loading={loading} onFilter={handleStatFilter} />
+      {/* <SocietyStats rows={rows} loading={loading} onFilter={handleStatFilter} /> */}
       <SocietyToolbar
         viewMode={viewMode}
         onViewModeChange={setViewMode}
@@ -247,19 +246,6 @@ export default function AdminSocietiesPage() {
           <>
             <Button size="sm" variant="outline" onClick={() => void bulkStatus("active")}>Activate</Button>
             <Button size="sm" variant="outline" onClick={() => void bulkStatus("inactive")}>Deactivate</Button>
-            <Button size="sm" variant="outline" onClick={() => void bulkStatus("coming_soon")}>Coming Soon</Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                const first = [...selected][0];
-                const row = rows.find((r) => r.id === first);
-                if (row) { setAssignSociety(row); setAssignOpen(true); }
-              }}
-            >
-              Assign Operator
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => handleExport("csv")}>Export Selected</Button>
           </>
         }
       />

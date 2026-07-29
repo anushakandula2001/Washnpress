@@ -55,10 +55,10 @@ export default function AdminPricingPage() {
   const [err, setErr] = useState<string | null>(null);
   const [gForm, setGForm] = useState({
     name: "",
-    wash: "40",
-    washIron: "60",
-    iron: "25",
-    dryClean: "80",
+    wash: "",
+    washIron: "",
+    iron: "",
+    dryClean: "",
   });
 
   const load = useCallback(async () => {

@@ -34,23 +34,7 @@ export function PickupToolbar({
           onChange={(e) => onSearchChange(e.target.value)}
         />
       </div>
-      <div className="flex flex-wrap gap-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-sm font-medium hover:bg-muted">
-            <Download className="h-4 w-4" />
-            Export
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => onExport("csv")}>CSV</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onExport("excel")}>Excel</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onExport("pdf")}>PDF</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={onRefresh} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
-      </div>
+      
     </div>
   );
 }

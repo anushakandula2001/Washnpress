@@ -21,7 +21,6 @@ const TABS = [
   "societies",
   "residents",
   "orders",
-  "executives",
   "performance",
   "activity",
   "notifications",
@@ -151,9 +150,7 @@ export function OperatorDrawer({
                 <TabsContent value="orders">
                   <OperatorOrders data={data} />
                 </TabsContent>
-                <TabsContent value="executives">
-                  <OperatorExecutives data={data} />
-                </TabsContent>
+                
                 <TabsContent value="performance">
                   <OperatorPerformance data={data} />
                 </TabsContent>

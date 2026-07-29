@@ -78,8 +78,7 @@ export function OperatorFilters({
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-              <option value="suspended">Suspended</option>
-              <option value="pending">Pending Verification</option>
+              
             </select>
           </div>
 
@@ -110,10 +109,10 @@ export function OperatorFilters({
               <option value="oldest">Oldest</option>
               <option value="name">A → Z</option>
               <option value="z-a">Z → A</option>
-              <option value="residents">Most Residents Managed</option>
+              {/* <option value="residents">Most Residents Managed</option>
               <option value="orders">Most Orders Managed</option>
               <option value="societies">Most Societies Assigned</option>
-              <option value="performance">Highest Performance</option>
+              <option value="performance">Highest Performance</option> */}
             </select>
           </div>
         </div>

@@ -47,30 +47,16 @@ export function DeliveryFilters({
             </option>
           ))}
         </select>
-        {/* <input
-          type="date"
-          className={selectClass}
-          value={filters.dateFrom}
-          onChange={(e) => onChange({ dateFrom: e.target.value })}
-          title="Scheduled from"
-        />
-        <input
-          type="date"
-          className={selectClass}
-          value={filters.dateTo}
-          onChange={(e) => onChange({ dateTo: e.target.value })}
-          title="Scheduled to"
-        /> */}
+  
         <select className={selectClass} value={filters.sortBy} onChange={(e) => onChange({ sortBy: e.target.value })}>
+          <option value="">Sort By</option>
           <option value="newest">Newest Updated</option>
           <option value="oldest">Oldest Updated</option>
           <option value="scheduled">Scheduled Soon</option>
           <option value="garments">Most Garments</option>
           <option value="resident">Resident A-Z</option>
         </select>
-        {/* <Button variant="outline" size="sm" onClick={onReset}>
-          Reset Filters
-        </Button> */}
+
       </CardContent>
     </Card>
   );

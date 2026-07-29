@@ -154,7 +154,7 @@ export default function AdminAddonsPage() {
               <tbody>
                 {addons.map((a) => (
                   <tr key={a.id} className="border-b border-border/60">
-                    <td className="py-2 font-mono text-xs">{a.code}</td>
+                    <td className="font-medium text-xs">{a.code}</td>
                     <td className="font-medium">{a.name}</td>
                     <td className="max-w-[200px] truncate text-muted-foreground">{a.description}</td>
                     <td>₹{a.price_inr}</td>
