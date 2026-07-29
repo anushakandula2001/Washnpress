@@ -52,7 +52,7 @@ export function RippleButton({
       }}
       {...props}
     >
-      <span className="relative z-10 inline-flex items-center justify-center gap-2">
+      <span className="relative z-10 inline-flex items-center justify-center gap-2 whitespace-nowrap">
         <AnimatePresence mode="wait" initial={false}>
           {loading ? (
             <motion.span
@@ -61,7 +61,7 @@ export function RippleButton({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.2 }}
-              className="inline-flex items-center gap-2"
+              className="inline-flex items-center gap-2 whitespace-nowrap"
             >
               <Loader2 className="h-4 w-4 animate-spin" />
               {loadingText ?? "Please wait…"}
@@ -73,6 +73,7 @@ export function RippleButton({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.2 }}
+              className="inline-flex items-center gap-2 whitespace-nowrap"
             >
               {children}
             </motion.span>

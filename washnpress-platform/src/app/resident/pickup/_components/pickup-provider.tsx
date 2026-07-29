@@ -43,6 +43,7 @@ type PickupContextValue = PickupBookingState & {
   setGarmentQty: (id: string, qty: number) => void;
   addCustomGarment: (name: string, qty: number) => void;
   toggleService: (id: string) => void;
+  setAllocationQty: (garmentId: string, serviceId: string, qty: number) => void;
   setInstructions: (value: string) => void;
   goNext: () => void;
   goBack: () => void;
@@ -68,6 +69,7 @@ function createInitialState(): PickupBookingState {
     selectedSlotId: null,
     garments: { ...initialGarments },
     selectedServiceIds: ["wash-fold"],
+    allocations: Object.fromEntries(Object.keys(initialGarments).map((k) => [k, []])),
     instructions: "",
     bookingId: null,
     submitting: false,
@@ -106,11 +108,13 @@ export function PickupProvider({ children }: { children: ReactNode }) {
             description: `Wash ₹${g.wash_price_inr} · Iron ₹${g.iron_price_inr} · Dry clean ₹${g.dry_clean_price_inr}`,
             icon: "shirt",
             weightKg: 0.3,
+            priceInr: Number(g.wash_price_inr ?? g.price_inr ?? 0),
           }));
           setGarmentOptions(mapped);
           setState((s) => ({
             ...s,
             garments: Object.fromEntries(mapped.map((g) => [g.id, s.garments[g.id] ?? 0])),
+            allocations: Object.fromEntries(mapped.map((g) => [g.id, s.allocations?.[g.id] ?? []])),
           }));
         }
 
@@ -189,10 +193,14 @@ export function PickupProvider({ children }: { children: ReactNode }) {
         return Boolean(state.selectedSlotId);
       case "garments":
         return totalGarmentCount(state.garments) > 0;
-      case "other-clothes":
-        return true;
       case "addons":
-        return state.selectedServiceIds.length > 0;
+        // ensure every garment with a positive count has allocations summing to its count
+        return Object.entries(state.garments).every(([id, qty]) => {
+          if ((qty ?? 0) <= 0) return true;
+          const alloc = state.allocations?.[id] ?? [];
+          const totalAllocated = alloc.reduce((s, a) => s + (a.qty ?? 0), 0);
+          return totalAllocated === qty;
+        });
       case "review":
         return Boolean(state.selectedSlotId) && totalGarmentCount(state.garments) > 0;
       default:
@@ -237,7 +245,22 @@ export function PickupProvider({ children }: { children: ReactNode }) {
     setState((s) => ({
       ...s,
       garments: { ...s.garments, [id]: Math.max(0, Math.min(50, qty)) },
+      allocations: { ...s.allocations, [id]: (s.allocations?.[id] ?? []).filter((a) => a.qty > 0) },
     }));
+  }, []);
+
+  const setAllocationQty = useCallback((garmentId: string, serviceId: string, qty: number) => {
+    setState((s) => {
+      const totalAvailable = s.garments[garmentId] ?? 0;
+      const safeQty = Math.max(0, Math.min(totalAvailable, Math.floor(qty ?? 0)));
+      const prev = s.allocations?.[garmentId] ?? [];
+      const exists = prev.some((p) => p.serviceId === serviceId);
+      let nextAlloc = prev.map((p) => (p.serviceId === serviceId ? { ...p, qty: safeQty } : p));
+      if (!exists) nextAlloc = [...nextAlloc, { serviceId, qty: safeQty }];
+      // remove zero entries
+      nextAlloc = nextAlloc.filter((p) => p.qty > 0);
+      return { ...s, allocations: { ...s.allocations, [garmentId]: nextAlloc } };
+    });
   }, []);
 
   const addCustomGarment = useCallback((name: string, qty: number) => {
@@ -296,7 +319,7 @@ export function PickupProvider({ children }: { children: ReactNode }) {
       const result = await confirmPickupBooking({
         slot: selectedSlot,
         specialInstructions: state.instructions,
-        serviceIds: state.selectedServiceIds,
+        allocations: state.allocations,
         garmentCounts: state.garments,
       });
       reschedulePickup(result.pickup);
@@ -315,7 +338,7 @@ export function PickupProvider({ children }: { children: ReactNode }) {
   }, [
     selectedSlot,
     state.instructions,
-    state.selectedServiceIds,
+    state.allocations,
     state.garments,
     reschedulePickup,
     refresh,
@@ -338,6 +361,7 @@ export function PickupProvider({ children }: { children: ReactNode }) {
       setGarmentQty,
       addCustomGarment,
       toggleService,
+      setAllocationQty,
       setInstructions,
       goNext,
       goBack,

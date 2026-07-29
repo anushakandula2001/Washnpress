@@ -11,7 +11,6 @@ import type {
 export const PICKUP_STEPS: PickupStepMeta[] = [
   { id: "slot", label: "Pickup Slot", shortLabel: "Slot" },
   { id: "garments", label: "Garments", shortLabel: "Items" },
-  { id: "other-clothes", label: "Other Clothes", shortLabel: "Other" },
   { id: "addons", label: "Services", shortLabel: "Extras" },
   { id: "review", label: "Review", shortLabel: "Review" },
 ];
@@ -147,6 +146,15 @@ export function formatSlotSummary(slot: PickupSlotOption): string {
   return `${formatTimeDisplay(slot.startTime24h)} – ${formatTimeDisplay(slot.endTime24h)} · ${slot.window}`;
 }
 
+export function formatSlotDate(dateIso: string): string {
+  return new Date(dateIso).toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
 export function estimateWeightKg(
   garments: Record<string, number>,
   options: GarmentOption[] = GARMENT_OPTIONS,
@@ -166,20 +174,33 @@ export function servicesTotal(
 }
 
 export function computeCharges(
-  selectedServiceIds: string[],
+  selectedServiceIds: string[] = [],
   options: ServiceOption[] = SERVICE_OPTIONS,
   taxRate = TAX_RATE,
   deliveryFee = BASE_PICKUP_FEE,
   garmentCounts: Record<string, number> = {},
   garmentOptions: GarmentOption[] = GARMENT_OPTIONS,
+  allocations?: Record<string, Array<{ serviceId: string; qty: number }>>,
 ) {
-  const services = servicesTotal(selectedServiceIds, options);
+  // If allocations provided, compute service totals from allocations quantities
+  let services = 0;
+  if (allocations) {
+    for (const allocs of Object.values(allocations)) {
+      for (const a of allocs) {
+        const svc = options.find((s) => s.id === a.serviceId);
+        services += (a.qty ?? 0) * (svc?.priceInr ?? 0);
+      }
+    }
+  } else {
+    services = servicesTotal(selectedServiceIds, options);
+  }
+
   const garmentSubtotal = garmentOptions.reduce(
     (sum, garment) => sum + (garmentCounts[garment.id] ?? 0) * (garment.priceInr ?? 0),
     0,
   );
   const subtotal = deliveryFee + services + garmentSubtotal;
   const tax = Math.round(subtotal * taxRate);
-  const grandTotal = subtotal + tax;
+  const grandTotal = Math.round(subtotal + tax);
   return { services, garmentSubtotal, subtotal, tax, grandTotal, deliveryFee };
 }
