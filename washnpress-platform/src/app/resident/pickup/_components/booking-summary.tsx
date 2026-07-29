@@ -32,6 +32,7 @@ type BookingSummaryProps = {
   garmentOptions?: GarmentOption[];
   taxRate?: number;
   deliveryFee?: number;
+  allocations?: Record<string, Array<{ serviceId: string; qty: number }>>;
   className?: string;
 };
 
@@ -85,6 +86,7 @@ export function BookingSummary({
   garmentOptions = [],
   taxRate = 0.05,
   deliveryFee = 0,
+  allocations = {},
   className,
 }: BookingSummaryProps) {
   const { transition } = useMotionPrefs();
@@ -98,6 +100,7 @@ export function BookingSummary({
     deliveryFee,
     garments,
     garmentOptions.length ? garmentOptions : undefined,
+    allocations,
   );
   const selectedServices = serviceOptions.filter((s) => selectedServiceIds.includes(s.id));
 
@@ -206,22 +209,24 @@ export function BookingSummary({
               </div>
             </>
           )}
-          {selectedServices.length > 0 && (
-            <div className="space-y-1 border-t border-primary/10 pt-3">
-              {selectedServices.map((s) => (
-                <div key={s.id} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{s.name}</span>
-                  <span className="font-medium">
-                    {s.priceInr === 0 ? "Included" : `₹${s.priceInr}`}
-                  </span>
-                </div>
-              ))}
-              <div className="flex justify-between pt-1 text-sm font-semibold">
-                <span>Est. total</span>
-                <span className="text-primary">₹{charges.grandTotal}</span>
-              </div>
+          <div className="space-y-1 border-t border-primary/10 pt-3">
+            {Object.entries(allocations).flatMap(([gId, allocs]) =>
+              allocs.map((a) => {
+                const svc = serviceOptions.find((s) => s.id === a.serviceId);
+                if (!svc) return null;
+                return (
+                  <div key={`${gId}-${a.serviceId}`} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{svc.name}</span>
+                    <span className="font-medium">{a.qty} × ₹{svc.priceInr} = ₹{a.qty * svc.priceInr}</span>
+                  </div>
+                );
+              }),
+            )}
+            <div className="flex justify-between pt-1 text-sm font-semibold">
+              <span>Est. total</span>
+              <span className="text-primary">₹{charges.grandTotal}</span>
             </div>
-          )}
+          </div>
         </motion.div>
       )}
 

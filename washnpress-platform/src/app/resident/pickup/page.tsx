@@ -7,12 +7,12 @@ import { PickupStepper } from "./_components/pickup-stepper";
 import { BookingSummary } from "./_components/booking-summary";
 import { StepNavigation } from "./_components/step-navigation";
 import { stepVariants, useMotionPrefs } from "./_components/motion-primitives";
+import { totalGarmentCount, computeCharges } from "./_data/pickup-constants";
 import { SlotStep } from "./_steps/slot-step";
 import { GarmentStep } from "./_steps/garnment-step";
 import { AddonsStep } from "./_steps/addons-step";
 import { SummaryStep } from "./_steps/summary-step";
 import { SuccessStep } from "./_steps/success-step";
-import { OtherClothesStep } from "./_steps/other-clothes-step";
 
 function PickupFlow() {
   const {
@@ -29,11 +29,16 @@ function PickupFlow() {
     serviceOptions,
     taxRate,
     deliveryFee,
+    allocations,
     goBack,
     goNext,
     confirmBooking,
   } = usePickup();
   const { transition } = useMotionPrefs();
+
+  const selectedItems = totalGarmentCount(garments);
+  const charges = computeCharges([], serviceOptions, taxRate, deliveryFee, garments, garmentOptions, allocations);
+  const estimatedTotal = charges.grandTotal;
 
   async function handleNext() {
     if (step === "review") {
@@ -41,6 +46,7 @@ function PickupFlow() {
       return;
     }
     goNext();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -48,7 +54,7 @@ function PickupFlow() {
       greeting="Schedule Pickup"
       subtitle="A guided flow for your next pickup, available in one simple journey"
     >
-      <div className="mx-auto max-w-4xl space-y-6 pb-24 lg:pb-8">
+      <div className="mx-auto max-w-4xl space-y-6 pb-40 lg:pb-8">
         {bookingError && (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
             {bookingError}
@@ -69,7 +75,6 @@ function PickupFlow() {
             >
               {step === "slot" && <SlotStep />}
               {step === "garments" && <GarmentStep />}
-              {step === "other-clothes" && <OtherClothesStep />}
               {step === "addons" && <AddonsStep />}
               {step === "review" && <SummaryStep />}
               {step === "success" && <SuccessStep />}
@@ -88,6 +93,7 @@ function PickupFlow() {
             serviceOptions={serviceOptions}
             taxRate={taxRate}
             deliveryFee={deliveryFee}
+            allocations={allocations}
             className="w-full"
           />
         )}
@@ -98,6 +104,8 @@ function PickupFlow() {
           submitting={submitting}
           onBack={goBack}
           onNext={handleNext}
+          selectedItems={selectedItems}
+          estimatedTotal={estimatedTotal}
           className="w-full"
         />
       </div>

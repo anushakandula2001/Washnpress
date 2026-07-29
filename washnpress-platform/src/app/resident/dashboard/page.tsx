@@ -119,18 +119,26 @@ export default function ResidentDashboard() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Quick actions</CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Link key={action.href} href={action.href} className="flex min-h-[84px] items-center justify-start gap-3 rounded-2xl border border-border bg-background p-3 text-sm font-medium text-foreground transition hover:border-primary/30 hover:bg-primary/5">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    <span className="text-left leading-5">{action.label}</span>
-                  </Link>
-                );
-              })}
+            <CardContent>
+              <div className="rounded-2xl border border-border/70 bg-muted/25 p-3 sm:p-4">
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                  {quickActions.map((action) => {
+                    const Icon = action.icon;
+                    return (
+                      <Link
+                        key={action.href}
+                        href={action.href}
+                        className="flex h-full min-h-[100px] flex-col items-center justify-center gap-3 rounded-2xl border border-border bg-background p-4 text-sm font-medium text-foreground no-underline transition hover:border-primary/30 hover:bg-primary/5 hover:no-underline"
+                      >
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <span className="text-center leading-5">{action.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
             </CardContent>
           </Card>
 

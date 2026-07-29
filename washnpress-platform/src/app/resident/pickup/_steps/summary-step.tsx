@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { useResident } from "@/components/resident/resident-provider";
 import {
   computeCharges,
+  formatSlotDate,
   formatSlotSummary,
   totalGarmentCount,
 } from "../_data/pickup-constants";
@@ -33,7 +34,7 @@ function Section({
   return (
     <motion.section
       variants={staggerItem}
-      className="rounded-[22px] border border-border bg-card p-5 shadow-sm"
+      className="border-t border-border pt-5 first:border-t-0 first:pt-0"
     >
       <div className="mb-3 flex items-center gap-2">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -56,6 +57,7 @@ export function SummaryStep() {
     serviceOptions,
     taxRate,
     deliveryFee,
+    allocations,
   } = usePickup();
   const { profile } = useResident();
 
@@ -84,7 +86,7 @@ export function SummaryStep() {
         <Section icon={Clock3} title="Pickup slot">
           {selectedSlot ? (
             <div>
-              <p className="font-medium">{selectedSlot.date}</p>
+              <p className="font-medium">{formatSlotDate(selectedSlot.date)}</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {formatSlotSummary(selectedSlot)}
               </p>
@@ -95,14 +97,33 @@ export function SummaryStep() {
         </Section>
 
         <Section icon={Shirt} title="Garments">
-          <ul className="space-y-2">
-            {garmentLines.map((g) => (
-              <li key={g.id} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{g.name}</span>
-                <span className="font-semibold">× {garments[g.id]}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-4">
+            {garmentLines.map((g) => {
+              const allocs = allocations?.[g.id] ?? [];
+              const garmentTotal = allocs.reduce((s, a) => s + (a.qty ?? 0) * (serviceOptions.find((x) => x.id === a.serviceId)?.priceInr ?? 0), 0);
+              return (
+                <div key={g.id} className="rounded-md border border-border/50 p-3">
+                  <p className="font-medium">{g.name}</p>
+                  <div className="mt-2 space-y-2">
+                    {allocs.map((a) => {
+                      const svc = serviceOptions.find((s) => s.id === a.serviceId);
+                      if (!svc) return null;
+                      return (
+                        <div key={a.serviceId} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">{svc.name}</span>
+                          <span className="font-semibold">{a.qty} × ₹{svc.priceInr} = ₹{a.qty * svc.priceInr}</span>
+                        </div>
+                      );
+                    })}
+                    <div className="flex justify-between pt-2 border-t">
+                      <span className="text-sm text-muted-foreground">Total</span>
+                      <span className="font-semibold">₹{garmentTotal}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
           <p className="mt-3 text-sm font-medium text-primary">
             {itemCount} item{itemCount === 1 ? "" : "s"} total
           </p>

@@ -20,10 +20,9 @@ export function PickupStepper({ current }: { current: PickupStepId }) {
   return (
     <div className="rounded-2xl border border-border/80 bg-card p-5 shadow-sm md:p-6">
       <div className="relative">
-        <div className="absolute left-[12%] right-[12%] top-5 h-1 rounded-full bg-muted md:top-6" />
+        <div className="absolute left-8 right-8 top-5 h-1 rounded-full bg-muted md:top-6 md:left-12 md:right-12" />
         <motion.div
-          className="absolute left-[12%] top-5 h-1 origin-left rounded-full bg-gradient-to-r from-primary to-secondary md:top-6"
-          style={{ width: "76%" }}
+          className="absolute inset-x-8 top-5 h-1 origin-left rounded-full bg-gradient-to-r from-primary to-secondary md:top-6 md:inset-x-12"
           initial={false}
           animate={{ scaleX: progress }}
           transition={reduce ? { duration: 0.01 } : { duration: 0.35, ease: "easeInOut" }}

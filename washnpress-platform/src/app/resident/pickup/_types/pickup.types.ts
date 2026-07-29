@@ -1,6 +1,6 @@
 import type { TimeWindow } from "@/lib/types";
 
-export type PickupStepId = "slot" | "garments" | "other-clothes" | "addons" | "review" | "success";
+export type PickupStepId = "slot" | "garments" | "addons" | "review" | "success";
 
 export type SlotAvailability = "available" | "few" | "booked";
 
@@ -48,6 +48,7 @@ export type PickupBookingState = {
   selectedSlotId: string | null;
   garments: Record<string, number>;
   selectedServiceIds: string[];
+  allocations: Record<string, Array<{ serviceId: string; qty: number }>>;
   instructions: string;
   bookingId: string | null;
   submitting: boolean;
