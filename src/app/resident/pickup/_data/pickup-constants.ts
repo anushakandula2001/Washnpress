@@ -9,13 +9,10 @@ import type {
 } from "../_types/pickup.types";
 
 export const PICKUP_STEPS: PickupStepMeta[] = [
-  { id: "laundry", label: "Laundry Type", shortLabel: "Type" },
+  { id: "date", label: "Pickup Slot", shortLabel: "Slot" },
   { id: "garments", label: "Garments", shortLabel: "Items" },
-  { id: "other", label: "Other Clothes", shortLabel: "Other" },
   { id: "addons", label: "Add-ons", shortLabel: "Extras" },
-  { id: "date", label: "Pickup Date", shortLabel: "Date" },
-  { id: "slot", label: "Time Slot", shortLabel: "Slot" },
-  { id: "review", label: "Booking Summary", shortLabel: "Review" },
+  { id: "review", label: "Review", shortLabel: "Confirm" },
 ];
 
 export const STEP_ORDER = [...PICKUP_STEPS.map((s) => s.id), "success"] as const;

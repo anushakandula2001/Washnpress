@@ -4,14 +4,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ResidentShell } from "@/components/resident/resident-shell";
 import { PickupProvider, usePickup } from "./_components/pickup-provider";
 import { PickupStepper } from "./_components/pickup-stepper";
-import { BookingSummary } from "./_components/booking-summary";
 import { StepNavigation } from "./_components/step-navigation";
 import { stepVariants, useMotionPrefs } from "./_components/motion-primitives";
 import { SlotStep } from "./_steps/slot-step";
-import { DateStep } from "./_steps/date-step";
 import { GarmentStep } from "./_steps/garnment-step";
-import { OtherStep } from "./_steps/other-step";
-import { LaundryStep } from "./_steps/laundry-step";
 import { AddonsStep } from "./_steps/addons-step";
 import { SummaryStep } from "./_steps/summary-step";
 import { SuccessStep } from "./_steps/success-step";
@@ -56,9 +52,7 @@ function PickupFlow() {
   const isGarmentStep = step === "garments";
   const selectedItemsCount = isGarmentStep ? totalGarmentCount(garments) : undefined;
   const estimatedTotal = isGarmentStep ? estimateGarmentTotal(garments, garmentOptions) : undefined;
-  const layoutClass = step === "garments"
-    ? "grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_340px] lg:items-start"
-    : "grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.85fr)] lg:items-start";
+  const layoutClass = "grid gap-6";
 
   async function handleNext() {
     if (step === "review") {
@@ -100,12 +94,9 @@ function PickupFlow() {
                   exit="exit"
                   transition={transition}
                 >
-                  {step === "laundry" && <LaundryStep />}
+                  {step === "date" && <SlotStep />}
                   {step === "garments" && <GarmentStep />}
-                  {step === "other" && <OtherStep />}
                   {step === "addons" && <AddonsStep />}
-                  {step === "date" && <DateStep />}
-                  {step === "slot" && <SlotStep showDateSelection={false} />}
                   {step === "review" && <SummaryStep />}
                   {step === "success" && <SuccessStep />}
                 </motion.div>
@@ -124,36 +115,7 @@ function PickupFlow() {
             />
           </div>
 
-          {step === "review" && (
-            <BookingSummary
-              step={step}
-              selectedSlot={selectedSlot}
-              garments={garments}
-              selectedServiceIds={selectedServiceIds}
-              instructions={instructions}
-              garmentOptions={garmentOptions}
-              serviceOptions={serviceOptions}
-              taxRate={taxRate}
-              deliveryFee={deliveryFee}
-              className="hidden lg:block"
-            />
-          )}
         </div>
-
-        {step === "review" && (
-          <BookingSummary
-            step={step}
-            selectedSlot={selectedSlot}
-            garments={garments}
-            selectedServiceIds={selectedServiceIds}
-            instructions={instructions}
-            garmentOptions={garmentOptions}
-            serviceOptions={serviceOptions}
-            taxRate={taxRate}
-            deliveryFee={deliveryFee}
-            className="lg:hidden"
-          />
-        )}
 
         <StepNavigation
           step={step}

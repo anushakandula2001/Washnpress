@@ -60,7 +60,7 @@ const initialGarments = Object.fromEntries(
 function createInitialState(): PickupBookingState {
   const dates = buildDateOptions();
   return {
-    step: "laundry",
+    step: "date",
     selectedDate: dates[0]?.iso ?? null,
     selectedSlotId: null,
     garments: { ...initialGarments },
@@ -119,14 +119,18 @@ export function PickupProvider({ children }: { children: ReactNode }) {
             priceInr: Number(a.price_inr ?? 0),
             icon: String(a.icon ?? "sparkles"),
           }));
-          setServiceOptions(mapped);
+          const mergedOptions = [
+            ...SERVICE_OPTIONS.filter((option) => !mapped.some((m) => m.id === option.id)),
+            ...mapped,
+          ];
+          setServiceOptions(mergedOptions);
           setState((s) => ({
             ...s,
             selectedServiceIds:
-              s.selectedServiceIds.filter((id) => mapped.some((m) => m.id === id)).length > 0
-                ? s.selectedServiceIds.filter((id) => mapped.some((m) => m.id === id))
-                : mapped[0]
-                  ? [mapped[0].id]
+              s.selectedServiceIds.filter((id) => mergedOptions.some((m) => m.id === id)).length > 0
+                ? s.selectedServiceIds.filter((id) => mergedOptions.some((m) => m.id === id))
+                : mergedOptions[0]
+                  ? [mergedOptions[0].id]
                   : [],
           }));
         }
@@ -158,11 +162,16 @@ export function PickupProvider({ children }: { children: ReactNode }) {
         if (cancelled) return;
         setSlots(data);
         const firstAvailable = data.find((s) => s.remainingCapacity > 0);
-        setState((s) => ({
-          ...s,
-          slotsLoading: false,
-          selectedDate: firstAvailable?.date ?? s.selectedDate,
-        }));
+        setState((s) => {
+          const date = firstAvailable?.date ?? s.selectedDate;
+          const slotForDate = data.find((slot) => slot.date === date && slot.remainingCapacity > 0);
+          return {
+            ...s,
+            slotsLoading: false,
+            selectedDate: date,
+            selectedSlotId: slotForDate?.id ?? null,
+          };
+        });
       } catch (err) {
         if (cancelled) return;
         setSlots([]);
@@ -182,18 +191,12 @@ export function PickupProvider({ children }: { children: ReactNode }) {
 
   const canContinue = useMemo(() => {
     switch (state.step) {
-      case "laundry":
-        return state.selectedServiceIds.some((id) => PRIMARY_LAUNDRY_TYPES.includes(id as typeof PRIMARY_LAUNDRY_TYPES[number]));
+      case "date":
+        return Boolean(state.selectedDate) && Boolean(state.selectedSlotId);
       case "garments":
         return totalGarmentCount(state.garments) > 0;
-      case "other":
-        return true;
       case "addons":
         return true;
-      case "date":
-        return Boolean(state.selectedDate);
-      case "slot":
-        return Boolean(state.selectedSlotId);
       case "review":
         return Boolean(state.selectedSlotId) && totalGarmentCount(state.garments) > 0;
       default:
@@ -213,7 +216,7 @@ export function PickupProvider({ children }: { children: ReactNode }) {
   }, [state.step, setStep]);
 
   const goBack = useCallback(() => {
-    if (state.step === "slot" || state.step === "success") return;
+    if (state.step === "date" || state.step === "success") return;
     const idx = STEP_ORDER.indexOf(state.step);
     const prev = STEP_ORDER[idx - 1];
     if (prev) setStep(prev, -1);
@@ -221,11 +224,11 @@ export function PickupProvider({ children }: { children: ReactNode }) {
 
   const setDate = useCallback((iso: string) => {
     setState((s) => {
-      const stillValid = slots.some((slot) => slot.id === s.selectedSlotId && slot.date === iso);
+      const slotForDate = slots.find((slot) => slot.date === iso && slot.remainingCapacity > 0);
       return {
         ...s,
         selectedDate: iso,
-        selectedSlotId: stillValid ? s.selectedSlotId : null,
+        selectedSlotId: slotForDate?.id ?? null,
       };
     });
   }, [slots]);

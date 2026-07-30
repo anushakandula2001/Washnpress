@@ -29,7 +29,7 @@ export function StepNavigation({
 }: StepNavigationProps) {
   if (step === "success") return null;
 
-  const isFirst = step === "laundry";
+  const isFirst = step === "date";
   const isReview = step === "review";
 
   return (
@@ -40,15 +40,6 @@ export function StepNavigation({
       )}
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {selectedItemsCount !== undefined && (
-          <div className="rounded-2xl border border-border/80 bg-white/90 p-3 shadow-sm backdrop-blur">
-            <p className="text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Selected items</p>
-            <p className="mt-1 text-lg font-semibold text-foreground">{selectedItemsCount} Garments</p>
-            <p className="mt-3 text-[11px] uppercase tracking-[0.3em] text-muted-foreground">Estimated total</p>
-            <p className="mt-1 text-lg font-semibold text-foreground">₹{(estimatedTotal ?? 0).toLocaleString("en-IN")}</p>
-          </div>
-        )}
-
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <Button
             type="button"

@@ -2,21 +2,11 @@
 
 import { motion } from "framer-motion";
 import { usePickup } from "../hooks/use-pickup";
-import { formatSlotSummary } from "../_data/pickup-constants";
 import { springSoft, staggerContainer, staggerItem, useMotionPrefs } from "../_components/motion-primitives";
-import type { TimeWindow } from "@/lib/types";
-import { Check, Sun, Sunset, Moon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import type { PickupSlotOption } from "../_types/pickup.types";
-
-const WINDOW_META: Record<TimeWindow, { icon: typeof Sun; hint: string }> = {
-  Morning: { icon: Sun, hint: "Start fresh" },
-  Afternoon: { icon: Sunset, hint: "Midday window" },
-  Evening: { icon: Moon, hint: "After work" },
-};
 
 export function DateStep() {
-  const { dates, selectedDate, setDate, slots, slotsLoading } = usePickup();
+  const { dates, selectedDate, setDate, slotsLoading } = usePickup();
   const { reduce } = useMotionPrefs();
 
   return (
@@ -26,7 +16,7 @@ export function DateStep() {
           Choose a pickup date
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-          Pick a date that fits your schedule. We will confirm a slot in the following step.
+          Pick a date that works for you; we’ll assign the best available pickup window automatically.
         </p>
       </div>
 
@@ -67,40 +57,18 @@ export function DateStep() {
         </motion.div>
       </div>
 
-      <div className="space-y-7">
-        {slotsLoading ? (
-          <div className="rounded-[24px] border border-border bg-card p-6 text-sm text-muted-foreground">
-            Loading available windows…
-          </div>
-        ) : (
-          Array.from(new Set(slots.map((slot) => slot.window))).map((window) => {
-            const group = slots.filter((slot) => slot.window === window && slot.date === selectedDate);
-            if (group.length === 0) return null;
-            const meta = WINDOW_META[window];
-            return (
-              <section key={window} className="rounded-[24px] border border-border bg-card p-5">
-                <div className="mb-4 flex items-center gap-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <meta.icon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="font-semibold">{window}</p>
-                    <p className="text-sm text-muted-foreground">{meta.hint}</p>
-                  </div>
-                </div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {group.map((slot) => (
-                    <div key={slot.id} className="rounded-2xl border border-border p-4">
-                      <p className="font-semibold">{formatSlotSummary(slot)}</p>
-                      <p className="mt-2 text-sm text-muted-foreground">{slot.availability}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            );
-          })
-        )}
+      <div className="rounded-[24px] border border-border bg-card p-6 text-sm text-muted-foreground">
+        <p className="font-semibold text-foreground">Automatic pickup window</p>
+        <p className="mt-2">
+          We’ll book the best available pickup window for your selected date.
+        </p>
       </div>
+
+      {slotsLoading && (
+        <div className="rounded-[24px] border border-border bg-card p-6 text-sm text-muted-foreground">
+          Loading availability…
+        </div>
+      )}
     </div>
   );
 }
