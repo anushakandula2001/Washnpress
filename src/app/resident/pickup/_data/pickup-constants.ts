@@ -9,10 +9,13 @@ import type {
 } from "../_types/pickup.types";
 
 export const PICKUP_STEPS: PickupStepMeta[] = [
-  { id: "slot", label: "Pickup Slot", shortLabel: "Slot" },
+  { id: "laundry", label: "Laundry Type", shortLabel: "Type" },
   { id: "garments", label: "Garments", shortLabel: "Items" },
-  { id: "addons", label: "Services", shortLabel: "Extras" },
-  { id: "review", label: "Review", shortLabel: "Review" },
+  { id: "other", label: "Other Clothes", shortLabel: "Other" },
+  { id: "addons", label: "Add-ons", shortLabel: "Extras" },
+  { id: "date", label: "Pickup Date", shortLabel: "Date" },
+  { id: "slot", label: "Time Slot", shortLabel: "Slot" },
+  { id: "review", label: "Booking Summary", shortLabel: "Review" },
 ];
 
 export const STEP_ORDER = [...PICKUP_STEPS.map((s) => s.id), "success"] as const;
@@ -35,6 +38,15 @@ export const SERVICE_OPTIONS: ServiceOption[] = [
   { id: "shoes", name: "Shoe Cleaning", description: "Deep clean for leather & canvas", priceInr: 150, icon: "footprints" },
   { id: "curtains", name: "Curtain Cleaning", description: "Specialized wash for home textiles", priceInr: 249, icon: "curtains" },
 ];
+
+export const PRIMARY_LAUNDRY_TYPES = [
+  "wash-fold",
+  "wash-iron",
+  "dry-cleaning",
+  "steam-iron",
+] as const;
+
+export const ADDON_SERVICE_IDS = ["express", "shoes", "curtains"] as const;
 
 export const MAX_INSTRUCTIONS = 240;
 export const TAX_RATE = 0.05;

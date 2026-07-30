@@ -197,21 +197,22 @@ export function ResidentProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const [meData, profileData, walletData, ordersData, pickupData, societiesData, notifData] =
-        await Promise.all([
-          api.me(),
-          api.profile.get().catch(() => null),
-          api.wallet.get().catch(() => ({ balance: 0, transactions: [] })),
-          api.orders.list().catch(() => ({ orders: [] })),
-          api.pickups.get().catch(() => ({ pickup: null })),
-          api.societies().catch(() => ({ societies: [] })),
-          api.notifications().catch(() => ({ notifications: [], unreadCount: 0 })),
-        ]);
-
+      const meData = await api.me();
       const authUser = meData.user as unknown as AuthUser;
       setUser(authUser);
 
-      if (profileData) {
+      const [profileResult, walletResult, ordersResult, pickupResult, societiesResult, notifResult] =
+        await Promise.allSettled([
+          api.profile.get(),
+          api.wallet.get(),
+          api.orders.list(),
+          api.pickups.get(),
+          api.societies(),
+          api.notifications(),
+        ]);
+
+      if (profileResult.status === "fulfilled" && profileResult.value) {
+        const profileData = profileResult.value;
         setProfile({
           name: (profileData.name as string) || authUser.fullName || "Resident",
           flatNumber: (profileData.flatNumber as string) || authUser.unitNumber || "",
@@ -224,17 +225,19 @@ export function ResidentProvider({ children }: { children: ReactNode }) {
           gender: (profileData.gender as string) || null,
         });
       } else {
-        setProfile({
-          name: authUser.fullName || "Resident",
-          flatNumber: authUser.unitNumber || "",
-          tower: authUser.towerBlock || "",
-          floor: null,
-          mobile: authUser.phone,
-          society: authUser.societyName || "",
-          residentCode: null,
-          email: null,
-          gender: null,
-        });
+        setProfile((current) =>
+          current ?? {
+            name: authUser.fullName || "Resident",
+            flatNumber: authUser.unitNumber || "",
+            tower: authUser.towerBlock || "",
+            floor: null,
+            mobile: authUser.phone,
+            society: authUser.societyName || "",
+            residentCode: null,
+            email: null,
+            gender: null,
+          },
+        );
       }
 
       try {
@@ -249,64 +252,77 @@ export function ResidentProvider({ children }: { children: ReactNode }) {
           monthlyInr: (s.monthlyInr as number) ?? 0,
         });
       } catch {
-        setSubscription(null);
+        // Preserve existing subscription if the endpoint fails.
       }
 
-      setBalance(walletData.balance);
-      setTransactions(
-        walletData.transactions.map((t) => ({
-          id: t.id as string,
-          type: t.type as "credit" | "debit",
-          description: t.description as string,
-          date: t.date as string,
-          amountInr: t.amountInr as number,
-        })),
-      );
-
-      const mappedOrders = ordersData.orders.map((o) => mapOrder(o as Record<string, unknown>));
-      setOrders(mappedOrders);
-      setSelectedOrderId((prev) => prev || mappedOrders[0]?.id || "");
-
-      if (pickupData.pickup) {
-        const p = pickupData.pickup;
-        setPickup({
-          id: p.id as string,
-          date: p.date as string,
-          startTime: p.startTime as string,
-          endTime: p.endTime as string,
-          window: p.window as string,
-          status: p.status as ResidentPickup["status"],
-        });
-      } else {
-        setPickup(null);
+      if (walletResult.status === "fulfilled") {
+        const walletData = walletResult.value;
+        setBalance(walletData.balance);
+        setTransactions(
+          walletData.transactions.map((t) => ({
+            id: t.id as string,
+            type: t.type as "credit" | "debit",
+            description: t.description as string,
+            date: t.date as string,
+            amountInr: t.amountInr as number,
+          })),
+        );
       }
 
-      setNotifications(
-        notifData.notifications.map((n) => ({
-          id: n.id as string,
-          title: n.title as string,
-          body: n.body as string,
-          unread: Boolean(n.unread),
-        })),
-      );
+      if (ordersResult.status === "fulfilled") {
+        const ordersData = ordersResult.value;
+        const mappedOrders = ordersData.orders.map((o) => mapOrder(o as Record<string, unknown>));
+        setOrders(mappedOrders);
+        setSelectedOrderId((prev) => prev || mappedOrders[0]?.id || "");
+      }
 
-      const stored =
-        typeof window !== "undefined" ? localStorage.getItem(SOCIETY_STORAGE_KEY) : null;
-      if (stored) {
-        setSelectedSociety(JSON.parse(stored) as Society);
-      } else if (societiesData.societies.length > 0) {
-        const first = societiesData.societies[0] as Record<string, unknown>;
-        const society: Society = {
-          id: first.id as string,
-          name: first.name as string,
-          address: (first.address as string) || "",
-          city: (first.city as string) || "",
-          residents: 0,
-          distanceKm: 0,
-          status: (first.status as Society["status"]) || "Active",
-        };
-        setSelectedSociety(society);
-        localStorage.setItem(SOCIETY_STORAGE_KEY, JSON.stringify(society));
+      if (pickupResult.status === "fulfilled") {
+        const pickupData = pickupResult.value;
+        if (pickupData.pickup) {
+          const p = pickupData.pickup;
+          setPickup({
+            id: p.id as string,
+            date: p.date as string,
+            startTime: p.startTime as string,
+            endTime: p.endTime as string,
+            window: p.window as string,
+            status: p.status as ResidentPickup["status"],
+          });
+        }
+      }
+
+      if (notifResult.status === "fulfilled") {
+        const notifData = notifResult.value;
+        setNotifications(
+          notifData.notifications.map((n) => ({
+            id: n.id as string,
+            title: n.title as string,
+            body: n.body as string,
+            unread: Boolean(n.unread),
+          })),
+        );
+      }
+
+      if (societiesResult.status === "fulfilled") {
+        const societiesData = societiesResult.value;
+        const stored =
+          typeof window !== "undefined" ? localStorage.getItem(SOCIETY_STORAGE_KEY) : null;
+        if (stored) {
+          setSelectedSociety(JSON.parse(stored) as Society);
+        } else if (societiesData.societies.length > 0) {
+          const first = societiesData.societies[0] as Record<string, unknown>;
+          const society: Society = {
+            id: first.id as string,
+            name: first.name as string,
+            address: (first.address as string) || "",
+            city: (first.city as string) || "",
+            residents: 0,
+            distanceKm: 0,
+            status: (first.status as Society["status"]) || "Active",
+          };
+          setSelectedSociety(society);
+          localStorage.setItem(SOCIETY_STORAGE_KEY, JSON.stringify(society));
+        }
       }
     } catch {
       // Keep last known state; avoid reintroducing mock defaults.

@@ -8,7 +8,10 @@ import { BookingSummary } from "./_components/booking-summary";
 import { StepNavigation } from "./_components/step-navigation";
 import { stepVariants, useMotionPrefs } from "./_components/motion-primitives";
 import { SlotStep } from "./_steps/slot-step";
+import { DateStep } from "./_steps/date-step";
 import { GarmentStep } from "./_steps/garnment-step";
+import { OtherStep } from "./_steps/other-step";
+import { LaundryStep } from "./_steps/laundry-step";
 import { AddonsStep } from "./_steps/addons-step";
 import { SummaryStep } from "./_steps/summary-step";
 import { SuccessStep } from "./_steps/success-step";
@@ -53,7 +56,7 @@ function PickupFlow() {
   const isGarmentStep = step === "garments";
   const selectedItemsCount = isGarmentStep ? totalGarmentCount(garments) : undefined;
   const estimatedTotal = isGarmentStep ? estimateGarmentTotal(garments, garmentOptions) : undefined;
-  const layoutClass = isGarmentStep
+  const layoutClass = step === "garments"
     ? "grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_340px] lg:items-start"
     : "grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.85fr)] lg:items-start";
 
@@ -97,9 +100,12 @@ function PickupFlow() {
                   exit="exit"
                   transition={transition}
                 >
-                  {step === "slot" && <SlotStep />}
+                  {step === "laundry" && <LaundryStep />}
                   {step === "garments" && <GarmentStep />}
+                  {step === "other" && <OtherStep />}
                   {step === "addons" && <AddonsStep />}
+                  {step === "date" && <DateStep />}
+                  {step === "slot" && <SlotStep showDateSelection={false} />}
                   {step === "review" && <SummaryStep />}
                   {step === "success" && <SuccessStep />}
                 </motion.div>
@@ -118,7 +124,7 @@ function PickupFlow() {
             />
           </div>
 
-          {!isGarmentStep && (
+          {step === "review" && (
             <BookingSummary
               step={step}
               selectedSlot={selectedSlot}
@@ -134,7 +140,7 @@ function PickupFlow() {
           )}
         </div>
 
-        {!isGarmentStep && (
+        {step === "review" && (
           <BookingSummary
             step={step}
             selectedSlot={selectedSlot}

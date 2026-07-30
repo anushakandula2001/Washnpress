@@ -70,7 +70,7 @@ function SlotChip({
   );
 }
 
-export function SlotStep() {
+export function SlotStep({ showDateSelection = true }: { showDateSelection?: boolean }) {
   const { dates, slots, selectedDate, selectedSlotId, slotsLoading, setDate, setSlot } =
     usePickup();
   const { reduce } = useMotionPrefs();

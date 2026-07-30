@@ -50,11 +50,6 @@ const categories = [
     title: "Winter Wear",
     matcher: (name: string) => /sweater|jacket|coat|hoodie/i.test(name),
   },
-  {
-    id: "household",
-    title: "Household",
-    matcher: (name: string) => /bedsheet|blanket|curtain|pillow|towel|bedding|other/i.test(name),
-  },
 ];
 
 function parsePricing(description: string) {

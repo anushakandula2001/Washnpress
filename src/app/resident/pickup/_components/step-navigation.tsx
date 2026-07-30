@@ -29,7 +29,7 @@ export function StepNavigation({
 }: StepNavigationProps) {
   if (step === "success") return null;
 
-  const isFirst = step === "slot";
+  const isFirst = step === "laundry";
   const isReview = step === "review";
 
   return (

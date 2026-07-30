@@ -110,9 +110,7 @@ export const operationsNav: PortalNavItem[] = [
 ] as const;
 
 export const residentNavExtras: PortalNavItem[] = [
-  { href: "/resident/track", label: "Track Order", icon: MapPin },
   { href: "/resident/notifications", label: "Notifications", icon: Bell },
-  { href: "/resident/addresses", label: "Addresses", icon: MapPin },
 ];
 
 export const OPERATIONS_STAGES = [

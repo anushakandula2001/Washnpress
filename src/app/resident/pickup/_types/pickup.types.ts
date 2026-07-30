@@ -1,6 +1,6 @@
 import type { TimeWindow } from "@/lib/types";
 
-export type PickupStepId = "slot" | "garments" | "addons" | "review" | "success";
+export type PickupStepId = "laundry" | "garments" | "other" | "addons" | "date" | "slot" | "review" | "success";
 
 export type SlotAvailability = "available" | "few" | "booked";
 

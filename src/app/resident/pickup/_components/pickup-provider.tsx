@@ -14,6 +14,7 @@ import {
   buildDateOptions,
   GARMENT_OPTIONS,
   PICKUP_STEPS,
+  PRIMARY_LAUNDRY_TYPES,
   SERVICE_OPTIONS,
   STEP_ORDER,
   totalGarmentCount,
@@ -41,6 +42,7 @@ type PickupContextValue = PickupBookingState & {
   setDate: (iso: string) => void;
   setSlot: (id: string) => void;
   setGarmentQty: (id: string, qty: number) => void;
+  setPrimaryService: (id: string) => void;
   toggleService: (id: string) => void;
   setInstructions: (value: string) => void;
   goNext: () => void;
@@ -58,7 +60,7 @@ const initialGarments = Object.fromEntries(
 function createInitialState(): PickupBookingState {
   const dates = buildDateOptions();
   return {
-    step: "slot",
+    step: "laundry",
     selectedDate: dates[0]?.iso ?? null,
     selectedSlotId: null,
     garments: { ...initialGarments },
@@ -180,12 +182,18 @@ export function PickupProvider({ children }: { children: ReactNode }) {
 
   const canContinue = useMemo(() => {
     switch (state.step) {
-      case "slot":
-        return Boolean(state.selectedSlotId);
+      case "laundry":
+        return state.selectedServiceIds.some((id) => PRIMARY_LAUNDRY_TYPES.includes(id as typeof PRIMARY_LAUNDRY_TYPES[number]));
       case "garments":
         return totalGarmentCount(state.garments) > 0;
+      case "other":
+        return true;
       case "addons":
-        return state.selectedServiceIds.length > 0;
+        return true;
+      case "date":
+        return Boolean(state.selectedDate);
+      case "slot":
+        return Boolean(state.selectedSlotId);
       case "review":
         return Boolean(state.selectedSlotId) && totalGarmentCount(state.garments) > 0;
       default:
@@ -233,13 +241,24 @@ export function PickupProvider({ children }: { children: ReactNode }) {
     }));
   }, []);
 
+  const setPrimaryService = useCallback((id: string) => {
+    setState((s) => {
+      const extras = s.selectedServiceIds.filter(
+        (serviceId) => !PRIMARY_LAUNDRY_TYPES.includes(serviceId as typeof PRIMARY_LAUNDRY_TYPES[number]),
+      );
+      return { ...s, selectedServiceIds: [id, ...extras] };
+    });
+  }, []);
+
   const toggleService = useCallback((id: string) => {
+    if (PRIMARY_LAUNDRY_TYPES.includes(id as typeof PRIMARY_LAUNDRY_TYPES[number])) {
+      return;
+    }
     setState((s) => {
       const exists = s.selectedServiceIds.includes(id);
       const next = exists
         ? s.selectedServiceIds.filter((x) => x !== id)
         : [...s.selectedServiceIds, id];
-      if (next.length === 0) return s;
       return { ...s, selectedServiceIds: next };
     });
   }, []);
@@ -304,6 +323,7 @@ export function PickupProvider({ children }: { children: ReactNode }) {
       setGarmentQty,
       toggleService,
       setInstructions,
+      setPrimaryService,
       goNext,
       goBack,
       resetBooking,
