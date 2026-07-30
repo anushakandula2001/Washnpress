@@ -26,16 +26,11 @@ import { useResident } from "@/components/resident/resident-provider";
 
 const navItems = [
   { href: "/resident/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/resident/subscription", label: "Subscription", icon: CreditCard },
   { href: "/resident/pickup", label: "Schedule Pickup", icon: CalendarClock },
   { href: "/resident/orders", label: "My Orders", icon: Package },
-  { href: "/resident/track", label: "Track Order", icon: MapPin },
+  { href: "/resident/subscription", label: "Subscription", icon: CreditCard },
   { href: "/resident/wallet", label: "Wallet", icon: Wallet },
-  { href: "/resident/addons", label: "Add-on Services", icon: Puzzle },
   { href: "/resident/support", label: "Support", icon: Headphones },
-  { href: "/resident/notifications", label: "Notifications", icon: Bell },
-  { href: "/resident/addresses", label: "Addresses", icon: MapPin },
-  { href: "/resident/impact", label: "Impact", icon: Leaf },
   { href: "/resident/profile", label: "Profile", icon: User },
 ];
 
@@ -63,6 +58,23 @@ function ReferCard() {
         </Link>
       </div>
       <Gift className="absolute -bottom-1 -right-1 h-16 w-16 opacity-20" />
+    </div>
+  );
+}
+
+function ProfileAvatar({ name }: { name?: string }) {
+  const initials = name
+    ? name
+        .split(" ")
+        .map((part) => part[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "R";
+
+  return (
+    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-foreground">
+      {initials}
     </div>
   );
 }
@@ -220,7 +232,13 @@ export function ResidentShell({
                 </div>
               )}
             </div>
-            <NotificationsBell />
+            <div className="flex items-center gap-3">
+              <NotificationsBell />
+              <div className="hidden items-center gap-3 rounded-full border border-border bg-card px-3 py-2 lg:flex">
+                <ProfileAvatar name={useResident().profile?.name} />
+                <span className="text-sm font-medium text-foreground">{useResident().profile?.name ?? "Resident"}</span>
+              </div>
+            </div>
           </div>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>

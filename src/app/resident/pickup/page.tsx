@@ -12,6 +12,22 @@ import { GarmentStep } from "./_steps/garnment-step";
 import { AddonsStep } from "./_steps/addons-step";
 import { SummaryStep } from "./_steps/summary-step";
 import { SuccessStep } from "./_steps/success-step";
+import { totalGarmentCount } from "./_data/pickup-constants";
+
+function parseWashPrice(description: string) {
+  const match = description.match(/wash\s*₹\s*(\d+)/i);
+  return match ? Number(match[1]) : 0;
+}
+
+function estimateGarmentTotal(
+  garments: Record<string, number>,
+  garmentOptions: Array<{ id: string; description: string }>,
+) {
+  return garmentOptions.reduce((sum, item) => {
+    const qty = garments[item.id] ?? 0;
+    return sum + qty * parseWashPrice(item.description);
+  }, 0);
+}
 
 function PickupFlow() {
   const {
@@ -34,6 +50,13 @@ function PickupFlow() {
   } = usePickup();
   const { transition } = useMotionPrefs();
 
+  const isGarmentStep = step === "garments";
+  const selectedItemsCount = isGarmentStep ? totalGarmentCount(garments) : undefined;
+  const estimatedTotal = isGarmentStep ? estimateGarmentTotal(garments, garmentOptions) : undefined;
+  const layoutClass = isGarmentStep
+    ? "grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_340px] lg:items-start"
+    : "grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.85fr)] lg:items-start";
+
   async function handleNext() {
     if (step === "review") {
       await confirmBooking();
@@ -55,7 +78,7 @@ function PickupFlow() {
         )}
         {step !== "success" && <PickupStepper current={step} />}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.7fr)_minmax(280px,0.85fr)] lg:items-start">
+        <div className={layoutClass}>
           <div className="min-w-0 space-y-6">
             <div
               className={
@@ -89,10 +112,29 @@ function PickupFlow() {
               submitting={submitting}
               onBack={goBack}
               onNext={handleNext}
+              selectedItemsCount={selectedItemsCount}
+              estimatedTotal={estimatedTotal}
               className="hidden lg:flex"
             />
           </div>
 
+          {!isGarmentStep && (
+            <BookingSummary
+              step={step}
+              selectedSlot={selectedSlot}
+              garments={garments}
+              selectedServiceIds={selectedServiceIds}
+              instructions={instructions}
+              garmentOptions={garmentOptions}
+              serviceOptions={serviceOptions}
+              taxRate={taxRate}
+              deliveryFee={deliveryFee}
+              className="hidden lg:block"
+            />
+          )}
+        </div>
+
+        {!isGarmentStep && (
           <BookingSummary
             step={step}
             selectedSlot={selectedSlot}
@@ -103,23 +145,9 @@ function PickupFlow() {
             serviceOptions={serviceOptions}
             taxRate={taxRate}
             deliveryFee={deliveryFee}
-            className="hidden lg:block"
+            className="lg:hidden"
           />
-        </div>
-
-        {/* Mobile summary (collapses above sticky CTA) */}
-        <BookingSummary
-          step={step}
-          selectedSlot={selectedSlot}
-          garments={garments}
-          selectedServiceIds={selectedServiceIds}
-          instructions={instructions}
-          garmentOptions={garmentOptions}
-          serviceOptions={serviceOptions}
-          taxRate={taxRate}
-          deliveryFee={deliveryFee}
-          className="lg:hidden"
-        />
+        )}
 
         <StepNavigation
           step={step}
@@ -127,6 +155,8 @@ function PickupFlow() {
           submitting={submitting}
           onBack={goBack}
           onNext={handleNext}
+          selectedItemsCount={selectedItemsCount}
+          estimatedTotal={estimatedTotal}
           className="lg:hidden"
         />
       </div>
