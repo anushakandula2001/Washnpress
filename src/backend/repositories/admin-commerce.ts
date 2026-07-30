@@ -4,8 +4,8 @@ import { query, queryOne, withTransaction } from "@/backend/db/pool";
 
 export async function listGarments(includeInactive = true) {
   const sql = includeInactive
-    ? `SELECT * FROM garment_catalog ORDER BY sort_order, name`
-    : `SELECT * FROM garment_catalog WHERE is_active = TRUE ORDER BY sort_order, name`;
+    ? `SELECT * FROM garment_catalog WHERE is_deleted = FALSE ORDER BY sort_order, name`
+    : `SELECT * FROM garment_catalog WHERE is_active = TRUE AND is_deleted = FALSE ORDER BY sort_order, name`;
   return (await query(sql)).rows;
 }
 
@@ -58,7 +58,7 @@ export async function upsertGarment(data: {
 }
 
 export async function deleteGarment(id: string) {
-  await query(`DELETE FROM garment_catalog WHERE id = $1`, [id]);
+  await query(`UPDATE garment_catalog SET is_deleted = TRUE, updated_at = now() WHERE id = $1`, [id]);
 }
 
 export async function setGarmentActive(id: string, isActive: boolean) {
@@ -72,8 +72,8 @@ export async function setGarmentActive(id: string, isActive: boolean) {
 
 export async function listAddonsAdmin(includeInactive = true) {
   const sql = includeInactive
-    ? `SELECT * FROM addon_services ORDER BY name`
-    : `SELECT * FROM addon_services WHERE is_active = TRUE ORDER BY name`;
+    ? `SELECT * FROM addon_services WHERE is_deleted = FALSE ORDER BY name`
+    : `SELECT * FROM addon_services WHERE is_active = TRUE AND is_deleted = FALSE ORDER BY name`;
   return (await query(sql)).rows;
 }
 
@@ -119,7 +119,7 @@ export async function upsertAddon(data: {
 }
 
 export async function deleteAddon(id: string) {
-  await query(`DELETE FROM addon_services WHERE id = $1`, [id]);
+  await query(`UPDATE addon_services SET is_deleted = TRUE WHERE id = $1`, [id]);
 }
 
 export async function setAddonActive(id: string, isActive: boolean) {
@@ -176,8 +176,8 @@ export async function updateCommerceSettings(data: {
 
 export async function listPlansAdmin(includeInactive = true) {
   const sql = includeInactive
-    ? `SELECT * FROM plans ORDER BY monthly_inr`
-    : `SELECT * FROM plans WHERE is_active = TRUE ORDER BY monthly_inr`;
+    ? `SELECT * FROM plans WHERE is_deleted = FALSE ORDER BY monthly_inr`
+    : `SELECT * FROM plans WHERE is_active = TRUE AND is_deleted = FALSE ORDER BY monthly_inr`;
   return (await query(sql)).rows;
 }
 
@@ -269,7 +269,7 @@ export async function deletePlan(id: string) {
   if (parseInt(used?.c ?? "0", 10) > 0) {
     return setPlanActive(id, false);
   }
-  await query(`DELETE FROM plans WHERE id = $1`, [id]);
+  await query(`UPDATE plans SET is_deleted = TRUE WHERE id = $1`, [id]);
   return { id, deleted: true };
 }
 
@@ -1022,4 +1022,63 @@ export async function listRolesWithUsers() {
     )
   ).rows;
   return { roles, users };
+}
+
+/* ── Pricing History & Analytics ──────────────────────── */
+
+export async function logPricingHistory(
+  module: string,
+  itemName: string,
+  prevValue: any,
+  newValue: any,
+  remarks: string,
+  updatedByUserId?: string
+) {
+  await query(
+    `INSERT INTO pricing_history (module, item_name, previous_value_json, new_value_json, remarks, updated_by)
+     VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6)`,
+    [module, itemName, JSON.stringify(prevValue ?? {}), JSON.stringify(newValue ?? {}), remarks, updatedByUserId ?? null]
+  );
+}
+
+export async function getPricingHistory() {
+  const sql = `
+    SELECT ph.*, u.full_name AS updated_by_name
+    FROM pricing_history ph
+    LEFT JOIN users u ON u.id = ph.updated_by
+    ORDER BY ph.created_at DESC
+    LIMIT 200
+  `;
+  return (await query(sql)).rows;
+}
+
+export async function getPricingAnalytics() {
+  // A simplified analytics implementation for the demo
+  const [
+    revenueRes,
+    topGarmentsRes,
+    topAddonsRes,
+  ] = await Promise.all([
+    query(`SELECT COALESCE(SUM(total_inr), 0) AS total_revenue, COUNT(*) AS total_orders FROM orders WHERE status = 'Delivered'`),
+    query(`
+      SELECT gc.name, COUNT(oi.id) as count
+      FROM order_items oi
+      JOIN garment_catalog gc ON gc.id = oi.garment_id
+      GROUP BY gc.id, gc.name
+      ORDER BY count DESC LIMIT 5
+    `),
+    query(`
+      SELECT oao.addon_code, COUNT(oao.id) as count
+      FROM order_applied_addons oao
+      GROUP BY oao.addon_code
+      ORDER BY count DESC LIMIT 5
+    `)
+  ]);
+
+  return {
+    totalRevenue: parseInt(revenueRes.rows[0]?.total_revenue || '0', 10),
+    totalOrders: parseInt(revenueRes.rows[0]?.total_orders || '0', 10),
+    topGarments: topGarmentsRes.rows,
+    topAddons: topAddonsRes.rows,
+  };
 }

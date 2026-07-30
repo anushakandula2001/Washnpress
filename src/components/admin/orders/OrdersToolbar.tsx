@@ -20,7 +20,7 @@ export function OrdersToolbar({
   search: string;
   onSearchChange: (v: string) => void;
   onRefresh: () => void;
-  onExport: (format: "csv" | "excel" | "pdf") => void;
+  onExport?: (format: "csv" | "excel" | "pdf") => void;
   loading?: boolean;
 }) {
   return (

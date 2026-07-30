@@ -818,7 +818,7 @@ const ORDER_TAB_STATUS_MAP: Record<string, string[]> = {
 
 export async function listOrdersAdmin(filters?: {
   status?: string;
-  societyId?: string;
+  societyId?: string | string[];
   residentId?: string;
   operatorId?: string;
   q?: string;
@@ -839,8 +839,17 @@ export async function listOrdersAdmin(filters?: {
   }
 
   if (filters?.societyId) {
-    params.push(filters.societyId);
-    where.push(`p.society_id = $${params.length}`);
+    if (Array.isArray(filters.societyId)) {
+      if (filters.societyId.length > 0) {
+        params.push(filters.societyId);
+        where.push(`p.society_id = ANY($${params.length}::uuid[])`);
+      } else {
+        where.push(`1=0`);
+      }
+    } else {
+      params.push(filters.societyId);
+      where.push(`p.society_id = $${params.length}`);
+    }
   }
   if (filters?.residentId) {
     params.push(filters.residentId);

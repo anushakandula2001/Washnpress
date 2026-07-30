@@ -6,7 +6,7 @@ export async function getOperatorByUserId(userId: string) {
 
 export async function getOperationsQueue(societyIds?: string[]) {
   let sql = `
-    SELECT o.order_code, o.status, o.pickup_garment_count, p.scheduled_for,
+    SELECT o.id, o.order_code, o.status, o.pickup_garment_count, p.scheduled_for,
            r.unit_number, r.tower_block, s.name AS society_name,
            COALESCE(u.full_name, 'Resident') AS resident_name
     FROM orders o

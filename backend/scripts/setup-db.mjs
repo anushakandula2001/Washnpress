@@ -51,6 +51,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Database setup failed:", err.message);
+  console.error("Database setup failed:");
+  console.error(err);
   process.exit(1);
 });

@@ -28,6 +28,7 @@ const TABS = [
 ] as const;
 
 export function OrderDrawer({
+  apiBaseUrl = "/api/admin/orders",
   orderId,
   row,
   open,
@@ -36,6 +37,7 @@ export function OrderDrawer({
   onAssignOperator,
   onRefreshList,
 }: {
+  apiBaseUrl?: string;
   orderId: string | null;
   row?: OrderRow | null;
   open: boolean;
@@ -53,7 +55,7 @@ export function OrderDrawer({
     if (!orderId) return;
     setLoading(true);
     setError(null);
-    void fetch(`/api/admin/orders?id=${encodeURIComponent(orderId)}`, { credentials: "same-origin" })
+    void fetch(`${apiBaseUrl}?id=${encodeURIComponent(orderId)}`, { credentials: "same-origin" })
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.message ?? "Failed");
@@ -61,7 +63,7 @@ export function OrderDrawer({
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Load failed"))
       .finally(() => setLoading(false));
-  }, [orderId]);
+  }, [orderId, apiBaseUrl]);
 
   React.useEffect(() => {
     setTab(initialTab);

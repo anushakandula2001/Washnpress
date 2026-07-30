@@ -3,7 +3,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PortalShell } from "@/components/portal/portal-shell";
-import { useToast } from "@/components/ui/toast";
 import { operationsNav } from "@/lib/portal-nav";
 import { usePagination } from "@/lib/admin/use-pagination";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
@@ -18,8 +17,7 @@ import {
   type OrderFilters as OrderFiltersType,
   type OrderRow,
 } from "@/components/admin/orders/types";
-import { Truck } from "lucide-react";
-import { api } from "@/frontend/api-client";
+import { CheckCircle2 } from "lucide-react";
 
 function applyClientFilters(rows: OrderRow[], filters: OrderFiltersType): OrderRow[] {
   let result = [...rows];
@@ -33,16 +31,15 @@ function applyClientFilters(rows: OrderRow[], filters: OrderFiltersType): OrderR
   return result;
 }
 
-export default function DeliveryPage() {
+export default function DeliveredOrdersPage() {
   return (
     <Suspense>
-      <DeliveryContent />
+      <DeliveredOrdersContent />
     </Suspense>
   );
 }
 
-function DeliveryContent() {
-  const { toast } = useToast();
+function DeliveredOrdersContent() {
   const searchParams = useSearchParams();
   const [rows, setRows] = useState<OrderRow[]>([]);
   const [filters, setFilters] = useState<OrderFiltersType>(defaultOrderFilters);
@@ -53,14 +50,12 @@ function DeliveryContent() {
   const [drawerTab, setDrawerTab] = useState("overview");
   const [drawerOpen, setDrawerOpen] = useState(false);
   
-  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
-
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
-      params.set("status", "READY_FOR_DELIVERY");
+      params.set("status", "DELIVERED");
       if (filters.q) params.set("q", filters.q);
       const res = await fetch(`/api/operations/orders?${params}`, { credentials: "same-origin" });
       const data = await res.json();
@@ -96,32 +91,14 @@ function DeliveryContent() {
     setDrawerOrder(order);
     setDrawerTab(initialTab);
     setDrawerOpen(true);
-    window.history.replaceState(null, "", `/operations/delivery?order=${order.order_code}`);
+    window.history.replaceState(null, "", `/operations/delivered-orders?order=${order.order_code}`);
   }
 
   function closeDrawer(open: boolean) {
     setDrawerOpen(open);
     if (!open) {
       setDrawerOrder(null);
-      window.history.replaceState(null, "", "/operations/delivery");
-    }
-  }
-
-  async function handleCompleteDelivery(row: OrderRow) {
-    if (busyIds.has(row.id)) return;
-    setBusyIds((prev) => new Set(prev).add(row.id));
-    try {
-      await api.operations.updateStatus(row.order_code, "DELIVERED");
-      toast(`Order ${row.order_code} marked as delivered`, "success");
-      setRows((prev) => prev.filter((r) => r.id !== row.id));
-    } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to update status", "error");
-    } finally {
-      setBusyIds((prev) => {
-        const next = new Set(prev);
-        next.delete(row.id);
-        return next;
-      });
+      window.history.replaceState(null, "", "/operations/delivered-orders");
     }
   }
 
@@ -129,8 +106,8 @@ function DeliveryContent() {
     <PortalShell
       navItems={operationsNav}
       portalLabel="Operations Portal"
-      greeting="Delivery Management"
-      subtitle="Orders ready for delivery"
+      greeting="Delivered Orders"
+      subtitle="History of successfully delivered orders"
     >
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
@@ -151,9 +128,9 @@ function DeliveryContent() {
 
       {!loading && paginated.length === 0 ? (
         <EmptyState
-          icon={Truck}
-          title="No Pending Deliveries"
-          description="All orders are delivered or still in processing."
+          icon={CheckCircle2}
+          title="No Delivered Orders"
+          description="There are no completed deliveries yet."
         />
       ) : (
         <OrdersTable
@@ -168,11 +145,6 @@ function DeliveryContent() {
             if (tabs.includes(action)) {
               openDrawer(row, action);
             }
-          }}
-          primaryAction={{
-            label: "Complete Delivery",
-            onClick: handleCompleteDelivery,
-            isBusy: (r) => busyIds.has(r.id)
           }}
         />
       )}
