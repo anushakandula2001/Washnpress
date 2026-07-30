@@ -135,7 +135,7 @@ export function ProfileDropdown({
                 <span>My Profile</span>
               </button>
 
-              <button
+              {/* <button
                 type="button"
                 role="menuitem"
                 onClick={() => navigateTo("/admin/settings#account")}
@@ -143,9 +143,9 @@ export function ProfileDropdown({
               >
                 <Settings className="h-4 w-4 text-muted-foreground" />
                 <span>Account Settings</span>
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 type="button"
                 role="menuitem"
                 onClick={() => navigateTo("/admin/change-password")}
@@ -153,9 +153,9 @@ export function ProfileDropdown({
               >
                 <KeyRound className="h-4 w-4 text-muted-foreground" />
                 <span>Change Password</span>
-              </button>
+              </button> */}
 
-              <button
+              {/* <button
                 type="button"
                 role="menuitem"
                 onClick={() => navigateTo("/admin/settings?tab=notifications")}
@@ -163,12 +163,12 @@ export function ProfileDropdown({
               >
                 <Bell className="h-4 w-4 text-muted-foreground" />
                 <span>Notification Preferences</span>
-              </button>
+              </button> */}
             </div>
 
             {/* System Preferences & Support */}
             <div className="p-1.5 space-y-0.5" role="none">
-              <button
+              {/* <button
                 type="button"
                 role="menuitem"
                 onClick={toggleTheme}
@@ -185,17 +185,17 @@ export function ProfileDropdown({
                 <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {mounted ? (isDark ? "Dark" : "Light") : "Toggle"}
                 </span>
-              </button>
+              </button> */}
 
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => navigateTo("/admin/help")}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-              >
-                <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                <span>Help & Support</span>
-              </button>
+              {/* <button
+              //   type="button"
+              //   role="menuitem"
+              //   onClick={() => navigateTo("/admin/help")}
+              //   className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+              // >
+              //   <HelpCircle className="h-4 w-4 text-muted-foreground" />
+              //   <span>Help & Support</span>
+              // </button> */}
             </div>
 
             {/* Logout Action */}
