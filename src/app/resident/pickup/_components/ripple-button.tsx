@@ -73,6 +73,7 @@ export function RippleButton({
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
               transition={{ duration: 0.2 }}
+              className="inline-flex items-center gap-2 whitespace-nowrap"
             >
               {children}
             </motion.span>

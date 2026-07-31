@@ -33,7 +33,7 @@ function Section({
   return (
     <motion.section
       variants={staggerItem}
-      className="rounded-[22px] border border-border bg-card p-5 shadow-sm"
+      className="border-b border-border/70 py-5 first:pt-0 last:border-b-0 last:pb-0"
     >
       <div className="mb-3 flex items-center gap-2">
         <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -44,6 +44,12 @@ function Section({
       {children}
     </motion.section>
   );
+}
+
+function formatReviewDate(value: string) {
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return value;
+  return `${day}-${month}-${year.slice(-2)}`;
 }
 
 export function SummaryStep() {
@@ -79,12 +85,12 @@ export function SummaryStep() {
         variants={staggerContainer}
         initial="hidden"
         animate="show"
-        className="grid gap-4"
+        className="rounded-[24px] border border-border/80 bg-card p-5 shadow-sm md:p-7"
       >
         <Section icon={Clock3} title="Pickup slot">
           {selectedSlot ? (
             <div>
-              <p className="font-medium">{selectedSlot.date}</p>
+              <p className="font-medium">{formatReviewDate(selectedSlot.date)}</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {formatSlotSummary(selectedSlot)}
               </p>
