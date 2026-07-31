@@ -1,94 +1,221 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PortalShell } from "@/components/portal/portal-shell";
+import { useToast } from "@/components/ui/toast";
 import { operationsNav } from "@/lib/portal-nav";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, User, Package } from "lucide-react";
+import { usePagination } from "@/lib/admin/use-pagination";
+import { EmptyState } from "@/components/admin/shared/EmptyState";
+import { OrdersToolbar } from "@/components/admin/orders/OrdersToolbar";
+import { OrdersFilters } from "@/components/admin/orders/OrdersFilters";
+import { OrdersTable } from "@/components/admin/orders/OrdersTable";
+import { OrderDrawer } from "@/components/admin/orders/OrderDrawer";
+import { Pagination } from "@/components/admin/orders/Pagination";
+import {
+  defaultOrderFilters,
+  normalizeOrderRow,
+  type OrderFilters as OrderFiltersType,
+  type OrderRow,
+} from "@/components/admin/orders/types";
+import { Package } from "lucide-react";
 
-type QueueItem = {
-  order_code: string;
-  status: string;
-  pickup_garment_count: number;
-  scheduled_for: string;
-  unit_number: string;
-  tower_block: string | null;
-  society_name: string;
-  resident_name: string;
-};
+function applyClientFilters(rows: OrderRow[], filters: OrderFiltersType): OrderRow[] {
+  let result = [...rows];
+  if (filters.q.trim()) {
+    const query = filters.q.trim().toLowerCase();
+    result = result.filter((r) => {
+      const hay = `${r.order_code} ${r.resident_name} ${r.resident_phone} ${r.society_name} ${r.status}`.toLowerCase();
+      return hay.includes(query);
+    });
+  }
+  return result;
+}
 
 export default function PickupsPage() {
-  const [pickups, setPickups] = useState<QueueItem[]>([]);
+  return (
+    <Suspense>
+      <PickupsContent />
+    </Suspense>
+  );
+}
+
+function PickupsContent() {
+  const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const [rows, setRows] = useState<OrderRow[]>([]);
+  const [filters, setFilters] = useState<OrderFiltersType>(defaultOrderFilters);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [drawerOrder, setDrawerOrder] = useState<OrderRow | null>(null);
+  const [drawerTab, setDrawerTab] = useState("overview");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Use queue endpoint to fetch scheduled pickups
+      const data = await fetch("/api/operations/queue", { credentials: "same-origin" }).then((r) => r.json());
+      const pickupStatuses = ["Scheduled", "Pickup Scheduled"];
+      const orders = data.queue?.filter((q: any) => pickupStatuses.includes(q.status)) || [];
+      setRows((orders as Array<Record<string, unknown>>).map(normalizeOrderRow));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Load failed");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetch("/api/operations/queue", { credentials: "same-origin" })
-      .then((res) => res.json())
-      .then((data) => {
-        // Filter for pickups
-        const pickupStatuses = ["Scheduled", "Pickup Scheduled"];
-        setPickups(data.queue?.filter((q: QueueItem) => pickupStatuses.includes(q.status)) || []);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+    void load();
+  }, [load]);
+
+  useEffect(() => {
+    const orderParam = searchParams.get("order");
+    if (!orderParam) return;
+    const match = rows.find((r) => r.order_code === orderParam || r.id === orderParam);
+    if (match) {
+      setDrawerOrder(match);
+      setDrawerTab("overview");
+      setDrawerOpen(true);
+      return;
+    }
+  }, [searchParams, rows]);
+
+  const filtered = useMemo(() => applyClientFilters(rows, filters), [rows, filters]);
+  const { paginated, from, to, total, page, totalPages, pageSize, goTo, setSize } = usePagination(filtered);
+
+  function openDrawer(order: OrderRow, initialTab = "overview") {
+    setDrawerOrder(order);
+    setDrawerTab(initialTab);
+    setDrawerOpen(true);
+    window.history.replaceState(null, "", `/operations/pickups?order=${order.order_code}`);
+  }
+
+  function closeDrawer(open: boolean) {
+    setDrawerOpen(open);
+    if (!open) {
+      setDrawerOrder(null);
+      window.history.replaceState(null, "", "/operations/pickups");
+    }
+  }
+
+  const handleSelect = (id: string, checked: boolean) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) setSelected(new Set(paginated.map((p) => p.id)));
+    else setSelected(new Set());
+  };
+
+  async function handleCompletePickup(row: OrderRow) {
+    if (busyIds.has(row.id)) return;
+    setBusyIds((prev) => new Set(prev).add(row.id));
+    try {
+      await fetch(`/api/operations/orders/${row.order_code}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "Picked Up" }),
+      });
+      toast(`Order ${row.order_code} marked as picked up`, "success");
+      setRows((prev) => prev.filter((r) => r.id !== row.id));
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to complete pickup", "error");
+    } finally {
+      setBusyIds((prev) => {
+        const next = new Set(prev);
+        next.delete(row.id);
+        return next;
+      });
+    }
+  }
 
   return (
     <PortalShell
       navItems={operationsNav}
       portalLabel="Operations Portal"
-      greeting="Pending Pickups"
-      subtitle="Manage your upcoming resident pickups"
+      greeting="Today's Pickups"
+      subtitle="Manage your scheduled pickups for today"
     >
-      {loading ? (
-        <div className="py-20 text-center text-muted-foreground">Loading pickups...</div>
-      ) : pickups.length === 0 ? (
-        <div className="py-20 text-center border rounded-xl border-dashed">
-          <Package className="mx-auto h-10 w-10 text-muted-foreground mb-4" />
-          <h3 className="font-semibold text-lg">No pending pickups</h3>
-          <p className="text-sm text-muted-foreground">You have no scheduled pickups at this time.</p>
-        </div>
+      {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
+
+      <OrdersToolbar
+        search={filters.q}
+        onSearchChange={(q) => setFilters((prev) => ({ ...prev, q }))}
+        onRefresh={() => void load()}
+        loading={loading}
+        placeholder="Search order code, resident, phone, society, operator..."
+      />
+
+      <OrdersFilters
+        filters={filters}
+        societies={[]}
+        operators={[]}
+        onChange={(patch) => setFilters((prev) => ({ ...prev, ...patch }))}
+        onReset={() => setFilters(defaultOrderFilters)}
+      />
+
+      {!loading && paginated.length === 0 ? (
+        <EmptyState
+          icon={Package}
+          title="No Today's Pickups"
+          description="No scheduled pickup orders for today."
+        />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {pickups.map((p) => (
-            <Card key={p.order_code} className="hover:border-primary/50 transition">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-base font-bold">{p.order_code}</CardTitle>
-                  <Badge variant={p.status === "Scheduled" ? "secondary" : "default"}>
-                    {p.status}
-                  </Badge>
-                </div>
-                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                  <Clock className="h-3 w-3" />
-                  {new Date(p.scheduled_for).toLocaleString(undefined, {
-                    month: "short", day: "numeric", hour: "numeric", minute: "2-digit"
-                  })}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-start gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="font-medium">{p.resident_name}</p>
-                    <p className="text-xs text-muted-foreground">Resident</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-2 text-sm border-t pt-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="font-medium">
-                      {p.unit_number}{p.tower_block ? `, ${p.tower_block}` : ''}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{p.society_name}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <OrdersTable
+          rows={paginated}
+          loading={loading}
+          selected={selected}
+          onSelect={handleSelect}
+          onSelectAll={handleSelectAll}
+          onRowClick={(row) => openDrawer(row)}
+          onAction={(action, row) => {
+            const tabs = ["overview", "timeline", "resident", "operator", "items", "notes", "activity"];
+            if (tabs.includes(action)) {
+              openDrawer(row, action);
+            }
+          }}
+          primaryAction={{
+            label: "Complete Pickup",
+            onClick: handleCompletePickup,
+            isBusy: (r) => busyIds.has(r.id)
+          }}
+        />
       )}
+
+      {total > 0 && (
+        <Pagination
+          from={from}
+          to={to}
+          total={total}
+          page={page}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          onPageChange={goTo}
+          onPageSizeChange={setSize}
+        />
+      )}
+
+      <OrderDrawer
+        apiBaseUrl="/api/operations/orders"
+        orderId={drawerOrder?.id ?? drawerOrder?.order_code ?? null}
+        row={drawerOrder}
+        open={drawerOpen}
+        onOpenChange={closeDrawer}
+        initialTab={drawerTab}
+        onRefreshList={() => void load()}
+      />
     </PortalShell>
   );
 }

@@ -6,6 +6,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { OrderStatusBadge } from "./OrderStatusBadge";
 import { ActionDropdown } from "./ActionDropdown";
 import { formatUnit, type OrderRow } from "./types";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
 
 export function OrdersTable({
   rows,
@@ -15,6 +17,7 @@ export function OrdersTable({
   onSelectAll,
   onRowClick,
   onAction,
+  primaryAction,
 }: {
   rows: OrderRow[];
   loading?: boolean;
@@ -23,6 +26,11 @@ export function OrdersTable({
   onSelectAll: (checked: boolean) => void;
   onRowClick: (row: OrderRow) => void;
   onAction: (action: string, row: OrderRow) => void;
+  primaryAction?: {
+    label: string | ((row: OrderRow) => string | null);
+    onClick: (row: OrderRow) => void;
+    isBusy?: (row: OrderRow) => boolean;
+  };
 }) {
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
 
@@ -57,7 +65,7 @@ export function OrdersTable({
               <th className="px-3 py-3">Garments</th>
               <th className="px-3 py-3">Scheduled</th>
               <th className="px-3 py-3">Created</th>
-              <th className="px-3 py-3">Actions</th>
+              <th className="px-3 py-3 w-[1%] whitespace-nowrap text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -103,17 +111,37 @@ export function OrdersTable({
                 <td className="px-3 py-2.5 text-muted-foreground">
                   {r.created_at ? new Date(r.created_at).toLocaleDateString() : "—"}
                 </td>
-                <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                  <ActionDropdown
-                    onView={() => onAction("view", r)}
-                    onTimeline={() => onAction("timeline", r)}
-                    onResident={() => onAction("resident", r)}
-                    onOperator={() => onAction("operator", r)}
-                    onItems={() => onAction("items", r)}
-                    onNotes={() => onAction("notes", r)}
-                    onActivity={() => onAction("activity", r)}
-                    onAssignOperator={() => onAction("assign", r)}
-                  />
+                <td className="px-3 py-2.5 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-end gap-2">
+                    {(() => {
+                      if (!primaryAction) return null;
+                      const isBusy = primaryAction.isBusy?.(r) ?? false;
+                      const label = typeof primaryAction.label === 'function' ? primaryAction.label(r) : primaryAction.label;
+                      if (!label) return null;
+                      
+                      return (
+                        <Button
+                          size="sm"
+                          disabled={isBusy}
+                          onClick={() => primaryAction.onClick(r)}
+                          className="h-8 shadow-sm transition hover:shadow-md"
+                        >
+                          {isBusy && <RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                          {label}
+                        </Button>
+                      );
+                    })()}
+                    <ActionDropdown
+                      onView={() => onAction("view", r)}
+                      onTimeline={() => onAction("timeline", r)}
+                      onResident={() => onAction("resident", r)}
+                      onOperator={() => onAction("operator", r)}
+                      onItems={() => onAction("items", r)}
+                      onNotes={() => onAction("notes", r)}
+                      onActivity={() => onAction("activity", r)}
+                      onAssignOperator={() => onAction("assign", r)}
+                    />
+                  </div>
                 </td>
               </tr>
             ))}

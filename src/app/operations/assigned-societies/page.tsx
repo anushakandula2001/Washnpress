@@ -114,26 +114,34 @@ function AssignedSocietiesContent() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-1.5 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Building2 className="h-4 w-4" />
-                        <span className="font-medium text-foreground">{s.building_count}</span> Towers
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Users className="h-4 w-4" />
+                    <div className="flex flex-col gap-1 text-xs">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Users className="h-3.5 w-3.5" />
                         <span className="font-medium text-foreground">{s.resident_count || 0}</span> Residents
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Activity className="h-3.5 w-3.5" />
+                        <span className="font-medium text-foreground">0</span> Active Slots
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Box className="h-3.5 w-3.5" />
+                        <span className="font-medium text-foreground">{s.today_pickups_count || 0}</span> Pickups Today
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-1.5 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Box className="h-4 w-4" />
-                        <span className="font-medium text-foreground">{s.today_orders_count || 0}</span> Orders Today
+                    <div className="flex flex-col gap-1 text-xs">
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Truck className="h-3.5 w-3.5" />
+                        <span className="font-medium text-foreground">0</span> Processing
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Truck className="h-4 w-4" />
-                        <span className="font-medium text-foreground">{(s.today_pickups_count || 0) + (s.today_deliveries_count || 0)}</span> Logistics
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Truck className="h-3.5 w-3.5" />
+                        <span className="font-medium text-foreground">{s.today_deliveries_count || 0}</span> Ready
+                      </div>
+                      <div className="flex items-center gap-1.5 text-muted-foreground">
+                        <Truck className="h-3.5 w-3.5" />
+                        <span className="font-medium text-foreground">0</span> Delivered
                       </div>
                     </div>
                   </TableCell>

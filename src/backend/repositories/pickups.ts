@@ -93,6 +93,14 @@ export async function listAllSlotsBySociety(societyId: string) {
   return result.rows;
 }
 
+export async function checkDuplicateSlot(societyId: string, slotDate: string, slotWindow: string) {
+  const existing = await queryOne(
+    `SELECT id FROM pickup_slots WHERE society_id = $1 AND slot_date = $2 AND slot_window = $3`,
+    [societyId, slotDate, slotWindow]
+  );
+  return existing !== null;
+}
+
 export async function createManagedSlot(data: {
   societyId: string;
   slotDate: string;

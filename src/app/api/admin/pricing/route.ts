@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { requireRole } from "@/backend/api/guards";
-import { ok, badRequest, created } from "@/backend/api/response";
+import { requireSession } from "@/backend/api/guards";
+import { forbidden, ok, badRequest, created } from "@/backend/api/response";
 import {
   getPublicPricingCatalog,
   listGarments,
@@ -17,19 +17,35 @@ import {
   upsertPlan,
   setPlanActive,
   deletePlan,
+  logPricingHistory,
+  getPricingHistory,
+  getPricingAnalytics
 } from "@/backend/repositories/admin-commerce";
 import { logAudit } from "@/backend/repositories/admin";
+import { queryOne } from "@/backend/db/pool";
 
 export async function GET(request: Request) {
-  const auth = await requireRole(request, "admin");
+  const auth = await requireSession(request);
   if ("error" in auth) return auth.error;
+
+  const roles = auth.session.roles ?? [];
+  const canAccess = roles.includes("admin") || roles.includes("finance_admin") || roles.includes("operator");
+  if (!canAccess) {
+    return forbidden("Requires admin, finance_admin, or operator role");
+  }
+
   const catalog = await getPublicPricingCatalog();
+  const history = await getPricingHistory();
+  const analytics = await getPricingAnalytics();
+
   return ok({
     garments: await listGarments(true),
     addons: await listAddonsAdmin(true),
     settings: await getCommerceSettings(),
     plans: await listPlansAdmin(true),
     activeCatalog: catalog,
+    history,
+    analytics
   });
 }
 
@@ -94,8 +110,15 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const auth = await requireRole(request, "admin");
+  const auth = await requireSession(request);
   if ("error" in auth) return auth.error;
+
+  const roles = auth.session.roles ?? [];
+  const canEdit = roles.includes("admin") || roles.includes("finance_admin");
+  if (!canEdit) {
+    return forbidden("Requires admin or finance_admin role to edit pricing");
+  }
+
   const parsed = bodySchema.safeParse(await request.json());
   if (!parsed.success) return badRequest("Invalid request", parsed.error.flatten());
 
@@ -103,14 +126,24 @@ export async function POST(request: Request) {
     const { section } = parsed.data;
     if (section === "garment" && parsed.data.garment) {
       const g = parsed.data.garment;
+      
+      let prevGarment = null;
+      if (g.id) {
+        prevGarment = await queryOne(`SELECT * FROM garment_catalog WHERE id = $1`, [g.id]);
+      }
+
       if (g.action === "delete" && g.id) {
         await deleteGarment(g.id);
+        await logPricingHistory("garment", prevGarment?.name || g.id, prevGarment, { deleted: true }, "Garment soft-deleted", auth.session.userId);
         return ok({ deleted: true });
       }
       if (g.action === "toggle" && g.id) {
-        return ok({ garment: await setGarmentActive(g.id, Boolean(g.isActive)) });
+        const toggled = await setGarmentActive(g.id, Boolean(g.isActive));
+        await logPricingHistory("garment", prevGarment?.name || g.id, prevGarment, toggled, "Garment toggled", auth.session.userId);
+        return ok({ garment: toggled });
       }
       const garment = await upsertGarment(g);
+      await logPricingHistory("garment", garment.name, prevGarment, garment, g.id ? "Garment updated" : "Garment created", auth.session.userId);
       await logAudit({
         actorUserId: auth.session.userId,
         actorRole: "admin",
@@ -124,19 +157,33 @@ export async function POST(request: Request) {
 
     if (section === "addon" && parsed.data.addon) {
       const a = parsed.data.addon;
+
+      let prevAddon = null;
+      if (a.id) {
+        prevAddon = await queryOne(`SELECT * FROM addon_services WHERE id = $1`, [a.id]);
+      }
+
       if (a.action === "delete" && a.id) {
         await deleteAddon(a.id);
+        await logPricingHistory("addon", prevAddon?.name || a.id, prevAddon, { deleted: true }, "Addon soft-deleted", auth.session.userId);
         return ok({ deleted: true });
       }
       if (a.action === "toggle" && a.id) {
-        return ok({ addon: await setAddonActive(a.id, Boolean(a.isActive)) });
+        const toggled = await setAddonActive(a.id, Boolean(a.isActive));
+        await logPricingHistory("addon", prevAddon?.name || a.id, prevAddon, toggled, "Addon toggled", auth.session.userId);
+        return ok({ addon: toggled });
       }
       const addon = await upsertAddon(a);
+      await logPricingHistory("addon", addon.name, prevAddon, addon, a.id ? "Addon updated" : "Addon created", auth.session.userId);
       return created({ addon });
     }
 
     if (section === "settings" && parsed.data.settings) {
+      const prevSettings = await getCommerceSettings();
       const settings = await updateCommerceSettings(parsed.data.settings);
+      
+      await logPricingHistory("delivery_taxes", "Platform Settings", prevSettings, settings, "Commerce settings updated", auth.session.userId);
+      
       await logAudit({
         actorUserId: auth.session.userId,
         actorRole: "admin",
@@ -149,13 +196,24 @@ export async function POST(request: Request) {
 
     if (section === "plan" && parsed.data.plan) {
       const p = parsed.data.plan;
+
+      let prevPlan = null;
+      if (p.id) {
+        prevPlan = await queryOne(`SELECT * FROM plans WHERE id = $1`, [p.id]);
+      }
+
       if (p.action === "delete" && p.id) {
-        return ok({ result: await deletePlan(p.id) });
+        const result = await deletePlan(p.id);
+        await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, { deleted: true }, "Plan soft-deleted", auth.session.userId);
+        return ok({ result });
       }
       if (p.action === "toggle" && p.id) {
-        return ok({ plan: await setPlanActive(p.id, Boolean(p.isActive)) });
+        const toggled = await setPlanActive(p.id, Boolean(p.isActive));
+        await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, toggled, "Plan toggled", auth.session.userId);
+        return ok({ plan: toggled });
       }
       const plan = await upsertPlan(p);
+      await logPricingHistory("plan", plan.tier, prevPlan, plan, p.id ? "Plan updated" : "Plan created", auth.session.userId);
       return created({ plan });
     }
 

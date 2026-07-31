@@ -13,30 +13,54 @@ CREATE TABLE IF NOT EXISTS ticket_categories (
 );
 
 -- 2. Expand/Create support_tickets table
-CREATE TABLE IF NOT EXISTS support_tickets (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  ticket_code VARCHAR(40) NOT NULL UNIQUE,
-  resident_id UUID REFERENCES residents(id) ON DELETE SET NULL,
-  order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
-  society_id UUID REFERENCES societies(id) ON DELETE SET NULL,
-  category VARCHAR(60) NOT NULL,
-  priority VARCHAR(20) NOT NULL DEFAULT 'Medium',
-  status VARCHAR(30) NOT NULL DEFAULT 'Open',
-  assigned_team VARCHAR(50) NOT NULL DEFAULT 'Customer Support',
-  assigned_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  description TEXT NOT NULL,
-  sla_first_response_due_at TIMESTAMPTZ,
-  sla_resolution_due_at TIMESTAMPTZ,
-  sla_first_responded_at TIMESTAMPTZ,
-  sla_resolved_at TIMESTAMPTZ,
-  sla_breached BOOLEAN NOT NULL DEFAULT FALSE,
-  csat_rating INTEGER CHECK (csat_rating IS NULL OR (csat_rating >= 1 AND csat_rating <= 5)),
-  csat_feedback TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CHECK (priority IN ('Low', 'Medium', 'High', 'Critical')),
-  CHECK (status IN ('Open', 'Assigned', 'In Progress', 'Waiting for Resident', 'Escalated', 'Resolved', 'Closed', 'Rejected'))
-);
+
+  
+-- 2. Upgrade existing support_tickets table
+
+ALTER TABLE support_tickets
+ADD COLUMN IF NOT EXISTS society_id UUID REFERENCES societies(id) ON DELETE SET NULL;
+
+ALTER TABLE support_tickets
+ADD COLUMN IF NOT EXISTS assigned_team VARCHAR(50) NOT NULL DEFAULT 'Customer Support';
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'support_tickets'
+          AND column_name = 'assigned_to_user_id'
+    ) AND NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'support_tickets'
+          AND column_name = 'assigned_user_id'
+    ) THEN
+        ALTER TABLE support_tickets
+        RENAME COLUMN assigned_to_user_id TO assigned_user_id;
+    END IF;
+END $$;
+
+ALTER TABLE support_tickets
+ADD COLUMN IF NOT EXISTS sla_first_response_due_at TIMESTAMPTZ;
+
+ALTER TABLE support_tickets
+ADD COLUMN IF NOT EXISTS sla_resolution_due_at TIMESTAMPTZ;
+
+ALTER TABLE support_tickets
+ADD COLUMN IF NOT EXISTS sla_first_responded_at TIMESTAMPTZ;
+
+ALTER TABLE support_tickets
+ADD COLUMN IF NOT EXISTS sla_resolved_at TIMESTAMPTZ;
+
+ALTER TABLE support_tickets
+ADD COLUMN IF NOT EXISTS sla_breached BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE support_tickets
+ADD COLUMN IF NOT EXISTS csat_rating INTEGER;
+
+ALTER TABLE support_tickets
+ADD COLUMN IF NOT EXISTS csat_feedback TEXT;
 
 -- 3. Create ticket_messages table (Public vs Internal channels)
 CREATE TABLE IF NOT EXISTS ticket_messages (

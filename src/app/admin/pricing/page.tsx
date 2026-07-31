@@ -2,366 +2,191 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { adminNav } from "@/lib/portal-nav";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shirt, PackagePlus, Truck, Receipt, CalendarRange, Activity, History } from "lucide-react";
 
-type Garment = {
-  id: string;
-  name: string;
-  wash_price_inr: string | number;
-  wash_iron_price_inr: string | number;
-  iron_price_inr: string | number;
-  dry_clean_price_inr: string | number;
-  is_active: boolean;
-};
-
-type Addon = {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  price_inr: string | number;
-  is_active: boolean;
-};
-
-type Settings = {
-  min_order_amount_inr: string | number;
-  delivery_fee_inr: string | number;
-  free_delivery_threshold_inr: string | number;
-  gst_percent: string | number;
-  service_tax_percent: string | number;
-  other_charges_label: string;
-  other_charges_inr: string | number;
-};
-
-type Plan = {
-  id: string;
-  tier: string;
-  name: string | null;
-  monthly_inr: string | number;
-  garment_cap: number;
-  is_active: boolean;
-};
+import { GarmentPricingTab } from "@/components/admin/pricing/GarmentPricingTab";
+import { AddonServicesTab } from "@/components/admin/pricing/AddonServicesTab";
+import { DeliveryChargesTab } from "@/components/admin/pricing/DeliveryChargesTab";
+import { TaxesFeesTab } from "@/components/admin/pricing/TaxesFeesTab";
+import { SubscriptionsTab } from "@/components/admin/pricing/SubscriptionsTab";
+import { PricingHistoryTab } from "@/components/admin/pricing/PricingHistoryTab";
+import { AnalyticsTab } from "@/components/admin/pricing/AnalyticsTab";
+import { ResidentAppPreview } from "@/components/admin/pricing/ResidentAppPreview";
+import { useToast } from "@/components/ui/toast";
 
 export default function AdminPricingPage() {
-  const [garments, setGarments] = useState<Garment[]>([]);
-  const [addons, setAddons] = useState<Addon[]>([]);
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [err, setErr] = useState<string | null>(null);
-  const [gForm, setGForm] = useState({
-    name: "",
-    wash: "",
-    washIron: "",
-    iron: "",
-    dryClean: "",
+  const [data, setData] = useState<any>({
+    garments: [],
+    addons: [],
+    settings: null,
+    plans: [],
+    history: [],
+    analytics: null
   });
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("garments");
+  const { toast } = useToast();
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/admin/pricing", { credentials: "same-origin" });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message ?? "Failed");
-    setGarments((data.garments as Garment[]) ?? []);
-    setAddons((data.addons as Addon[]) ?? []);
-    setSettings((data.settings as Settings) ?? null);
-    setPlans((data.plans as Plan[]) ?? []);
-  }, []);
+    try {
+      const res = await fetch("/api/admin/pricing", { credentials: "same-origin" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message ?? "Failed to load pricing data");
+      setData(json);
+    } catch (e: any) {
+      toast(e.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    void load().catch((e) => setErr(e instanceof Error ? e.message : "Load failed"));
+    void load();
   }, [load]);
 
   async function post(body: Record<string, unknown>) {
-    setMsg(null);
-    setErr(null);
-    const res = await fetch("/api/admin/pricing", {
-      method: "POST",
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message ?? "Save failed");
-    setMsg("Saved — Resident & Operator portals will see updates immediately.");
-    await load();
+    try {
+      const res = await fetch("/api/admin/pricing", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message ?? "Save failed");
+      toast("Pricing updated successfully.", "success");
+      await load(); // Reload to get fresh history/analytics/data
+      return true;
+    } catch (e: any) {
+      toast(e.message, "error");
+      return false;
+    }
+  }
+
+  if (loading) {
+    return (
+      <PortalShell navItems={adminNav} portalLabel="Admin Portal" greeting="Pricing Management" subtitle="Loading module...">
+        <div className="flex h-64 items-center justify-center">Loading...</div>
+      </PortalShell>
+    );
   }
 
   return (
     <PortalShell
       navItems={adminNav}
       portalLabel="Admin Portal"
-      greeting="Pricing"
-      subtitle="Garments, add-ons, delivery fees, taxes — source of truth for all portals"
+      greeting="Pricing Management"
+      subtitle="Centralized control for all pricing, taxes, and subscriptions"
     >
-      {msg && <p className="mb-3 text-sm text-primary">{msg}</p>}
-      {err && <p className="mb-3 text-sm text-destructive">{err}</p>}
-
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">1. Garment pricing</CardTitle>
-            <CardDescription>Residents see these prices when scheduling pickup</CardDescription>
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <Card className="rounded-xl border-none bg-background shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Garments</CardTitle>
+            <Shirt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-2 sm:grid-cols-5">
-              <Input placeholder="Garment name" value={gForm.name} onChange={(e) => setGForm({ ...gForm, name: e.target.value })} />
-              <Input type="number" placeholder="Wash" value={gForm.wash} onChange={(e) => setGForm({ ...gForm, wash: e.target.value })} />
-              <Input type="number" placeholder="Wash+Iron" value={gForm.washIron} onChange={(e) => setGForm({ ...gForm, washIron: e.target.value })} />
-              <Input type="number" placeholder="Iron" value={gForm.iron} onChange={(e) => setGForm({ ...gForm, iron: e.target.value })} />
-              <Input type="number" placeholder="Dry clean" value={gForm.dryClean} onChange={(e) => setGForm({ ...gForm, dryClean: e.target.value })} />
-            </div>
-            <Button
-              onClick={() =>
-                void post({
-                  section: "garment",
-                  garment: {
-                    name: gForm.name,
-                    washPriceInr: Number(gForm.wash),
-                    washIronPriceInr: Number(gForm.washIron),
-                    ironPriceInr: Number(gForm.iron),
-                    dryCleanPriceInr: Number(gForm.dryClean),
-                  },
-                }).catch((e) => setErr(e instanceof Error ? e.message : "Failed"))
-              }
-            >
-              Add garment
-            </Button>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px] text-left text-sm">
-                <thead className="border-b text-muted-foreground">
-                  <tr>
-                    <th className="py-2">Garment</th>
-                    <th>Wash</th>
-                    <th>Wash+Iron</th>
-                    <th>Iron</th>
-                    <th>Dry Clean</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {garments.map((g) => (
-                    <tr key={g.id} className="border-b border-border/60">
-                      <td className="py-2 font-medium">{g.name}</td>
-                      <td>₹{g.wash_price_inr}</td>
-                      <td>₹{g.wash_iron_price_inr}</td>
-                      <td>₹{g.iron_price_inr}</td>
-                      <td>₹{g.dry_clean_price_inr}</td>
-                      <td>
-                        <Badge variant={g.is_active ? "success" : "secondary"}>
-                          {g.is_active ? "Active" : "Disabled"}
-                        </Badge>
-                      </td>
-                      <td className="space-x-1 py-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            void post({
-                              section: "garment",
-                              garment: {
-                                id: g.id,
-                                name: g.name,
-                                washPriceInr: Number(g.wash_price_inr),
-                                washIronPriceInr: Number(g.wash_iron_price_inr),
-                                ironPriceInr: Number(g.iron_price_inr),
-                                dryCleanPriceInr: Number(g.dry_clean_price_inr),
-                                action: "toggle",
-                                isActive: !g.is_active,
-                              },
-                            })
-                          }
-                        >
-                          {g.is_active ? "Disable" : "Enable"}
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() =>
-                            void post({
-                              section: "garment",
-                              garment: {
-                                id: g.id,
-                                name: g.name,
-                                washPriceInr: 0,
-                                washIronPriceInr: 0,
-                                ironPriceInr: 0,
-                                dryCleanPriceInr: 0,
-                                action: "delete",
-                              },
-                            })
-                          }
-                        >
-                          Delete
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.garments.length}</div>
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">2. Add-on services</CardTitle>
-            <CardDescription>Full CRUD also on /admin/addons</CardDescription>
+        <Card className="rounded-xl border-none bg-background shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Add-ons</CardTitle>
+            <PackagePlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {addons.map((a) => (
-              <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border p-3">
-                <div>
-                  <p className="font-medium">{a.name}</p>
-                  <p className="text-muted-foreground">{a.description}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span>₹{a.price_inr}</span>
-                  <Badge variant={a.is_active ? "success" : "secondary"}>
-                    {a.is_active ? "On" : "Off"}
-                  </Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      void post({
-                        section: "addon",
-                        addon: {
-                          id: a.id,
-                          code: a.code,
-                          name: a.name,
-                          description: a.description,
-                          priceInr: Number(a.price_inr),
-                          action: "toggle",
-                          isActive: !a.is_active,
-                        },
-                      })
-                    }
-                  >
-                    Toggle
-                  </Button>
-                </div>
-              </div>
-            ))}
+          <CardContent>
+            <div className="text-2xl font-bold">{data.addons.filter((a: any) => a.is_active).length}</div>
           </CardContent>
         </Card>
+        <Card className="rounded-xl border-none bg-background shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Delivery Max</CardTitle>
+            <Truck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{data.settings?.delivery_fee_inr || 0}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl border-none bg-background shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Taxes</CardTitle>
+            <Receipt className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{(data.settings?.gst_percent || 0) + (data.settings?.service_tax_percent || 0)}%</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl border-none bg-background shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Plans</CardTitle>
+            <CalendarRange className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.plans.filter((p: any) => p.is_active).length}</div>
+          </CardContent>
+        </Card>
+        <Card className="rounded-xl border-none bg-background shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Revenue</CardTitle>
+            <Activity className="h-4 w-4 text-[#18C5D8]" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">₹{data.analytics?.totalRevenue || 0}</div>
+          </CardContent>
+        </Card>
+      </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">3. Delivery charges</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {settings && (
-                <>
-                  <label className="block text-sm">
-                    Min order amount
-                    <Input
-                      className="mt-1"
-                      type="number"
-                      defaultValue={String(settings.min_order_amount_inr)}
-                      id="minOrder"
-                    />
-                  </label>
-                  <label className="block text-sm">
-                    Delivery fee
-                    <Input className="mt-1" type="number" defaultValue={String(settings.delivery_fee_inr)} id="delFee" />
-                  </label>
-                  <label className="block text-sm">
-                    Free delivery threshold
-                    <Input
-                      className="mt-1"
-                      type="number"
-                      defaultValue={String(settings.free_delivery_threshold_inr)}
-                      id="freeThr"
-                    />
-                  </label>
-                  <Button
-                    onClick={() => {
-                      const min = Number((document.getElementById("minOrder") as HTMLInputElement).value);
-                      const fee = Number((document.getElementById("delFee") as HTMLInputElement).value);
-                      const thr = Number((document.getElementById("freeThr") as HTMLInputElement).value);
-                      void post({
-                        section: "settings",
-                        settings: {
-                          minOrderAmountInr: min,
-                          deliveryFeeInr: fee,
-                          freeDeliveryThresholdInr: thr,
-                        },
-                      });
-                    }}
-                  >
-                    Save delivery
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
+      <div className="flex flex-col gap-6 lg:flex-row">
+        <div className="flex-1">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="mb-4 flex flex-wrap justify-start gap-2 bg-transparent p-0">
+              <TabsTrigger value="garments" className="rounded-full px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Garment Pricing</TabsTrigger>
+              <TabsTrigger value="addons" className="rounded-full px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Add-on Services</TabsTrigger>
+              <TabsTrigger value="delivery" className="rounded-full px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Delivery Charges</TabsTrigger>
+              <TabsTrigger value="taxes" className="rounded-full px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Taxes & Fees</TabsTrigger>
+              <TabsTrigger value="subscriptions" className="rounded-full px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Subscription Plans</TabsTrigger>
+              <TabsTrigger value="history" className="rounded-full px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Pricing History</TabsTrigger>
+              <TabsTrigger value="analytics" className="rounded-full px-4 py-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Analytics</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="garments" className="m-0 border-none p-0 outline-none">
+              <GarmentPricingTab garments={data.garments} onUpdate={post} />
+            </TabsContent>
+            
+            <TabsContent value="addons" className="m-0 border-none p-0 outline-none">
+              <AddonServicesTab addons={data.addons} onUpdate={post} />
+            </TabsContent>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">4. Taxes</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {settings && (
-                <>
-                  <label className="block text-sm">
-                    GST %
-                    <Input className="mt-1" type="number" defaultValue={String(settings.gst_percent)} id="gst" />
-                  </label>
-                  <label className="block text-sm">
-                    Service tax %
-                    <Input className="mt-1" type="number" defaultValue={String(settings.service_tax_percent)} id="svcTax" />
-                  </label>
-                  <label className="block text-sm">
-                    Other charges label
-                    <Input className="mt-1" defaultValue={settings.other_charges_label} id="otherLbl" />
-                  </label>
-                  <label className="block text-sm">
-                    Other charges ₹
-                    <Input className="mt-1" type="number" defaultValue={String(settings.other_charges_inr)} id="otherAmt" />
-                  </label>
-                  <Button
-                    onClick={() =>
-                      void post({
-                        section: "settings",
-                        settings: {
-                          gstPercent: Number((document.getElementById("gst") as HTMLInputElement).value),
-                          serviceTaxPercent: Number((document.getElementById("svcTax") as HTMLInputElement).value),
-                          otherChargesLabel: (document.getElementById("otherLbl") as HTMLInputElement).value,
-                          otherChargesInr: Number((document.getElementById("otherAmt") as HTMLInputElement).value),
-                        },
-                      })
-                    }
-                  >
-                    Save taxes
-                  </Button>
-                </>
-              )}
-            </CardContent>
-          </Card>
+            <TabsContent value="delivery" className="m-0 border-none p-0 outline-none">
+              <DeliveryChargesTab settings={data.settings} onUpdate={post} />
+            </TabsContent>
+
+            <TabsContent value="taxes" className="m-0 border-none p-0 outline-none">
+              <TaxesFeesTab settings={data.settings} onUpdate={post} />
+            </TabsContent>
+
+            <TabsContent value="subscriptions" className="m-0 border-none p-0 outline-none">
+              <SubscriptionsTab plans={data.plans} onUpdate={post} />
+            </TabsContent>
+
+            <TabsContent value="history" className="m-0 border-none p-0 outline-none">
+              <PricingHistoryTab history={data.history} />
+            </TabsContent>
+
+            <TabsContent value="analytics" className="m-0 border-none p-0 outline-none">
+              <AnalyticsTab analytics={data.analytics} />
+            </TabsContent>
+          </Tabs>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Subscription plan prices (quick)</CardTitle>
-            <CardDescription>Full plan editor on /admin/subscriptions</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {plans.map((p) => (
-              <div key={p.id} className="flex justify-between rounded-lg border border-border px-3 py-2">
-                <span>
-                  {p.name ?? p.tier} · cap {p.garment_cap}
-                </span>
-                <span>₹{p.monthly_inr}/mo</span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+        {/* Sticky Sidebar for Preview */}
+        <div className="w-full shrink-0 lg:w-80">
+          <div className="sticky top-6">
+            <ResidentAppPreview garments={data.garments} addons={data.addons} settings={data.settings} />
+          </div>
+        </div>
       </div>
     </PortalShell>
   );

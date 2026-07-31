@@ -71,6 +71,12 @@ export const operationsNav: PortalNavItem[] = [
     section: "Delivery",
   },
   {
+    href: "/operations/delivered-orders",
+    label: "Delivered Orders",
+    icon: CircleCheck,
+    section: "Delivery",
+  },
+  {
     href: "/operations/reports",
     label: "Reports",
     icon: BarChart3,
@@ -81,12 +87,6 @@ export const operationsNav: PortalNavItem[] = [
     href: "/operations/customers",
     label: "Residents",
     icon: Users,
-    section: "People",
-  },
-  {
-    href: "/operations/executives",
-    label: "Executives",
-    icon: Bike,
     section: "People",
   },
   {

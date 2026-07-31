@@ -7,6 +7,7 @@ import {
   deleteManagedSlot,
   listAllSlotsBySociety,
   findSlotById,
+  checkDuplicateSlot,
 } from "@/backend/repositories/pickups";
 import { getOperatorByUserId } from "@/backend/repositories/operations";
 import { query } from "@/backend/db/pool";
@@ -30,27 +31,27 @@ const updateSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-async function operatorSocietyIds(userId: string, isAdmin: boolean) {
+async function getOperatorSocieties(userId: string, isAdmin: boolean) {
   if (isAdmin) {
-    const all = await query<{ id: string }>(`SELECT id FROM societies ORDER BY name`);
-    return all.rows.map((r) => r.id);
+    const all = await query<{ id: string; name: string }>(`SELECT id, name FROM societies ORDER BY name`);
+    return all.rows;
   }
 
   const op = await getOperatorByUserId(userId);
   if (!op) return [];
 
-  const assigned = await query<{ society_id: string }>(
-    `SELECT society_id FROM operator_societies WHERE operator_id = $1`,
+  const assigned = await query<{ id: string; name: string }>(
+    `SELECT s.id, s.name FROM societies s JOIN operator_societies os ON os.society_id = s.id WHERE os.operator_id = $1 ORDER BY s.name`,
     [op.id],
   );
-  if (assigned.rows.length > 0) return assigned.rows.map((r) => r.society_id);
+  if (assigned.rows.length > 0) return assigned.rows;
 
   if (op.unit_id) {
-    const unit = await query<{ society_id: string }>(
-      `SELECT society_id FROM units WHERE id = $1`,
+    const unit = await query<{ id: string; name: string }>(
+      `SELECT s.id, s.name FROM societies s JOIN units u ON u.society_id = s.id WHERE u.id = $1`,
       [op.unit_id],
     );
-    return unit.rows.map((r) => r.society_id);
+    return unit.rows;
   }
   return [];
 }
@@ -60,7 +61,8 @@ export async function GET(request: Request) {
   if ("error" in auth) return auth.error;
 
   const isAdmin = auth.session.roles.includes("admin");
-  const allowed = await operatorSocietyIds(auth.session.userId, isAdmin);
+  const allowedSocieties = await getOperatorSocieties(auth.session.userId, isAdmin);
+  const allowed = allowedSocieties.map((s) => s.id);
   const societyId = new URL(request.url).searchParams.get("societyId");
 
   if (societyId) {
@@ -68,14 +70,14 @@ export async function GET(request: Request) {
       return forbidden("Society not assigned to this operator");
     }
     const slots = await listAllSlotsBySociety(societyId);
-    return ok({ slots, societyIds: allowed });
+    return ok({ slots, societies: allowedSocieties });
   }
 
   const slots = [];
   for (const id of allowed) {
     slots.push(...(await listAllSlotsBySociety(id)));
   }
-  return ok({ slots, societyIds: allowed });
+  return ok({ slots, societies: allowedSocieties });
 }
 
 export async function POST(request: Request) {
@@ -86,9 +88,35 @@ export async function POST(request: Request) {
   if (!parsed.success) return badRequest("Invalid request", parsed.error.flatten());
 
   const isAdmin = auth.session.roles.includes("admin");
-  const allowed = await operatorSocietyIds(auth.session.userId, isAdmin);
+  const allowed = (await getOperatorSocieties(auth.session.userId, isAdmin)).map(s => s.id);
   if (!allowed.includes(parsed.data.societyId) && !isAdmin) {
     return forbidden("Society not assigned to this operator");
+  }
+
+  // Validate date is not in the past
+  const slotDateObj = new Date(parsed.data.slotDate);
+  const now = new Date();
+  const slotDateOnly = new Date(slotDateObj.getFullYear(), slotDateObj.getMonth(), slotDateObj.getDate());
+  const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (slotDateOnly.getTime() < todayOnly.getTime()) {
+    return badRequest("Pickup slots cannot be created for past dates.");
+  }
+
+  if (slotDateOnly.getTime() === todayOnly.getTime()) {
+    const endTimeParts = parsed.data.endTime.split(":");
+    const endHour = parseInt(endTimeParts[0], 10);
+    const endMinute = parseInt(endTimeParts[1], 10);
+    
+    if (now.getHours() > endHour || (now.getHours() === endHour && now.getMinutes() >= endMinute)) {
+      return badRequest("Pickup slots cannot be created for expired time windows today.");
+    }
+  }
+
+  // Duplicate check
+  const isDuplicate = await checkDuplicateSlot(parsed.data.societyId, parsed.data.slotDate, parsed.data.slotWindow);
+  if (isDuplicate) {
+    return badRequest("A pickup slot already exists for this society, date and time window.");
   }
 
   const slot = await createManagedSlot(parsed.data);
@@ -106,7 +134,7 @@ export async function PATCH(request: Request) {
   if (!existing) return notFound("Slot not found");
 
   const isAdmin = auth.session.roles.includes("admin");
-  const allowed = await operatorSocietyIds(auth.session.userId, isAdmin);
+  const allowed = (await getOperatorSocieties(auth.session.userId, isAdmin)).map(s => s.id);
   if (!allowed.includes(existing.society_id) && !isAdmin) {
     return forbidden("Society not assigned to this operator");
   }
@@ -127,7 +155,7 @@ export async function DELETE(request: Request) {
   if (!existing) return notFound("Slot not found");
 
   const isAdmin = auth.session.roles.includes("admin");
-  const allowed = await operatorSocietyIds(auth.session.userId, isAdmin);
+  const allowed = (await getOperatorSocieties(auth.session.userId, isAdmin)).map(s => s.id);
   if (!allowed.includes(existing.society_id) && !isAdmin) {
     return forbidden("Society not assigned to this operator");
   }

@@ -45,7 +45,7 @@ export function ResidentsFilters({
   // Load plans dynamically
   useEffect(() => {
     fetch("/api/admin/subscriptions")
-      .then((res) => res.json())
+      .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data && data.plans) {
           setPlans(data.plans);
@@ -65,7 +65,7 @@ export function ResidentsFilters({
     }
 
     fetch(`/api/admin/societies/${filters.societyId}/towers`)
-      .then((res) => res.json())
+      .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data && data.towers) {
           setTowers(data.towers);
@@ -88,7 +88,7 @@ export function ResidentsFilters({
     }
 
     fetch(`/api/admin/towers/${selectedTowerId}/floors`)
-      .then((res) => res.json())
+      .then((res) => res.ok ? res.json() : null)
       .then((data) => {
         if (data && data.floors) {
           setFloors(data.floors);

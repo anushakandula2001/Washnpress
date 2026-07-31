@@ -106,6 +106,8 @@ export function PortalShell({
   greeting?: string;
   subtitle?: string;
 }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   if (portalLabel === "Admin Portal") {
     return (
       <AdminShell greeting={greeting} subtitle={subtitle}>
@@ -113,8 +115,6 @@ export function PortalShell({
       </AdminShell>
     );
   }
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-background">

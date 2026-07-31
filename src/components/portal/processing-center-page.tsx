@@ -29,16 +29,6 @@ import { cn } from "@/lib/utils/cn";
 
 export const PIPELINE_STAGES = [
   {
-    id: "pickup",
-    label: "Pickup",
-    icon: Truck,
-    color: "#6366f1",
-    bgLight: "rgba(99,102,241,0.12)",
-    statuses: ["Scheduled", "Pending", "Confirmed"],
-    nextStatus: "Picked Up",
-    nextAction: "Confirm Pickup",
-  },
-  {
     id: "receiving",
     label: "Receiving",
     icon: Package,
@@ -56,7 +46,7 @@ export const PIPELINE_STAGES = [
     bgLight: "rgba(0,168,168,0.12)",
     statuses: ["In Wash"],
     nextStatus: "Dry",
-    nextAction: "Complete Washing",
+    nextAction: "Start Drying",
   },
   {
     id: "drying",
@@ -66,7 +56,7 @@ export const PIPELINE_STAGES = [
     bgLight: "rgba(14,165,233,0.12)",
     statuses: ["Dry"],
     nextStatus: "Iron",
-    nextAction: "Complete Drying",
+    nextAction: "Start Ironing",
   },
   {
     id: "ironing",
@@ -75,38 +65,18 @@ export const PIPELINE_STAGES = [
     color: "#a855f7",
     bgLight: "rgba(168,85,247,0.12)",
     statuses: ["Iron"],
-    nextStatus: "Quality Check",
-    nextAction: "Complete Ironing",
+    nextStatus: "Out for Delivery",
+    nextAction: "Pass QC & Pack",
   },
   {
-    id: "qc",
-    label: "Quality Check",
-    icon: CheckCircle2,
-    color: "#10b981",
-    bgLight: "rgba(16,185,129,0.12)",
-    statuses: ["Quality Check", "QC Hold", "QC"],
-    nextStatus: "Packing",
-    nextAction: "Pass QC",
-  },
-  {
-    id: "packing",
-    label: "Packing",
-    icon: Package,
-    color: "#f97316",
-    bgLight: "rgba(249,115,22,0.12)",
-    statuses: ["Packing"],
-    nextStatus: "Ready for Delivery",
-    nextAction: "Mark Packed",
-  },
-  {
-    id: "ready",
-    label: "Ready",
-    icon: CheckCircle2,
-    color: "#22c55e",
-    bgLight: "rgba(34,197,94,0.12)",
-    statuses: ["Out for Delivery", "Ready for Delivery"],
-    nextStatus: null,
-    nextAction: null,
+    id: "qc_hold",
+    label: "QC Hold",
+    icon: AlertTriangle,
+    color: "#ef4444",
+    bgLight: "rgba(239,68,68,0.12)",
+    statuses: ["QC Hold"],
+    nextStatus: "In Wash",
+    nextAction: "Re-process (Wash)",
   },
 ] as const;
 
@@ -415,7 +385,7 @@ const PRIORITY_OPTIONS: { value: Priority | "all"; label: string }[] = [
   { value: "normal", label: "Normal" },
 ];
 
-export function ProcessingCenterPage({ initialStage }: { initialStage?: string }) {
+export default function ProcessingCenterPage({ initialStage }: { initialStage?: string }) {
   const [orders, setOrders] = useState<ProcessingOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
