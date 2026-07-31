@@ -29,7 +29,7 @@ export async function GET(request: Request) {
        (SELECT COUNT(*)::text FROM support_tickets WHERE status IN ('open','in_progress')) AS tickets,
        (SELECT COUNT(*)::text FROM societies) AS societies,
        (SELECT COUNT(*)::text FROM pickups WHERE scheduled_for::date = CURRENT_DATE) AS today_pickups,
-       (SELECT COUNT(*)::text FROM orders WHERE status NOT IN ('Delivered','Cancelled','Scheduled')) AS in_progress,
+      (SELECT COUNT(*)::text FROM orders WHERE status NOT IN ('Delivered','Cancelled','cancelled','Scheduled')) AS in_progress,
        (SELECT COUNT(*)::text FROM orders WHERE status = 'Delivered') AS completed`,
   );
 

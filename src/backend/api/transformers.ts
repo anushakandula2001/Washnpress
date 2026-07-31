@@ -12,6 +12,8 @@ const STATUS_TO_STAGE: Record<string, (typeof ORDER_STAGES)[number]> = {
   "QC Hold": "QC",
   "Out for Delivery": "Delivery",
   Delivered: "Delivery",
+  cancelled: "Pickup",
+  Cancelled: "Pickup",
 };
 
 const STATUS_DISPLAY: Record<string, { label: string; variant: "default" | "secondary" | "success" }> = {
@@ -23,6 +25,8 @@ const STATUS_DISPLAY: Record<string, { label: string; variant: "default" | "seco
   "QC Hold": { label: "QC Hold", variant: "secondary" },
   "Out for Delivery": { label: "Out for Delivery", variant: "default" },
   Delivered: { label: "Delivered", variant: "success" },
+  cancelled: { label: "Cancelled", variant: "secondary" },
+  Cancelled: { label: "Cancelled", variant: "secondary" },
 };
 
 export function toPickupSlot(slot: DbPickupSlot): PickupSlot {

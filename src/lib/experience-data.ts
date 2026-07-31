@@ -99,6 +99,7 @@ export function countByStatus(orderList: Order[]) {
     "Out for Delivery": 0,
     Delivered: 0,
     Cancelled: 0,
+    cancelled: 0,
   };
 
   for (const order of orderList) {

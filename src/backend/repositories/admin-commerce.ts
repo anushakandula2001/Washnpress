@@ -828,7 +828,7 @@ export async function getOperatorPerformance() {
                 SELECT COUNT(*)::int FROM orders ord
                 JOIN pickups p ON p.id = ord.pickup_id
                 JOIN operator_societies os3 ON os3.society_id = p.society_id
-                WHERE os3.operator_id = o.id AND ord.status NOT IN ('Delivered','Cancelled')
+                WHERE os3.operator_id = o.id AND ord.status NOT IN ('Delivered','Cancelled','cancelled')
               ) AS pending_orders,
               (
                 SELECT COALESCE(AVG(orat.rating), 0)::float FROM order_ratings orat

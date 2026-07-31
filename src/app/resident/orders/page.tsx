@@ -1,11 +1,12 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { ResidentShell } from "@/components/resident/resident-shell";
 import { OrderHorizontalStepper } from "@/components/resident/order-stepper";
 import { OrderVerticalTimeline } from "@/components/resident/order-timeline";
 import { useResident } from "@/components/resident/resident-provider";
+import { api } from "@/frontend/api-client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,19 +19,22 @@ type SortKey = "newest" | "oldest";
 const PAGE_SIZE = 8;
 
 function isActiveStatus(status: string) {
-  return status !== "Delivered" && status !== "Cancelled";
+  return status !== "Delivered" && status !== "Cancelled" && status !== "cancelled";
 }
 
 function OrdersContent() {
   const searchParams = useSearchParams();
   const highlightId = searchParams.get("id");
-  const { orders, selectedOrderId, setSelectedOrderId, getOrderTracking } = useResident();
+  const { orders, selectedOrderId, setSelectedOrderId, getOrderTracking, refresh } = useResident();
+  const router = useRouter();
 
   const [tab, setTab] = useState<FilterTab>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("newest");
   const [page, setPage] = useState(1);
   const [trackingEvents, setTrackingEvents] = useState<TrackingEvent[]>([]);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -38,7 +42,7 @@ function OrdersContent() {
 
     if (tab === "active") list = list.filter((o) => isActiveStatus(o.status));
     if (tab === "completed") list = list.filter((o) => o.status === "Delivered");
-    if (tab === "cancelled") list = list.filter((o) => o.status === "Cancelled");
+    if (tab === "cancelled") list = list.filter((o) => o.status === "Cancelled" || o.status === "cancelled");
 
     if (q) {
       list = list.filter(
@@ -88,6 +92,21 @@ function OrdersContent() {
       cancelled = true;
     };
   }, [activeOrder?.id, getOrderTracking]);
+
+  async function handleCancelOrder() {
+    if (!activeOrder || cancelling) return;
+    if (!window.confirm(`Cancel order #${activeOrder.id}?`)) return;
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      await api.orders.cancel(activeOrder.id);
+      await refresh();
+    } catch (error) {
+      setCancelError(error instanceof Error ? error.message : "Unable to cancel order");
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   const tabs: Array<{ id: FilterTab; label: string }> = [
     { id: "all", label: "All" },
@@ -208,16 +227,14 @@ function OrdersContent() {
             {activeOrder ? (
               <>
                 <OrderVerticalTimeline events={trackingEvents} />
+                {cancelError && <p className="mt-4 text-sm text-destructive">{cancelError}</p>}
                 <div className="mt-6 flex gap-2">
-                  <Button variant="outline" size="sm">
-                    Download Receipt
-                  </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={() => router.push("/resident/support")}>
                     Report Issue
                   </Button>
-                  {activeOrder.status !== "Delivered" && (
-                    <Button variant="outline" size="sm">
-                      Cancel Order
+                  {activeOrder.status !== "Delivered" && activeOrder.status !== "Cancelled" && activeOrder.status !== "cancelled" && (
+                    <Button variant="outline" size="sm" onClick={() => void handleCancelOrder()} disabled={cancelling}>
+                      {cancelling ? "Cancelling…" : "Cancel Order"}
                     </Button>
                   )}
                 </div>

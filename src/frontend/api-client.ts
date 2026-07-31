@@ -67,6 +67,15 @@ export const api = {
       apiFetch("/api/resident/profile", { method: "PUT", body: JSON.stringify(data) }),
   },
 
+  residentAddresses: {
+    list: () => apiFetch<{ addresses: Array<Record<string, unknown>> }>("/api/resident/addresses"),
+    create: (data: Record<string, unknown>) =>
+      apiFetch<{ address: Record<string, unknown> }>("/api/resident/addresses", {
+        method: "POST",
+        body: JSON.stringify(data),
+      }),
+  },
+
   subscription: {
     get: () => apiFetch<{
       subscription: Record<string, unknown>;
@@ -83,6 +92,7 @@ export const api = {
 
   orders: {
     list: () => apiFetch<{ orders: Array<Record<string, unknown>> }>("/api/orders"),
+    cancel: (id: string) => apiFetch(`/api/orders/${id}`, { method: "DELETE" }),
     get: (id: string) => apiFetch<{ order: Record<string, unknown> }>(`/api/orders/${id}`),
     tracking: (id: string) =>
       apiFetch<{
