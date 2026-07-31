@@ -108,9 +108,9 @@ export function SubscriptionsTab({ plans, onUpdate }: { plans: any[]; onUpdate: 
   };
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-      <div className="xl:col-span-8 space-y-6">
-      {/* Toolbar */}
+    <>
+      <div className="w-full space-y-6">
+        {/* Toolbar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-xl bg-card p-4 shadow-sm border border-border">
         <div className="flex flex-1 items-center gap-2">
           <h2 className="text-lg font-semibold tracking-tight">Active Subscription Plans</h2>
@@ -210,11 +210,6 @@ export function SubscriptionsTab({ plans, onUpdate }: { plans: any[]; onUpdate: 
         ))}
       </div>
       </div>
-      
-      {/* RIGHT COLUMN: Business Previews */}
-      <div className="xl:col-span-4 space-y-6">
-        <BusinessPreviewCard data={previewData} />
-      </div>
 
       {/* Add Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -248,6 +243,6 @@ export function SubscriptionsTab({ plans, onUpdate }: { plans: any[]; onUpdate: 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }
