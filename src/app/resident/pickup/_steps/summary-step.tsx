@@ -5,13 +5,14 @@ import { motion } from "framer-motion";
 import {
   Clock3,
   MapPin,
-  Phone,
   Shirt,
   Sparkles,
   FileText,
   TicketPercent,
+  CalendarClock,
+  Info,
+  PackageCheck,
 } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { useResident } from "@/components/resident/resident-provider";
 import {
   computeCharges,
@@ -63,7 +64,7 @@ export function SummaryStep() {
     taxRate,
     deliveryFee,
   } = usePickup();
-  const { profile } = useResident();
+  const { profile, subscription } = useResident();
 
   const garmentLines = garmentOptions.filter((g) => (garments[g.id] ?? 0) > 0);
   const services = serviceOptions.filter((s) => selectedServiceIds.includes(s.id));
@@ -87,12 +88,17 @@ export function SummaryStep() {
         animate="show"
         className="rounded-[24px] border border-border/80 bg-card p-5 shadow-sm md:p-7"
       >
-        <Section icon={Clock3} title="Pickup slot">
+        <Section icon={MapPin} title="Pickup Details">
           {selectedSlot ? (
             <div>
-              <p className="font-medium">{formatReviewDate(selectedSlot.date)}</p>
+              <p className="font-medium">
+                {formatReviewDate(selectedSlot.date)} · {formatSlotSummary(selectedSlot)}
+              </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {formatSlotSummary(selectedSlot)}
+                {profile?.society || "—"}, Flat {profile?.flatNumber || "—"}, {profile?.tower || "—"}
+              </p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Contact: +91 {profile?.mobile || "—"}
               </p>
             </div>
           ) : (
@@ -100,42 +106,39 @@ export function SummaryStep() {
           )}
         </Section>
 
-        <Section icon={Shirt} title="Garments">
-          <ul className="space-y-2">
-            {garmentLines.map((g) => (
-              <li key={g.id} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{g.name}</span>
-                <span className="font-semibold">× {garments[g.id]}</span>
-              </li>
-            ))}
-          </ul>
+        <Section icon={Shirt} title="Garments Summary">
+          {garmentLines.length > 0 ? (
+            <ul className="space-y-2">
+              {garmentLines.map((g) => (
+                <li key={g.id} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{g.name}</span>
+                  <span className="font-semibold">× {garments[g.id]}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No garments selected</p>
+          )}
           <p className="mt-3 text-sm font-medium text-primary">
             {itemCount} item{itemCount === 1 ? "" : "s"} total
           </p>
         </Section>
 
-        <Section icon={Sparkles} title="Services">
-          <ul className="space-y-2">
-            {services.map((s) => (
-              <li key={s.id} className="flex justify-between text-sm">
-                <span className="text-muted-foreground">{s.name}</span>
-                <span className="font-semibold">
-                  {s.priceInr === 0 ? "Included" : `₹${s.priceInr}`}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </Section>
-
-        <Section icon={MapPin} title="Address">
-          <p className="text-sm font-medium">{profile?.society || "—"}</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Flat {profile?.flatNumber || "—"}, {profile?.tower || "—"}
-          </p>
-        </Section>
-
-        <Section icon={Phone} title="Phone">
-          <p className="text-sm font-medium">+91 {profile?.mobile || "—"}</p>
+        <Section icon={Sparkles} title="Add-on Services Summary">
+          {services.length > 0 ? (
+            <ul className="space-y-2">
+              {services.map((s) => (
+                <li key={s.id} className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">{s.name}</span>
+                  <span className="font-semibold">
+                    {s.priceInr === 0 ? "Included" : `₹${s.priceInr}`}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">No add-on services selected</p>
+          )}
         </Section>
 
         <Section icon={FileText} title="Instructions">
@@ -144,16 +147,8 @@ export function SummaryStep() {
           </p>
         </Section>
 
-        <Section icon={TicketPercent} title="Charges">
+        <Section icon={TicketPercent} title="Estimated Charges">
           <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">Coupon</span>
-              <Input
-                disabled
-                placeholder="Coming soon"
-                className="h-9 max-w-[180px] rounded-xl bg-muted/50"
-              />
-            </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Services</span>
               <span>₹{charges.services}</span>
@@ -166,6 +161,41 @@ export function SummaryStep() {
               <span>Grand total</span>
               <span className="text-primary">₹{charges.grandTotal}</span>
             </div>
+          </div>
+        </Section>
+
+        <Section icon={CalendarClock} title="Subscription Summary">
+          {subscription ? (
+            <div className="grid gap-2 text-sm sm:grid-cols-2">
+              <p><span className="text-muted-foreground">Plan:</span> {subscription.planName}</p>
+              <p><span className="text-muted-foreground">Monthly:</span> ₹{subscription.monthlyInr}</p>
+              <p><span className="text-muted-foreground">Garments:</span> {subscription.garmentsUsed}/{subscription.garmentCap}</p>
+              <p><span className="text-muted-foreground">Renews:</span> {subscription.renewsOn}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No active subscription</p>
+          )}
+        </Section>
+
+        <Section icon={Clock3} title="Pickup Timeline">
+          <div className="grid gap-3 text-sm sm:grid-cols-3">
+            <div><p className="font-medium text-primary">1. Pickup</p><p className="text-muted-foreground">Scheduled</p></div>
+            <div><p className="font-medium">2. Processing</p><p className="text-muted-foreground">After collection</p></div>
+            <div><p className="font-medium">3. Delivery</p><p className="text-muted-foreground">At your doorstep</p></div>
+          </div>
+        </Section>
+
+        <Section icon={Info} title="Important Information">
+          <ul className="space-y-1 text-sm text-muted-foreground">
+            <li>Please keep garments ready before the selected pickup window.</li>
+            <li>Final charges may vary if garment quantities change after inspection.</li>
+          </ul>
+        </Section>
+
+        <Section icon={PackageCheck} title="Order Summary">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">{itemCount} garments · {services.length} service{services.length === 1 ? "" : "s"}</span>
+            <span className="text-lg font-bold text-primary">₹{charges.grandTotal}</span>
           </div>
         </Section>
       </motion.div>

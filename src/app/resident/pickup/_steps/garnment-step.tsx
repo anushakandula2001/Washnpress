@@ -52,14 +52,18 @@ const categories = [
   },
 ];
 
-function parsePricing(description: string) {
+function parsePricing(description: string, item?: {
+  washPriceInr?: number;
+  ironPriceInr?: number;
+  dryCleanPriceInr?: number;
+}) {
   const washMatch = description.match(/wash\s*₹\s*(\d+)/i);
   const ironMatch = description.match(/iron\s*₹\s*(\d+)/i);
   const dryCleanMatch = description.match(/dry\s*clean\s*₹\s*(\d+)/i);
   return {
-    wash: washMatch ? Number(washMatch[1]) : null,
-    iron: ironMatch ? Number(ironMatch[1]) : null,
-    dryClean: dryCleanMatch ? Number(dryCleanMatch[1]) : null,
+    wash: item?.washPriceInr ?? (washMatch ? Number(washMatch[1]) : null),
+    iron: item?.ironPriceInr ?? (ironMatch ? Number(ironMatch[1]) : null),
+    dryClean: item?.dryCleanPriceInr ?? (dryCleanMatch ? Number(dryCleanMatch[1]) : null),
   };
 }
 
@@ -91,7 +95,7 @@ export function GarmentStep() {
     () =>
       garmentOptions.reduce((sum, item) => {
         const qty = garments[item.id] ?? 0;
-        const pricing = parsePricing(item.description);
+        const pricing = parsePricing(item.description, item);
         return sum + qty * (pricing.wash ?? 0);
       }, 0),
     [garmentOptions, garments],
@@ -170,7 +174,7 @@ export function GarmentStep() {
                             ) : (
                               items.map((item) => {
                                 const qty = garments[item.id] ?? 0;
-                                const pricing = parsePricing(item.description);
+                                const pricing = parsePricing(item.description, item);
                                 const active = qty > 0;
                                 const Icon = iconMap[item.icon] ?? Package;
 

@@ -103,6 +103,9 @@ export function PickupProvider({ children }: { children: ReactNode }) {
             description: `Wash ₹${g.wash_price_inr} · Iron ₹${g.iron_price_inr} · Dry clean ₹${g.dry_clean_price_inr}`,
             icon: "shirt",
             weightKg: 0.3,
+            washPriceInr: Number(g.wash_price_inr ?? 0),
+            ironPriceInr: Number(g.iron_price_inr ?? 0),
+            dryCleanPriceInr: Number(g.dry_clean_price_inr ?? 0),
           }));
           setGarmentOptions(mapped);
           setState((s) => ({

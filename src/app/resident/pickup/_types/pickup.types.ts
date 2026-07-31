@@ -31,6 +31,9 @@ export type GarmentOption = {
   description: string;
   icon: string;
   weightKg: number;
+  washPriceInr?: number;
+  ironPriceInr?: number;
+  dryCleanPriceInr?: number;
 };
 
 export type ServiceOption = {
