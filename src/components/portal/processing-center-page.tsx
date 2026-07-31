@@ -78,7 +78,6 @@ export const PIPELINE_STAGES = [
     nextStatus: "In Wash",
     nextAction: "Re-process (Wash)",
   },
-  
 ] as const;
 
 type StageId = (typeof PIPELINE_STAGES)[number]["id"];
