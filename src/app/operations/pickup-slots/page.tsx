@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { api } from "@/frontend/api-client";
+import { useToast } from "@/components/ui/toast";
 import { operationsNav } from "@/lib/portal-nav";
+import { Loader2 } from "lucide-react";
 
 type Society = { id: string; name: string };
 type SlotRow = {
@@ -49,72 +50,107 @@ export default function PickupSlotsPage() {
   const [slotDate, setSlotDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [slotWindow, setSlotWindow] = useState<(typeof WINDOWS)[number]>("Morning");
   const [capacity, setCapacity] = useState("20");
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
 
   const load = useCallback(async (sid?: string) => {
     setLoading(true);
-    setError(null);
     try {
-      const socData = await api.operationsMaster.get({ type: "societies" });
-      const list = ((socData.societies as Society[]) ?? []).map((s) => ({
-        id: String(s.id),
-        name: String(s.name),
-      }));
+      const data = await slotsApi("GET", undefined, sid ? { societyId: sid } : undefined);
+      
+      const list = (data.societies as Society[]) ?? [];
       setSocieties(list);
-      const activeSociety = sid || societyId || list[0]?.id || "";
-      if (!societyId && activeSociety) setSocietyId(activeSociety);
+      
+      const activeSociety = sid || (list.length === 1 ? list[0].id : societyId) || "";
+      if (activeSociety && societyId !== activeSociety) {
+        setSocietyId(activeSociety);
+      }
 
-      const data = await slotsApi("GET", undefined, activeSociety ? { societyId: activeSociety } : undefined);
-      setSlots((data.slots as SlotRow[]) ?? []);
+      // Filter upcoming slots to hide expired ones
+      const now = new Date();
+      const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+      const upcomingSlots = ((data.slots as SlotRow[]) ?? []).filter(slot => {
+        const slotDateObj = new Date(slot.slot_date);
+        const slotDateOnly = new Date(slotDateObj.getFullYear(), slotDateObj.getMonth(), slotDateObj.getDate());
+        
+        if (slotDateOnly.getTime() < todayOnly.getTime()) return false; // Past dates
+        if (slotDateOnly.getTime() === todayOnly.getTime()) {
+          const startTimeParts = slot.start_time.split(":");
+          const startHour = parseInt(startTimeParts[0], 10);
+          const startMinute = parseInt(startTimeParts[1], 10);
+          if (now.getHours() > startHour || (now.getHours() === startHour && now.getMinutes() >= startMinute)) {
+            return false; // Expired today
+          }
+        }
+        return true;
+      });
+
+      setSlots(upcomingSlots);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load slots");
+      toast({
+        variant: "destructive",
+        title: "Failed to load slots",
+        description: err instanceof Error ? err.message : "An error occurred",
+      });
     } finally {
       setLoading(false);
     }
-  }, [societyId]);
+  }, [societyId, toast]);
 
   useEffect(() => {
     void load();
-  }, [load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  async function createSlot() {
-    setMessage(null);
-    setError(null);
-    if (!societyId) {
-      setError("Select a society");
-      return;
-    }
-    const times = WINDOW_TIMES[slotWindow];
-    
-    // Validation: Block past dates and times
+  // Compute available windows dynamically based on current time if date is today
+  const availableWindows = useMemo(() => {
     const slotDateObj = new Date(slotDate);
     const now = new Date();
-    
-    // Reset time components for date-only comparison
     const slotDateOnly = new Date(slotDateObj.getFullYear(), slotDateObj.getMonth(), slotDateObj.getDate());
     const todayOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    if (slotDateOnly.getTime() < todayOnly.getTime()) {
-      setError("Pickup slots cannot be created for past dates or expired time windows.");
+
+    if (slotDateOnly.getTime() > todayOnly.getTime()) return WINDOWS;
+    if (slotDateOnly.getTime() < todayOnly.getTime()) return [];
+
+    // Date is today
+    return WINDOWS.filter(w => {
+      const startTimeParts = WINDOW_TIMES[w].start.split(":");
+      const startHour = parseInt(startTimeParts[0], 10);
+      const startMinute = parseInt(startTimeParts[1], 10);
+      return now.getHours() < startHour || (now.getHours() === startHour && now.getMinutes() < startMinute);
+    });
+  }, [slotDate]);
+
+  // Reset slotWindow if the current one is not available
+  useEffect(() => {
+    if (availableWindows.length > 0 && !availableWindows.includes(slotWindow)) {
+      setSlotWindow(availableWindows[0]);
+    }
+  }, [availableWindows, slotWindow]);
+
+  async function createSlot() {
+    if (!societyId) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please select a society.",
+      });
       return;
     }
     
-    if (slotDateOnly.getTime() === todayOnly.getTime()) {
-      // Check if the end time has already passed
-      const endTimeParts = times.end.split(":"); // e.g. "11:00"
-      const endHour = parseInt(endTimeParts[0], 10);
-      const endMinute = parseInt(endTimeParts[1], 10);
-      
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
-      
-      if (currentHour > endHour || (currentHour === endHour && currentMinute >= endMinute)) {
-        setError("Pickup slots cannot be created for past dates or expired time windows.");
-        return;
-      }
+    if (availableWindows.length === 0 || !availableWindows.includes(slotWindow)) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Selected time window is no longer available.",
+      });
+      return;
     }
+
+    const times = WINDOW_TIMES[slotWindow];
+    setIsSaving(true);
 
     try {
       await slotsApi("POST", {
@@ -125,10 +161,24 @@ export default function PickupSlotsPage() {
         endTime: times.end,
         capacityTotal: Number(capacity) || 20,
       });
-      setMessage("Slot created — residents can book it immediately.");
+      
+      toast({
+        title: "Slot created",
+        description: "Residents can book it immediately.",
+      });
+      
+      // Reset form to defaults
+      setCapacity("20");
+      
       await load(societyId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Create failed");
+      toast({
+        variant: "destructive",
+        title: "Create failed",
+        description: err instanceof Error ? err.message : "Failed to create slot.",
+      });
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -137,19 +187,32 @@ export default function PickupSlotsPage() {
       await slotsApi("PATCH", { slotId: slot.id, isActive: !(slot.is_active !== false) });
       await load(societyId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Update failed");
+      toast({
+        variant: "destructive",
+        title: "Update failed",
+        description: err instanceof Error ? err.message : "Failed to update slot.",
+      });
     }
   }
 
   async function removeSlot(slotId: string) {
     try {
       await slotsApi("DELETE", undefined, { slotId });
-      setMessage("Slot removed / disabled.");
+      toast({
+        title: "Slot removed",
+        description: "The slot has been deleted or disabled.",
+      });
       await load(societyId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+      toast({
+        variant: "destructive",
+        title: "Delete failed",
+        description: err instanceof Error ? err.message : "Failed to delete slot.",
+      });
     }
   }
+
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   return (
     <PortalShell
@@ -168,8 +231,9 @@ export default function PickupSlotsPage() {
             <label className="block text-sm">
               <span className="mb-1 block text-muted-foreground">Society</span>
               <select
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 value={societyId}
+                disabled={societies.length === 1}
                 onChange={(e) => {
                   setSocietyId(e.target.value);
                   void load(e.target.value);
@@ -185,22 +249,35 @@ export default function PickupSlotsPage() {
             </label>
             <label className="block text-sm">
               <span className="mb-1 block text-muted-foreground">Date</span>
-              <Input type="date" value={slotDate} onChange={(e) => setSlotDate(e.target.value)} />
+              <Input 
+                type="date" 
+                value={slotDate} 
+                min={todayStr}
+                onChange={(e) => setSlotDate(e.target.value)} 
+              />
             </label>
+            
             <label className="block text-sm">
               <span className="mb-1 block text-muted-foreground">Window</span>
-              <select
-                className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                value={slotWindow}
-                onChange={(e) => setSlotWindow(e.target.value as (typeof WINDOWS)[number])}
-              >
-                {WINDOWS.map((w) => (
-                  <option key={w} value={w}>
-                    {w} ({WINDOW_TIMES[w].start}–{WINDOW_TIMES[w].end})
-                  </option>
-                ))}
-              </select>
+              {availableWindows.length > 0 ? (
+                <select
+                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  value={slotWindow}
+                  onChange={(e) => setSlotWindow(e.target.value as (typeof WINDOWS)[number])}
+                >
+                  {availableWindows.map((w) => (
+                    <option key={w} value={w}>
+                      {w} ({WINDOW_TIMES[w].start}–{WINDOW_TIMES[w].end})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="w-full rounded-md border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                  No pickup windows available for selected date
+                </div>
+              )}
             </label>
+
             <label className="block text-sm">
               <span className="mb-1 block text-muted-foreground">Max orders (capacity)</span>
               <Input
@@ -210,11 +287,21 @@ export default function PickupSlotsPage() {
                 onChange={(e) => setCapacity(e.target.value)}
               />
             </label>
-            <Button className="w-full" onClick={() => void createSlot()}>
-              Create slot
+            
+            <Button 
+              className="w-full" 
+              onClick={() => void createSlot()} 
+              disabled={isSaving || !societyId || availableWindows.length === 0}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Create slot"
+              )}
             </Button>
-            {message ? <p className="text-sm text-emerald-700">{message}</p> : null}
-            {error ? <p className="text-sm text-destructive">{error}</p> : null}
           </CardContent>
         </Card>
 

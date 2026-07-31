@@ -60,32 +60,56 @@ export function ProfileAvatar({
 
   return (
     <div className="relative inline-block shrink-0">
-      <button
-        type="button"
-        onClick={onClick}
-        tabIndex={onClick ? 0 : -1}
-        className={cn(
-          "relative flex items-center justify-center overflow-hidden rounded-full border border-border bg-primary/10 font-semibold text-primary transition duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
-          sizeClasses[size],
-          onClick ? "cursor-pointer hover:opacity-90 hover:scale-105" : "cursor-default",
-          className,
-        )}
-        aria-label={alt ?? `${name} profile picture`}
-      >
-        {src && !imageError ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={src}
-            alt={alt ?? name}
-            onError={() => setImageError(true)}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <span className="inline-flex items-center justify-center">
-            {initials ? initials : <User className="h-1/2 w-1/2" />}
-          </span>
-        )}
-      </button>
+      {onClick ? (
+        <button
+          type="button"
+          onClick={onClick}
+          tabIndex={0}
+          className={cn(
+            "relative flex items-center justify-center overflow-hidden rounded-full border border-border bg-primary/10 font-semibold text-primary transition duration-150 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer hover:opacity-90 hover:scale-105",
+            sizeClasses[size],
+            className,
+          )}
+          aria-label={alt ?? `${name} profile picture`}
+        >
+          {src && !imageError ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt={alt ?? name}
+              onError={() => setImageError(true)}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="inline-flex items-center justify-center">
+              {initials ? initials : <User className="h-1/2 w-1/2" />}
+            </span>
+          )}
+        </button>
+      ) : (
+        <div
+          className={cn(
+            "relative flex items-center justify-center overflow-hidden rounded-full border border-border bg-primary/10 font-semibold text-primary transition duration-150 cursor-default",
+            sizeClasses[size],
+            className,
+          )}
+          aria-label={alt ?? `${name} profile picture`}
+        >
+          {src && !imageError ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={src}
+              alt={alt ?? name}
+              onError={() => setImageError(true)}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <span className="inline-flex items-center justify-center">
+              {initials ? initials : <User className="h-1/2 w-1/2" />}
+            </span>
+          )}
+        </div>
+      )}
 
       {showStatus && (
         <span

@@ -50,7 +50,12 @@ export async function listResidentsForSocieties(societyIds: string[]) {
   if (societyIds.length === 0) return [];
   const result = await query(
     `SELECT r.id, r.resident_code, r.unit_number, r.tower_block, r.email,
-            s.name AS society_name, u.full_name, u.phone, r.created_at
+            s.name AS society_name, u.full_name, u.phone, r.created_at,
+            'active' as status,
+            COALESCE((SELECT balance_inr FROM wallets WHERE resident_id = r.id), 0) AS wallet_balance,
+            (SELECT COUNT(*) FROM orders p JOIN pickups pu ON p.pickup_id = pu.id WHERE pu.resident_id = r.id) AS orders_count,
+            (SELECT pl.name FROM subscriptions sub JOIN plans pl ON sub.plan_id = pl.id WHERE sub.resident_id = r.id AND sub.status = 'active' LIMIT 1) AS subscription_tier,
+            (SELECT status FROM subscriptions sub WHERE sub.resident_id = r.id ORDER BY cycle_end DESC LIMIT 1) AS subscription_status
      FROM residents r
      JOIN users u ON u.id = r.user_id
      JOIN societies s ON s.id = r.society_id

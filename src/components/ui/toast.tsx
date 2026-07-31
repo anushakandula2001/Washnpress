@@ -59,14 +59,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+const fallbackCtx = {
+  toast: (message: string) => {
+    if (typeof window !== "undefined") console.info("[toast]", message);
+  },
+};
+
 export function useToast() {
   const ctx = React.useContext(ToastContext);
   if (!ctx) {
-    return {
-      toast: (message: string) => {
-        if (typeof window !== "undefined") console.info("[toast]", message);
-      },
-    };
+    return fallbackCtx;
   }
   return ctx;
 }

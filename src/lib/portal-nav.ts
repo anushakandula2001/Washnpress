@@ -90,12 +90,6 @@ export const operationsNav: PortalNavItem[] = [
     section: "People",
   },
   {
-    href: "/operations/executives",
-    label: "Executives",
-    icon: Bike,
-    section: "People",
-  },
-  {
     href: "/operations/assigned-societies",
     label: "Assigned Societies",
     icon: Building2,
