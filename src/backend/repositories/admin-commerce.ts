@@ -1042,43 +1042,58 @@ export async function logPricingHistory(
 }
 
 export async function getPricingHistory() {
-  const sql = `
-    SELECT ph.*, u.full_name AS updated_by_name
-    FROM pricing_history ph
-    LEFT JOIN users u ON u.id = ph.updated_by
-    ORDER BY ph.created_at DESC
-    LIMIT 200
-  `;
-  return (await query(sql)).rows;
+  try {
+    const sql = `
+      SELECT ph.*, u.full_name AS updated_by_name
+      FROM pricing_history ph
+      LEFT JOIN users u ON u.id = ph.updated_by
+      ORDER BY ph.created_at DESC
+      LIMIT 200
+    `;
+    return (await query(sql)).rows;
+  } catch (err) {
+    console.error("Failed to fetch pricing history:", err);
+    return [];
+  }
 }
 
 export async function getPricingAnalytics() {
-  // A simplified analytics implementation for the demo
-  const [
-    revenueRes,
-    topGarmentsRes,
-    topAddonsRes,
-  ] = await Promise.all([
-    query(`SELECT COALESCE(SUM(total_inr), 0) AS total_revenue, COUNT(*) AS total_orders FROM orders WHERE status = 'Delivered'`),
-    query(`
-      SELECT gc.name, COUNT(oi.id) as count
-      FROM order_items oi
-      JOIN garment_catalog gc ON gc.id = oi.garment_id
-      GROUP BY gc.id, gc.name
-      ORDER BY count DESC LIMIT 5
-    `),
-    query(`
-      SELECT oao.addon_code, COUNT(oao.id) as count
-      FROM order_applied_addons oao
-      GROUP BY oao.addon_code
-      ORDER BY count DESC LIMIT 5
-    `)
-  ]);
+  try {
+    // A simplified analytics implementation for the demo
+    const [
+      revenueRes,
+      topGarmentsRes,
+      topAddonsRes,
+    ] = await Promise.all([
+      query(`SELECT COALESCE(SUM(total_inr), 0) AS total_revenue, COUNT(*) AS total_orders FROM orders WHERE status = 'Delivered'`),
+      query(`
+        SELECT gc.name, COUNT(oi.id) as count
+        FROM order_items oi
+        JOIN garment_catalog gc ON gc.id = oi.garment_id
+        GROUP BY gc.id, gc.name
+        ORDER BY count DESC LIMIT 5
+      `),
+      query(`
+        SELECT oao.addon_code, COUNT(oao.id) as count
+        FROM order_applied_addons oao
+        GROUP BY oao.addon_code
+        ORDER BY count DESC LIMIT 5
+      `)
+    ]);
 
-  return {
-    totalRevenue: parseInt(revenueRes.rows[0]?.total_revenue || '0', 10),
-    totalOrders: parseInt(revenueRes.rows[0]?.total_orders || '0', 10),
-    topGarments: topGarmentsRes.rows,
-    topAddons: topAddonsRes.rows,
-  };
+    return {
+      totalRevenue: parseInt(revenueRes.rows[0]?.total_revenue || '0', 10),
+      totalOrders: parseInt(revenueRes.rows[0]?.total_orders || '0', 10),
+      topGarments: topGarmentsRes.rows,
+      topAddons: topAddonsRes.rows,
+    };
+  } catch (err) {
+    console.error("Failed to fetch pricing analytics:", err);
+    return {
+      totalRevenue: 0,
+      totalOrders: 0,
+      topGarments: [],
+      topAddons: [],
+    };
+  }
 }
