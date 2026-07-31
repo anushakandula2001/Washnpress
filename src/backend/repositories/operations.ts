@@ -14,7 +14,7 @@ export async function getOperationsQueue(societyIds?: string[]) {
     JOIN residents r ON r.id = p.resident_id
     JOIN societies s ON s.id = p.society_id
     JOIN users u ON u.id = r.user_id
-    WHERE o.status NOT IN ('Delivered', 'Cancelled')
+    WHERE o.status NOT IN ('Delivered', 'Cancelled', 'cancelled')
       AND p.scheduled_for::date <= CURRENT_DATE + INTERVAL '1 day'`;
   const params: unknown[] = [];
   if (societyIds && societyIds.length > 0) {
@@ -198,7 +198,7 @@ export async function getOperationsReports(userId: string, isAdmin: boolean) {
   // 3. SLA Metrics
   const sla = await queryOne(
     `SELECT
-       COUNT(o.id) FILTER (WHERE p.scheduled_for < now() - INTERVAL '4 hours' AND o.status NOT IN ('Delivered', 'Cancelled'))::int as delayed_pickups,
+      COUNT(o.id) FILTER (WHERE p.scheduled_for < now() - INTERVAL '4 hours' AND o.status NOT IN ('Delivered', 'Cancelled', 'cancelled'))::int as delayed_pickups,
        COUNT(o.id) FILTER (WHERE o.status IN ('Delivered') AND o.updated_at > p.scheduled_for + INTERVAL '48 hours')::int as breached_delivery
      FROM orders o
      JOIN pickups p ON p.id = o.pickup_id

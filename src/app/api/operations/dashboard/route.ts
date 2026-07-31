@@ -48,7 +48,7 @@ export async function GET(request: Request) {
        COUNT(*) FILTER (WHERE o.status ILIKE '%ready%')::text AS ready_delivery,
        COUNT(*) FILTER (WHERE o.status = 'Delivered' AND o.updated_at::date = CURRENT_DATE)::text AS completed_today,
        COUNT(*) FILTER (
-         WHERE o.status NOT IN ('Delivered', 'Cancelled')
+         WHERE o.status NOT IN ('Delivered', 'Cancelled', 'cancelled')
            AND p.scheduled_for < now() - INTERVAL '4 hours'
        )::text AS delayed
      FROM orders o

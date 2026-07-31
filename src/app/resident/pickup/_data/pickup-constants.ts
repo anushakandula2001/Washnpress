@@ -18,12 +18,12 @@ export const PICKUP_STEPS: PickupStepMeta[] = [
 export const STEP_ORDER = [...PICKUP_STEPS.map((s) => s.id), "success"] as const;
 
 export const GARMENT_OPTIONS: GarmentOption[] = [
-  { id: "shirts", name: "Shirts & Tops", description: "Casual & formal tops", icon: "shirt", weightKg: 0.25 },
-  { id: "trousers", name: "Trousers & Jeans", description: "Pants, denim, chinos", icon: "pants", weightKg: 0.4 },
-  { id: "dresses", name: "Dresses & Kurtas", description: "Ethnic & western wear", icon: "dress", weightKg: 0.35 },
-  { id: "bedding", name: "Bedding", description: "Sheets, covers, pillowcases", icon: "bed", weightKg: 0.8 },
-  { id: "towels", name: "Towels", description: "Bath & hand towels", icon: "towel", weightKg: 0.45 },
-  { id: "others", name: "Other Items", description: "Misc. garments & soft goods", icon: "package", weightKg: 0.3 },
+  { id: "shirts", name: "Shirts & Tops", description: "Casual & formal tops", icon: "shirt", weightKg: 0.25, washPriceInr: 40 },
+  { id: "trousers", name: "Trousers & Jeans", description: "Pants, denim, chinos", icon: "pants", weightKg: 0.4, washPriceInr: 50 },
+  { id: "dresses", name: "Dresses & Kurtas", description: "Ethnic & western wear", icon: "dress", weightKg: 0.35, washPriceInr: 55 },
+  { id: "bedding", name: "Bedding", description: "Sheets, covers, pillowcases", icon: "bed", weightKg: 0.8, washPriceInr: 70 },
+  { id: "towels", name: "Towels", description: "Bath & hand towels", icon: "towel", weightKg: 0.45, washPriceInr: 45 },
+  { id: "others", name: "Other Items", description: "Misc. garments & soft goods", icon: "package", weightKg: 0.3, washPriceInr: 35 },
 ];
 
 export const SERVICE_OPTIONS: ServiceOption[] = [

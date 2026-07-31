@@ -813,7 +813,7 @@ const ORDER_TAB_STATUS_MAP: Record<string, string[]> = {
   ready: ["Iron"],
   out: ["Out for Delivery"],
   completed: ["Delivered"],
-  cancelled: ["Cancelled"],
+  cancelled: ["Cancelled", "cancelled"],
 };
 
 export async function listOrdersAdmin(filters?: {

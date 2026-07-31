@@ -203,7 +203,7 @@ export function GarmentStep() {
                                         <div className="mt-2 space-y-2 text-sm text-muted-foreground">
                                           <p>{item.description}</p>
                                           <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                            <span>Wash {formatPrice(pricing.wash)}</span>
+                                            <span className="font-medium text-primary">Wash {formatPrice(pricing.wash)} / item</span>
                                             {pricing.iron !== null && <span>Iron {formatPrice(pricing.iron)}</span>}
                                             {pricing.dryClean !== null && <span>Dry Clean {formatPrice(pricing.dryClean)}</span>}
                                           </div>
@@ -211,7 +211,10 @@ export function GarmentStep() {
                                       </div>
                                     </div>
 
-                                    <div className="mt-5 flex items-center justify-between">
+                                    <div className="mt-5 flex items-center justify-between border-t border-border/70 pt-4">
+                                      <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                                        Quantity
+                                      </span>
                                       <button
                                         type="button"
                                         aria-label={`Decrease ${item.name}`}
@@ -238,6 +241,9 @@ export function GarmentStep() {
                                       >
                                         <Plus className="h-4 w-4" />
                                       </button>
+                                      <span className="ml-3 min-w-[72px] text-right text-sm font-semibold text-foreground">
+                                        ₹{((pricing.wash ?? 0) * qty).toLocaleString("en-IN")}
+                                      </span>
                                     </div>
                                   </div>
                                 );

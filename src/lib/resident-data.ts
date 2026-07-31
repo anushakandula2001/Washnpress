@@ -10,6 +10,16 @@ export type ResidentProfile = {
   residentCode?: string | null;
   email?: string | null;
   gender?: string | null;
+  alternateContact?: string | null;
+};
+
+export type ResidentAddress = {
+  id: string;
+  label: string;
+  addressLine: string;
+  city: string;
+  state?: string | null;
+  pincode?: string | null;
 };
 
 export type ResidentSubscription = {

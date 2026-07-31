@@ -30,6 +30,7 @@ export async function GET(request: Request) {
 
 const updateSchema = z.object({
   fullName: z.string().min(1).optional(),
+  email: z.string().email().or(z.literal("")).optional(),
   unitNumber: z.string().min(1).optional(),
   towerBlock: z.string().optional(),
   alternateContact: z.string().regex(/^[6-9]\d{9}$/).optional(),
@@ -47,6 +48,7 @@ export async function PUT(request: Request) {
 
   const profile = await updateResidentProfile(session.residentId!, {
     fullName: parsed.data.fullName,
+    email: parsed.data.email,
     unitNumber: parsed.data.unitNumber,
     towerBlock: parsed.data.towerBlock,
     alternateContact: parsed.data.alternateContact,

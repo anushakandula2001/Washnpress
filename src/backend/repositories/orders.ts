@@ -33,6 +33,30 @@ export async function findOrderByCode(orderCode: string, residentId?: string) {
   return queryOne<DbOrder>(sql, params);
 }
 
+export async function cancelResidentOrder(orderCode: string, residentId: string) {
+  const order = await queryOne<{ id: string }>(
+    `UPDATE orders o
+    SET status = 'cancelled', updated_at = now()
+     FROM pickups p
+     WHERE o.pickup_id = p.id
+       AND o.order_code = $1
+       AND p.resident_id = $2
+      AND o.status NOT IN ('Delivered', 'Cancelled', 'cancelled', 'Out for Delivery')
+     RETURNING o.id`,
+    [orderCode, residentId],
+  );
+
+  if (!order) return null;
+
+  await query(
+    `INSERT INTO order_events (order_id, event_type, event_payload)
+     VALUES ($1, 'status_changed', $2::jsonb)`,
+    [order.id, JSON.stringify({ status: "cancelled", orderCode })],
+  );
+
+  return findOrderByCode(orderCode, residentId);
+}
+
 export async function findOrderById(orderId: string) {
   return queryOne<DbOrder>(
     `SELECT o.id, o.order_code, o.status, o.pickup_garment_count, o.delivered_garment_count,

@@ -1,7 +1,7 @@
 import { requireResident } from "@/backend/api/guards";
-import { findOrderByCode, listOrderEvents, listOrderItems } from "@/backend/repositories/orders";
+import { cancelResidentOrder, findOrderByCode, listOrderEvents, listOrderItems } from "@/backend/repositories/orders";
 import { toResidentOrder } from "@/backend/api/transformers";
-import { ok, unauthorized, notFound } from "@/backend/api/response";
+import { ok, badRequest, notFound } from "@/backend/api/response";
 
 export async function GET(
   request: Request,
@@ -25,4 +25,21 @@ export async function GET(
     events,
     items,
   });
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const auth = await requireResident(request);
+  if ("error" in auth) return auth.error;
+
+  const { id } = await params;
+  try {
+    const order = await cancelResidentOrder(id, auth.session.residentId!);
+    if (!order) return notFound("Order not found or cannot be cancelled");
+    return ok({ cancelled: true, order: toResidentOrder(order) });
+  } catch (error) {
+    return badRequest(error instanceof Error ? error.message : "Unable to cancel order");
+  }
 }

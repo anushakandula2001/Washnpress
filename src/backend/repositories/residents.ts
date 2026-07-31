@@ -36,6 +36,7 @@ export async function updateResidentProfile(
   residentId: string,
   data: {
     fullName?: string;
+    email?: string;
     unitNumber?: string;
     towerBlock?: string;
     alternateContact?: string;
@@ -47,6 +48,14 @@ export async function updateResidentProfile(
       `UPDATE users SET full_name = $1, updated_at = now()
        WHERE id = (SELECT user_id FROM residents WHERE id = $2)`,
       [data.fullName, residentId],
+    );
+  }
+
+  if (data.email !== undefined) {
+    await query(
+      `UPDATE users SET email = $1, updated_at = now()
+       WHERE id = (SELECT user_id FROM residents WHERE id = $2)`,
+      [data.email || null, residentId],
     );
   }
 
@@ -68,6 +77,34 @@ export async function updateResidentProfile(
   );
 
   return findResidentProfile(residentId);
+}
+
+export async function findResidentAddresses(residentId: string) {
+  return query(
+    `SELECT id, label, address_line, city, state, pincode, created_at, updated_at
+     FROM resident_addresses
+     WHERE resident_id = $1
+     ORDER BY created_at DESC`,
+    [residentId],
+  );
+}
+
+export async function createResidentAddress(
+  residentId: string,
+  data: {
+    label: string;
+    addressLine: string;
+    city: string;
+    state?: string;
+    pincode?: string;
+  },
+) {
+  return queryOne(
+    `INSERT INTO resident_addresses (resident_id, label, address_line, city, state, pincode)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id, label, address_line, city, state, pincode, created_at, updated_at`,
+    [residentId, data.label, data.addressLine, data.city, data.state ?? null, data.pincode ?? null],
+  );
 }
 
 export async function findUserByPhone(phone: string) {

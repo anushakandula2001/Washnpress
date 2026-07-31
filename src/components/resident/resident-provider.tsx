@@ -223,6 +223,7 @@ export function ResidentProvider({ children }: { children: ReactNode }) {
           residentCode: (profileData.residentCode as string) || null,
           email: (profileData.email as string) || null,
           gender: (profileData.gender as string) || null,
+          alternateContact: (profileData.alternateContact as string) || null,
         });
       } else {
         setProfile((current) =>
@@ -236,6 +237,7 @@ export function ResidentProvider({ children }: { children: ReactNode }) {
             residentCode: null,
             email: null,
             gender: null,
+            alternateContact: null,
           },
         );
       }

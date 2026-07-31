@@ -30,7 +30,8 @@ export type OrderStatus =
   | "QC Hold"
   | "Out for Delivery"
   | "Delivered"
-  | "Cancelled";
+  | "Cancelled"
+  | "cancelled";
 
 export type Order = {
   id: string;

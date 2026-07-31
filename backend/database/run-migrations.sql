@@ -4,6 +4,8 @@
 \i backend/database/migrations/003_audit_tables.sql
 \i backend/database/migrations/004_wallet_payments_addons.sql
 
+\i backend/database/migrations/012_allow_order_cancellation.sql
+
 \i backend/database/migrations/005_extended_features.sql
 
 \echo 'Running Wash N Press seeds'
