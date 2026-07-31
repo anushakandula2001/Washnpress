@@ -83,9 +83,7 @@ export const adminNavGroups: AdminNavGroup[] = [
     label: "Business",
     defaultExpanded: true,
     items: [
-      { href: "/admin/addons", label: "AddOn's", icon: Sparkles, keywords: ["laundry", "addon", "pricing rules"] },
-      { href: "/admin/pricing", label: "Pricing", icon: Tags, keywords: ["price", "garment"] },
-      { href: "/admin/subscriptions", label: "Subscriptions", icon: CreditCard, keywords: ["plan", "subscription"] },
+      { href: "/admin/business", label: "Business Management", icon: LayoutDashboard, keywords: ["business", "pricing", "subscriptions"] },
       { href: "/admin/wallet-transactions", label: "Wallet", icon: Wallet, keywords: ["wallet", "credits", "refund"] },
       { href: "/admin/payments", label: "Payments", icon: Banknote, keywords: ["payment", "invoice"] },
     ],
