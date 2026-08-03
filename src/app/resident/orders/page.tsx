@@ -13,13 +13,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { TrackingEvent } from "@/lib/resident-data";
 
-type FilterTab = "all" | "active" | "completed" | "cancelled";
+type FilterTab = "all" | "active" | "completed" | "Cancelled";
 type SortKey = "newest" | "oldest";
 
 const PAGE_SIZE = 8;
 
 function isActiveStatus(status: string) {
-  return status !== "Delivered" && status !== "Cancelled" && status !== "cancelled";
+  return status !== "Delivered" && status !== "Cancelled" && status !== "Cancelled";
 }
 
 function OrdersContent() {
@@ -42,7 +42,7 @@ function OrdersContent() {
 
     if (tab === "active") list = list.filter((o) => isActiveStatus(o.status));
     if (tab === "completed") list = list.filter((o) => o.status === "Delivered");
-    if (tab === "cancelled") list = list.filter((o) => o.status === "Cancelled" || o.status === "cancelled");
+    if (tab === "Cancelled") list = list.filter((o) => o.status === "Cancelled" || o.status === "Cancelled");
 
     if (q) {
       list = list.filter(
@@ -84,12 +84,12 @@ function OrdersContent() {
       setTrackingEvents([]);
       return;
     }
-    let cancelled = false;
+    let Cancelled = false;
     void getOrderTracking(activeOrder.id).then((events) => {
-      if (!cancelled) setTrackingEvents(events);
+      if (!Cancelled) setTrackingEvents(events);
     });
     return () => {
-      cancelled = true;
+      Cancelled = true;
     };
   }, [activeOrder?.id, getOrderTracking]);
 
@@ -112,7 +112,7 @@ function OrdersContent() {
     { id: "all", label: "All" },
     { id: "active", label: "Active" },
     { id: "completed", label: "Completed" },
-    { id: "cancelled", label: "Cancelled" },
+    { id: "Cancelled", label: "Cancelled" },
   ];
 
   return (
@@ -232,7 +232,7 @@ function OrdersContent() {
                   <Button variant="outline" size="sm" onClick={() => router.push("/resident/support")}>
                     Report Issue
                   </Button>
-                  {activeOrder.status !== "Delivered" && activeOrder.status !== "Cancelled" && activeOrder.status !== "cancelled" && (
+                  {activeOrder.status !== "Delivered" && activeOrder.status !== "Cancelled" && activeOrder.status !== "Cancelled" && (
                     <Button variant="outline" size="sm" onClick={() => void handleCancelOrder()} disabled={cancelling}>
                       {cancelling ? "Cancelling…" : "Cancel Order"}
                     </Button>
