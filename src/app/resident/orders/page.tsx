@@ -19,7 +19,7 @@ type SortKey = "newest" | "oldest";
 const PAGE_SIZE = 8;
 
 function isActiveStatus(status: string) {
-  return status !== "Delivered" && status !== "Cancelled" && status !== "Cancelled";
+  return status !== "Delivered" && status !== "Cancelled" && status !== "cancelled";
 }
 
 function OrdersContent() {
@@ -42,7 +42,7 @@ function OrdersContent() {
 
     if (tab === "active") list = list.filter((o) => isActiveStatus(o.status));
     if (tab === "completed") list = list.filter((o) => o.status === "Delivered");
-    if (tab === "Cancelled") list = list.filter((o) => o.status === "Cancelled" || o.status === "Cancelled");
+    if (tab === "Cancelled") list = list.filter((o) => o.status === "Cancelled" || o.status === "cancelled");
 
     if (q) {
       list = list.filter(

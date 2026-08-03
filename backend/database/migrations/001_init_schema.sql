@@ -138,7 +138,7 @@ CREATE TABLE orders (
   qc_reason TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CHECK (status IN ('Scheduled', 'Picked Up', 'In Wash', 'Dry', 'Iron', 'QC Hold', 'Out for Delivery', 'Delivered')),
+  CHECK (status IN ('Scheduled', 'Picked Up', 'In Wash', 'Dry', 'Iron', 'QC Hold', 'Out for Delivery', 'Delivered', 'Cancelled', 'cancelled')),
   CHECK (pickup_garment_count >= 0)
 );
 
