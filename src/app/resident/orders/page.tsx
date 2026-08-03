@@ -232,7 +232,7 @@ function OrdersContent() {
                   <Button variant="outline" size="sm" onClick={() => router.push("/resident/support")}>
                     Report Issue
                   </Button>
-                  {activeOrder.status !== "Delivered" && activeOrder.status !== "Cancelled" && activeOrder.status !== "Cancelled" && (
+                  {activeOrder.status !== "Delivered" && activeOrder.status !== "Cancelled" && activeOrder.status !== "cancelled" && (
                     <Button variant="outline" size="sm" onClick={() => void handleCancelOrder()} disabled={cancelling}>
                       {cancelling ? "Cancelling…" : "Cancel Order"}
                     </Button>

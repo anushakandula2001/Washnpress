@@ -11,7 +11,6 @@ import {
   TicketPercent,
   CalendarClock,
   Info,
-  PackageCheck,
 } from "lucide-react";
 import { useResident } from "@/components/resident/resident-provider";
 import {
@@ -21,31 +20,6 @@ import {
 } from "../_data/pickup-constants";
 import { usePickup } from "../hooks/use-pickup";
 import { staggerContainer, staggerItem } from "../_components/motion-primitives";
-
-function Section({
-  icon: Icon,
-  title,
-  children,
-}: {
-  icon: typeof Clock3;
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <motion.section
-      variants={staggerItem}
-      className="border-b border-border/70 py-5 first:pt-0 last:border-b-0 last:pb-0"
-    >
-      <div className="mb-3 flex items-center gap-2">
-        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Icon className="h-4 w-4" />
-        </span>
-        <h3 className="font-semibold">{title}</h3>
-      </div>
-      {children}
-    </motion.section>
-  );
-}
 
 function formatReviewDate(value: string) {
   const [year, month, day] = value.split("-");
@@ -68,7 +42,7 @@ export function SummaryStep() {
 
   const garmentLines = garmentOptions.filter((g) => (garments[g.id] ?? 0) > 0);
   const services = serviceOptions.filter((s) => selectedServiceIds.includes(s.id));
-  const charges = computeCharges(selectedServiceIds, serviceOptions, taxRate, deliveryFee);
+  const charges = computeCharges(selectedServiceIds, garments, garmentOptions, serviceOptions, taxRate, deliveryFee);
   const itemCount = totalGarmentCount(garments);
 
   return (
@@ -86,118 +60,313 @@ export function SummaryStep() {
         variants={staggerContainer}
         initial="hidden"
         animate="show"
-        className="rounded-[24px] border border-border/80 bg-card p-5 shadow-sm md:p-7"
+        className="space-y-4 md:space-y-6"
       >
-        <Section icon={MapPin} title="Pickup Details">
-          {selectedSlot ? (
-            <div>
-              <p className="font-medium">
-                {formatReviewDate(selectedSlot.date)} · {formatSlotSummary(selectedSlot)}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {profile?.society || "—"}, Flat {profile?.flatNumber || "—"}, {profile?.tower || "—"}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Contact: +91 {profile?.mobile || "—"}
-              </p>
+        {/* Pickup Details Card */}
+        <motion.div
+          variants={staggerItem}
+          className="rounded-2xl md:rounded-3xl border-2 border-border/50 bg-white p-5 md:p-6 shadow-sm"
+        >
+          <div className="flex items-start gap-3 md:gap-4">
+            <span className="flex h-10 md:h-12 w-10 md:w-12 flex-shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-primary/15 text-primary">
+              <MapPin className="h-5 md:h-6 w-5 md:w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-base md:text-lg">Pickup Details</h3>
+              {selectedSlot ? (
+                <div className="mt-3 space-y-2 text-sm">
+                  <p className="font-semibold text-foreground">
+                    📅 {formatReviewDate(selectedSlot.date)} · {formatSlotSummary(selectedSlot)}
+                  </p>
+                  <p className="text-muted-foreground">
+                    📍 {profile?.society || "—"}, Flat {profile?.flatNumber || "—"}, {profile?.tower || "—"}
+                  </p>
+                  <p className="text-muted-foreground">
+                    📞 +91 {profile?.mobile || "—"}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-muted-foreground">No slot selected</p>
+              )}
             </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No slot selected</p>
-          )}
-        </Section>
+          </div>
+        </motion.div>
 
-        <Section icon={Shirt} title="Garments Summary">
+        {/* Garments Card */}
+        <motion.div
+          variants={staggerItem}
+          className="rounded-2xl md:rounded-3xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/2 p-5 md:p-6 shadow-sm"
+        >
+          <div className="flex items-start gap-3 md:gap-4 mb-4">
+            <span className="flex h-10 md:h-12 w-10 md:w-12 flex-shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-primary/20 text-primary">
+              <Shirt className="h-5 md:h-6 w-5 md:w-6" />
+            </span>
+            <div>
+              <h3 className="font-bold text-base md:text-lg">Garments & Costs</h3>
+              <p className="mt-0.5 text-xs md:text-sm text-muted-foreground">Breakdown of your laundry items</p>
+            </div>
+          </div>
+
           {garmentLines.length > 0 ? (
-            <ul className="space-y-2">
-              {garmentLines.map((g) => (
-                <li key={g.id} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{g.name}</span>
-                  <span className="font-semibold">× {garments[g.id]}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-2 rounded-xl bg-white/70 p-3 md:p-4">
+              {garmentLines.map((g) => {
+                const qty = garments[g.id] ?? 0;
+                const itemCost = qty * (g.washPriceInr ?? 0);
+                return (
+                  <motion.div
+                    key={g.id}
+                    variants={staggerItem}
+                    className="flex items-center justify-between rounded-lg bg-white p-2.5 md:p-3 border border-border/40"
+                  >
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm md:text-base text-foreground">{g.name}</p>
+                      <p className="text-xs md:text-sm text-muted-foreground">
+                        {qty} × ₹{g.washPriceInr ?? 0}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-sm md:text-base text-primary">
+                        ₹{itemCost.toLocaleString("en-IN")}
+                      </p>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">No garments selected</p>
           )}
-          <p className="mt-3 text-sm font-medium text-primary">
-            {itemCount} item{itemCount === 1 ? "" : "s"} total
-          </p>
-        </Section>
+        </motion.div>
 
-        <Section icon={Sparkles} title="Add-on Services Summary">
+        {/* Services Card */}
+        <motion.div
+          variants={staggerItem}
+          className="rounded-2xl md:rounded-3xl border-2 border-border/50 bg-white p-5 md:p-6 shadow-sm"
+        >
+          <div className="flex items-start gap-3 md:gap-4 mb-4">
+            <span className="flex h-10 md:h-12 w-10 md:w-12 flex-shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-primary/15 text-primary">
+              <Sparkles className="h-5 md:h-6 w-5 md:w-6" />
+            </span>
+            <div>
+              <h3 className="font-bold text-base md:text-lg">Services Selected</h3>
+              <p className="mt-0.5 text-xs md:text-sm text-muted-foreground">Additional laundry services</p>
+            </div>
+          </div>
+
           {services.length > 0 ? (
-            <ul className="space-y-2">
+            <div className="space-y-2">
               {services.map((s) => (
-                <li key={s.id} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">{s.name}</span>
-                  <span className="font-semibold">
+                <motion.div
+                  key={s.id}
+                  variants={staggerItem}
+                  className="flex items-center justify-between rounded-lg bg-slate-50 p-2.5 md:p-3 border border-border/30"
+                >
+                  <span className="text-sm md:text-base font-medium text-foreground">{s.name}</span>
+                  <span className="font-bold text-sm md:text-base text-primary">
                     {s.priceInr === 0 ? "Included" : `₹${s.priceInr}`}
                   </span>
-                </li>
+                </motion.div>
               ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-muted-foreground">No add-on services selected</p>
-          )}
-        </Section>
-
-        <Section icon={FileText} title="Instructions">
-          <p className="text-sm text-muted-foreground">
-            {instructions.trim() || "No special instructions"}
-          </p>
-        </Section>
-
-        <Section icon={TicketPercent} title="Estimated Charges">
-          <div className="space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Services</span>
-              <span>₹{charges.services}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Taxes (5%)</span>
-              <span>₹{charges.tax}</span>
-            </div>
-            <div className="flex justify-between border-t border-border pt-2 text-base font-bold">
-              <span>Grand total</span>
-              <span className="text-primary">₹{charges.grandTotal}</span>
-            </div>
-          </div>
-        </Section>
-
-        <Section icon={CalendarClock} title="Subscription Summary">
-          {subscription ? (
-            <div className="grid gap-2 text-sm sm:grid-cols-2">
-              <p><span className="text-muted-foreground">Plan:</span> {subscription.planName}</p>
-              <p><span className="text-muted-foreground">Monthly:</span> ₹{subscription.monthlyInr}</p>
-              <p><span className="text-muted-foreground">Garments:</span> {subscription.garmentsUsed}/{subscription.garmentCap}</p>
-              <p><span className="text-muted-foreground">Renews:</span> {subscription.renewsOn}</p>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No active subscription</p>
+            <p className="text-sm text-muted-foreground">No additional services selected</p>
           )}
-        </Section>
+        </motion.div>
 
-        <Section icon={Clock3} title="Pickup Timeline">
-          <div className="grid gap-3 text-sm sm:grid-cols-3">
-            <div><p className="font-medium text-primary">1. Pickup</p><p className="text-muted-foreground">Scheduled</p></div>
-            <div><p className="font-medium">2. Processing</p><p className="text-muted-foreground">After collection</p></div>
-            <div><p className="font-medium">3. Delivery</p><p className="text-muted-foreground">At your doorstep</p></div>
+        {/* Instructions Card */}
+        {instructions.trim() && (
+          <motion.div
+            variants={staggerItem}
+            className="rounded-2xl md:rounded-3xl border-2 border-border/50 bg-white p-5 md:p-6 shadow-sm"
+          >
+            <div className="flex items-start gap-3 md:gap-4">
+              <span className="flex h-10 md:h-12 w-10 md:w-12 flex-shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-primary/15 text-primary">
+                <FileText className="h-5 md:h-6 w-5 md:w-6" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-bold text-base md:text-lg">Special Instructions</h3>
+                <p className="mt-2 text-sm text-muted-foreground">{instructions}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Pricing Summary - Main Focus */}
+        <motion.div
+          variants={staggerItem}
+          className="rounded-2xl md:rounded-3xl border-3 border-primary/60 bg-gradient-to-br from-primary/8 to-primary/4 p-5 md:p-6 shadow-md"
+        >
+          <h3 className="font-bold text-lg md:text-xl mb-5 flex items-center gap-2">
+            <TicketPercent className="h-5 md:h-6 w-5 md:w-6 text-primary" />
+            Price Breakdown
+          </h3>
+
+          <div className="space-y-3">
+            {/* Garment Costs */}
+            {charges.garmentCosts > 0 && (
+              <div className="flex justify-between items-center p-3 md:p-4 rounded-lg bg-white border border-border/40">
+                <span className="text-sm md:text-base font-medium text-foreground">
+                  Garment Washing ({itemCount} item{itemCount !== 1 ? "s" : ""})
+                </span>
+                <span className="text-sm md:text-base font-bold text-primary">
+                  ₹{charges.garmentCosts.toLocaleString("en-IN")}
+                </span>
+              </div>
+            )}
+
+            {/* Service Costs */}
+            {charges.services > 0 && (
+              <div className="flex justify-between items-center p-3 md:p-4 rounded-lg bg-white border border-border/40">
+                <span className="text-sm md:text-base font-medium text-foreground">
+                  Additional Services ({services.length})
+                </span>
+                <span className="text-sm md:text-base font-bold text-primary">
+                  ₹{charges.services.toLocaleString("en-IN")}
+                </span>
+              </div>
+            )}
+
+            {/* Delivery Fee */}
+            {charges.deliveryFee > 0 && (
+              <div className="flex justify-between items-center p-3 md:p-4 rounded-lg bg-white border border-border/40">
+                <span className="text-sm md:text-base font-medium text-foreground">Delivery Fee</span>
+                <span className="text-sm md:text-base font-bold text-primary">
+                  ₹{charges.deliveryFee.toLocaleString("en-IN")}
+                </span>
+              </div>
+            )}
+
+            <div className="border-t-2 border-primary/20 pt-3">
+              {/* Subtotal */}
+              <div className="flex justify-between items-center p-3 md:p-4 mb-2">
+                <span className="text-sm md:text-base font-semibold text-muted-foreground">Subtotal</span>
+                <span className="text-sm md:text-base font-bold text-muted-foreground">
+                  ₹{charges.subtotal.toLocaleString("en-IN")}
+                </span>
+              </div>
+
+              {/* Tax */}
+              <div className="flex justify-between items-center p-3 md:p-4 mb-3">
+                <span className="text-sm md:text-base font-semibold text-muted-foreground">Tax (5%)</span>
+                <span className="text-sm md:text-base font-bold text-muted-foreground">
+                  ₹{charges.tax.toLocaleString("en-IN")}
+                </span>
+              </div>
+
+              {/* Grand Total - Highlighted */}
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex justify-between items-center p-4 md:p-5 rounded-xl bg-gradient-to-r from-primary to-primary/80 text-white"
+              >
+                <span className="text-base md:text-lg font-bold">You will pay</span>
+                <span className="text-2xl md:text-3xl font-extrabold">
+                  ₹{charges.grandTotal.toLocaleString("en-IN")}
+                </span>
+              </motion.div>
+            </div>
           </div>
-        </Section>
 
-        <Section icon={Info} title="Important Information">
-          <ul className="space-y-1 text-sm text-muted-foreground">
-            <li>Please keep garments ready before the selected pickup window.</li>
-            <li>Final charges may vary if garment quantities change after inspection.</li>
-          </ul>
-        </Section>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mt-4 text-xs md:text-sm text-primary font-medium"
+          >
+            💡 Final charges may vary if garment quantities change after inspection.
+          </motion.p>
+        </motion.div>
 
-        <Section icon={PackageCheck} title="Order Summary">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">{itemCount} garments · {services.length} service{services.length === 1 ? "" : "s"}</span>
-            <span className="text-lg font-bold text-primary">₹{charges.grandTotal}</span>
+        {/* Subscription Summary */}
+        {subscription && (
+          <motion.div
+            variants={staggerItem}
+            className="rounded-2xl md:rounded-3xl border-2 border-border/50 bg-white p-5 md:p-6 shadow-sm"
+          >
+            <div className="flex items-start gap-3 md:gap-4 mb-4">
+              <span className="flex h-10 md:h-12 w-10 md:w-12 flex-shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-primary/15 text-primary">
+                <CalendarClock className="h-5 md:h-6 w-5 md:w-6" />
+              </span>
+              <div>
+                <h3 className="font-bold text-base md:text-lg">Your Subscription</h3>
+                <p className="mt-0.5 text-xs md:text-sm text-muted-foreground">Active plan details</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:gap-4 sm:grid-cols-2 text-sm">
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs text-muted-foreground font-medium">Plan</p>
+                <p className="mt-1 font-bold text-foreground">{subscription.planName}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs text-muted-foreground font-medium">Monthly Cost</p>
+                <p className="mt-1 font-bold text-foreground">₹{subscription.monthlyInr}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs text-muted-foreground font-medium">Garments Used</p>
+                <p className="mt-1 font-bold text-foreground">{subscription.garmentsUsed}/{subscription.garmentCap}</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-xs text-muted-foreground font-medium">Renewal Date</p>
+                <p className="mt-1 font-bold text-foreground">{subscription.renewsOn}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Pickup Timeline */}
+        <motion.div
+          variants={staggerItem}
+          className="rounded-2xl md:rounded-3xl border-2 border-border/50 bg-white p-5 md:p-6 shadow-sm"
+        >
+          <div className="flex items-start gap-3 md:gap-4 mb-4">
+            <span className="flex h-10 md:h-12 w-10 md:w-12 flex-shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-primary/15 text-primary">
+              <Clock3 className="h-5 md:h-6 w-5 md:w-6" />
+            </span>
+            <div>
+              <h3 className="font-bold text-base md:text-lg">What Happens Next</h3>
+              <p className="mt-0.5 text-xs md:text-sm text-muted-foreground">Your order journey</p>
+            </div>
           </div>
-        </Section>
+
+          <div className="grid gap-3 sm:grid-cols-3 text-sm">
+            <div className="rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 p-3 md:p-4 border border-primary/20">
+              <p className="font-bold text-primary text-base md:text-lg">1.</p>
+              <p className="mt-1 font-bold text-foreground">Pickup</p>
+              <p className="mt-0.5 text-xs md:text-sm text-muted-foreground">We'll arrive at your door</p>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3 md:p-4 border border-border/30">
+              <p className="font-bold text-muted-foreground text-base md:text-lg">2.</p>
+              <p className="mt-1 font-bold text-foreground">Processing</p>
+              <p className="mt-0.5 text-xs md:text-sm text-muted-foreground">Professional care & cleaning</p>
+            </div>
+            <div className="rounded-lg bg-slate-50 p-3 md:p-4 border border-border/30">
+              <p className="font-bold text-muted-foreground text-base md:text-lg">3.</p>
+              <p className="mt-1 font-bold text-foreground">Delivery</p>
+              <p className="mt-0.5 text-xs md:text-sm text-muted-foreground">Fresh & ready at home</p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Important Info */}
+        <motion.div
+          variants={staggerItem}
+          className="rounded-2xl md:rounded-3xl border-2 border-amber-200/50 bg-amber-50/30 p-5 md:p-6"
+        >
+          <div className="flex items-start gap-3 md:gap-4">
+            <span className="flex h-10 md:h-12 w-10 md:w-12 flex-shrink-0 items-center justify-center rounded-xl md:rounded-2xl bg-amber-100/50 text-amber-700">
+              <Info className="h-5 md:h-6 w-5 md:w-6" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-bold text-base md:text-lg text-amber-900">Important Information</h3>
+              <ul className="mt-2 space-y-1.5 text-sm text-amber-900/80">
+                <li>✓ Please keep garments ready before the pickup window.</li>
+                <li>✓ Final charges may vary if quantities change after inspection.</li>
+                <li>✓ All items are insured during processing and delivery.</li>
+              </ul>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
     </div>
   );

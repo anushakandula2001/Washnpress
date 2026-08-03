@@ -91,3 +91,16 @@ export async function resumeSubscription(residentId: string) {
   );
   return findActiveSubscription(residentId);
 }
+
+export async function incrementGarmentsUsed(residentId: string, quantity: number) {
+  const subscription = await findActiveSubscription(residentId);
+  if (!subscription) return null;
+
+  const newUsed = subscription.garments_used + quantity;
+  await query(
+    `UPDATE subscriptions SET garments_used = $2, updated_at = now()
+     WHERE id = $1`,
+    [subscription.id, newUsed],
+  );
+  return findActiveSubscription(residentId);
+}

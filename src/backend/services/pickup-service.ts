@@ -9,6 +9,7 @@ import {
   reschedulePickup,
 } from "@/backend/repositories/pickups";
 import { createOrderForPickup } from "@/backend/repositories/orders";
+import { incrementGarmentsUsed } from "@/backend/repositories/subscriptions";
 import {
   createResidentNotification,
   notifySocietyOperators,
@@ -71,6 +72,11 @@ export async function bookPickup(data: {
     garmentCount: data.garmentCount,
     items: data.items,
   });
+
+  // Update subscription garments used if resident has active subscription
+  if (data.garmentCount && data.garmentCount > 0) {
+    await incrementGarmentsUsed(data.residentId, data.garmentCount);
+  }
 
   await decrementSlotCapacity(data.slotId);
 

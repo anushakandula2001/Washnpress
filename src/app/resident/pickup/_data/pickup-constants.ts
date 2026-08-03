@@ -173,15 +173,28 @@ export function servicesTotal(
   return options.filter((s) => selectedIds.includes(s.id)).reduce((sum, s) => sum + s.priceInr, 0);
 }
 
+export function garmentCostsTotal(
+  garments: Record<string, number>,
+  garmentOptions: GarmentOption[] = GARMENT_OPTIONS,
+): number {
+  return garmentOptions.reduce(
+    (sum, g) => sum + (garments[g.id] ?? 0) * (g.washPriceInr ?? 0),
+    0,
+  );
+}
+
 export function computeCharges(
   selectedServiceIds: string[],
-  options: ServiceOption[] = SERVICE_OPTIONS,
+  garments: Record<string, number> = {},
+  garmentOptions: GarmentOption[] = GARMENT_OPTIONS,
+  serviceOptions: ServiceOption[] = SERVICE_OPTIONS,
   taxRate = TAX_RATE,
   deliveryFee = BASE_PICKUP_FEE,
 ) {
-  const services = servicesTotal(selectedServiceIds, options);
-  const subtotal = deliveryFee + services;
+  const garmentCosts = garmentCostsTotal(garments, garmentOptions);
+  const services = servicesTotal(selectedServiceIds, serviceOptions);
+  const subtotal = deliveryFee + garmentCosts + services;
   const tax = Math.round(subtotal * taxRate);
   const grandTotal = subtotal + tax;
-  return { services, subtotal, tax, grandTotal, deliveryFee };
+  return { garmentCosts, services, deliveryFee, subtotal, tax, grandTotal };
 }
