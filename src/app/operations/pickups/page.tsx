@@ -9,8 +9,6 @@ import { usePagination } from "@/lib/admin/use-pagination";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
 import { OrdersToolbar } from "@/components/admin/orders/OrdersToolbar";
 import { OrdersFilters } from "@/components/admin/orders/OrdersFilters";
-import { OrdersTable } from "@/components/admin/orders/OrdersTable";
-import { OrderDrawer } from "@/components/admin/orders/OrderDrawer";
 import { Pagination } from "@/components/admin/orders/Pagination";
 import {
   defaultOrderFilters,
@@ -19,6 +17,10 @@ import {
   type OrderRow,
 } from "@/components/admin/orders/types";
 import { Package } from "lucide-react";
+
+import { PickupCard } from "@/components/operations/pickups/PickupCard";
+import { CompletePickupDialog } from "@/components/operations/pickups/CompletePickupDialog";
+import { TodayPickupDrawer } from "@/components/operations/pickups/TodayPickupDrawer";
 
 function applyClientFilters(rows: OrderRow[], filters: OrderFiltersType): OrderRow[] {
   let result = [...rows];
@@ -52,14 +54,14 @@ function PickupsContent() {
   const [drawerTab, setDrawerTab] = useState("overview");
   const [drawerOpen, setDrawerOpen] = useState(false);
   
+  const [confirmOrder, setConfirmOrder] = useState<OrderRow | null>(null);
+  
   const [busyIds, setBusyIds] = useState<Set<string>>(new Set());
-  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      // Use queue endpoint to fetch scheduled pickups
       const data = await fetch("/api/operations/queue", { credentials: "same-origin" }).then((r) => r.json());
       const pickupStatuses = ["Scheduled", "Pickup Scheduled"];
       const orders = data.queue?.filter((q: any) => pickupStatuses.includes(q.status)) || [];
@@ -105,21 +107,7 @@ function PickupsContent() {
     }
   }
 
-  const handleSelect = (id: string, checked: boolean) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (checked) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) setSelected(new Set(paginated.map((p) => p.id)));
-    else setSelected(new Set());
-  };
-
-  async function handleCompletePickup(row: OrderRow) {
+  async function handleConfirmComplete(row: OrderRow) {
     if (busyIds.has(row.id)) return;
     setBusyIds((prev) => new Set(prev).add(row.id));
     try {
@@ -130,6 +118,7 @@ function PickupsContent() {
       });
       toast(`Order ${row.order_code} marked as picked up`, "success");
       setRows((prev) => prev.filter((r) => r.id !== row.id));
+      setConfirmOrder(null);
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to complete pickup", "error");
     } finally {
@@ -173,48 +162,49 @@ function PickupsContent() {
           description="No scheduled pickup orders for today."
         />
       ) : (
-        <OrdersTable
-          rows={paginated}
-          loading={loading}
-          selected={selected}
-          onSelect={handleSelect}
-          onSelectAll={handleSelectAll}
-          onRowClick={(row) => openDrawer(row)}
-          onAction={(action, row) => {
-            const tabs = ["overview", "timeline", "resident", "operator", "items", "notes", "activity"];
-            if (tabs.includes(action)) {
-              openDrawer(row, action);
-            }
-          }}
-          primaryAction={{
-            label: "Complete Pickup",
-            onClick: handleCompletePickup,
-            isBusy: (r) => busyIds.has(r.id)
-          }}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
+          {paginated.map((row) => (
+            <PickupCard 
+              key={row.id}
+              row={row}
+              isBusy={busyIds.has(row.id)}
+              onClick={(r) => openDrawer(r)}
+              onComplete={(r) => setConfirmOrder(r)}
+            />
+          ))}
+        </div>
       )}
 
       {total > 0 && (
-        <Pagination
-          from={from}
-          to={to}
-          total={total}
-          page={page}
-          totalPages={totalPages}
-          pageSize={pageSize}
-          onPageChange={goTo}
-          onPageSizeChange={setSize}
-        />
+        <div className="mt-6">
+          <Pagination
+            from={from}
+            to={to}
+            total={total}
+            page={page}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageChange={goTo}
+            onPageSizeChange={setSize}
+          />
+        </div>
       )}
 
-      <OrderDrawer
-        apiBaseUrl="/api/operations/orders"
+      <TodayPickupDrawer
         orderId={drawerOrder?.id ?? drawerOrder?.order_code ?? null}
         row={drawerOrder}
         open={drawerOpen}
         onOpenChange={closeDrawer}
         initialTab={drawerTab}
         onRefreshList={() => void load()}
+      />
+      
+      <CompletePickupDialog 
+        order={confirmOrder}
+        open={!!confirmOrder}
+        onOpenChange={(open) => !open && setConfirmOrder(null)}
+        onConfirm={handleConfirmComplete}
+        isBusy={confirmOrder ? busyIds.has(confirmOrder.id) : false}
       />
     </PortalShell>
   );

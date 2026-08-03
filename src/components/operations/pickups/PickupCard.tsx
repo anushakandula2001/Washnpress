@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CalendarClock, MapPin, User, Shirt, CheckCircle } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/cn";
 
 interface PickupCardProps {
   row: OrderRow;
@@ -41,46 +41,39 @@ export function PickupCard({ row, onClick, onComplete, isBusy }: PickupCardProps
         </div>
       </div>
 
-      <CardContent className="p-4 flex-1 space-y-4">
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-              <User className="w-4 h-4" />
-              <span>Resident</span>
-            </div>
-            <p className="font-medium truncate">{row.resident_name}</p>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-              <MapPin className="w-4 h-4" />
-              <span>Location</span>
-            </div>
-            <p className="font-medium truncate">{row.society_name}</p>
-            <p className="text-xs text-muted-foreground">{formatUnit(row)}</p>
-          </div>
-          
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-              <Shirt className="w-4 h-4" />
-              <span>Items</span>
-            </div>
-            <p className="font-medium">{row.pickup_garment_count} Garments</p>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-              <CheckCircle className="w-4 h-4" />
-              <span>Operator</span>
-            </div>
-            <p className="font-medium truncate">{row.operator_name || "Unassigned"}</p>
-            {row.operator_code && <p className="text-xs text-muted-foreground">{row.operator_code}</p>}
+      <CardContent className="p-4 flex-1 space-y-3 text-sm">
+        <div className="flex items-start gap-3">
+          <User className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+          <span className="font-medium">{row.resident_name}</span>
+        </div>
+        
+        <div className="flex items-start gap-3">
+          <MapPin className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+          <div>
+            {/* <p className="font-medium">{row.society_name}</p> */}
+            <p className="text-muted-foreground">{formatUnit(row)}</p>
           </div>
         </div>
+        
+        <div className="flex items-center gap-3">
+          <Shirt className="w-4 h-4 text-muted-foreground shrink-0" />
+          <span className="font-medium">{row.pickup_garment_count} Garments</span>
+        </div>
+        
+        {/* <div className="flex items-start gap-3">
+          <CheckCircle className="w-4 h-4 mt-0.5 text-muted-foreground shrink-0" />
+          <div>
+            <p className="font-medium">{row.operator_name || "Unassigned"}</p>
+            {row.operator_code && <p className="text-xs text-muted-foreground">{row.operator_code}</p>}
+          </div>
+        </div> */}
       </CardContent>
 
-      <div className="p-4 pt-0 mt-auto flex gap-3">
+      <div className="p-4 pt-0 mt-auto flex gap-2">
         <Button 
           variant="outline" 
-          className="flex-1"
+          size="sm"
+          className="flex-1 text-xs whitespace-nowrap"
           onClick={(e) => {
             e.stopPropagation();
             onClick(row);
@@ -89,7 +82,8 @@ export function PickupCard({ row, onClick, onComplete, isBusy }: PickupCardProps
           View Details
         </Button>
         <Button 
-          className="flex-1"
+          size="sm"
+          className="flex-1 text-xs whitespace-nowrap"
           disabled={isBusy}
           onClick={(e) => {
             e.stopPropagation();
