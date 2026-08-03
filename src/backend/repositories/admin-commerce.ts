@@ -72,48 +72,57 @@ export async function setGarmentActive(id: string, isActive: boolean) {
 
 export async function listAddonsAdmin(includeInactive = true) {
   const sql = includeInactive
-    ? `SELECT * FROM addon_services WHERE is_deleted = FALSE ORDER BY name`
-    : `SELECT * FROM addon_services WHERE is_active = TRUE AND is_deleted = FALSE ORDER BY name`;
+    ? `SELECT * FROM addon_services WHERE is_deleted = FALSE ORDER BY display_order ASC, name ASC`
+    : `SELECT * FROM addon_services WHERE is_active = TRUE AND is_deleted = FALSE ORDER BY display_order ASC, name ASC`;
   return (await query(sql)).rows;
 }
 
 export async function upsertAddon(data: {
   id?: string;
-  code: string;
-  name: string;
-  description: string;
-  priceInr: number;
+  code?: string;
+  name?: string;
+  description?: string;
+  priceInr?: number;
   icon?: string;
+  category?: string;
+  priority?: string;
+  displayOrder?: number;
   isActive?: boolean;
 }) {
   if (data.id) {
     return queryOne(
       `UPDATE addon_services SET
-         code = $2, name = $3, description = $4, price_inr = $5,
-         icon = COALESCE($6, icon), is_active = COALESCE($7, is_active)
+         code = COALESCE($2, code), name = COALESCE($3, name), description = COALESCE($4, description), price_inr = COALESCE($5, price_inr),
+         icon = COALESCE($6, icon), is_active = COALESCE($7, is_active), category = COALESCE($8, category), priority = COALESCE($9, priority), display_order = COALESCE($10, display_order)
        WHERE id = $1 RETURNING *`,
       [
         data.id,
-        data.code.trim().toLowerCase().replace(/\s+/g, "_"),
-        data.name.trim(),
-        data.description,
-        data.priceInr,
+        data.code ? data.code.trim().toLowerCase().replace(/\s+/g, "_") : null,
+        data.name ? data.name.trim() : null,
+        data.description ?? null,
+        data.priceInr ?? null,
         data.icon ?? null,
         data.isActive ?? null,
+        data.category ?? null,
+        data.priority ?? null,
+        data.displayOrder ?? null,
       ],
     );
   }
   return queryOne(
-    `INSERT INTO addon_services (code, name, description, price_inr, icon, is_active)
-     VALUES ($1,$2,$3,$4,COALESCE($5,'sparkles'),COALESCE($6,TRUE))
+    `INSERT INTO addon_services (code, name, description, price_inr, icon, is_active, category, priority, display_order)
+     VALUES ($1,$2,$3,$4,COALESCE($5,'sparkles'),COALESCE($6,TRUE),COALESCE($7,'General'),COALESCE($8,'Normal'),COALESCE($9,0))
      RETURNING *`,
     [
-      data.code.trim().toLowerCase().replace(/\s+/g, "_"),
-      data.name.trim(),
-      data.description,
-      data.priceInr,
+      data.code ? data.code.trim().toLowerCase().replace(/\s+/g, "_") : "",
+      data.name ? data.name.trim() : "",
+      data.description ?? "",
+      data.priceInr ?? 0,
       data.icon ?? "sparkles",
       data.isActive ?? true,
+      data.category ?? "General",
+      data.priority ?? "Normal",
+      data.displayOrder ?? 0,
     ],
   );
 }
@@ -142,30 +151,123 @@ export async function getCommerceSettings() {
 
 export async function updateCommerceSettings(data: {
   minOrderAmountInr?: number;
+  minOrderDesc?: string;
+  minOrderIsActive?: boolean;
+  
   deliveryFeeInr?: number;
+  deliveryFeeDesc?: string;
+  deliveryFeeIsActive?: boolean;
+
   freeDeliveryThresholdInr?: number;
+  freeDeliveryDesc?: string;
+  freeDeliveryIsActive?: boolean;
+
+  expressDeliveryInr?: number;
+  expressDeliveryDesc?: string;
+  expressDeliveryIsActive?: boolean;
+
+  lateNightDeliveryInr?: number;
+  lateNightDeliveryDesc?: string;
+  lateNightDeliveryTime?: string;
+  lateNightDeliveryIsActive?: boolean;
+
   gstPercent?: number;
+  gstIsActive?: boolean;
+
+  cgstPercent?: number;
+  cgstIsActive?: boolean;
+
+  sgstPercent?: number;
+  sgstIsActive?: boolean;
+
   serviceTaxPercent?: number;
+  serviceTaxLabel?: string;
+  serviceTaxIsActive?: boolean;
+
   otherChargesLabel?: string;
   otherChargesInr?: number;
+
+  packagingFeeInr?: number;
+  packagingFeeLabel?: string;
+  packagingFeeType?: string;
+  packagingFeeIsActive?: boolean;
 }) {
   return queryOne(
     `UPDATE platform_commerce_settings SET
        min_order_amount_inr = COALESCE($1, min_order_amount_inr),
-       delivery_fee_inr = COALESCE($2, delivery_fee_inr),
-       free_delivery_threshold_inr = COALESCE($3, free_delivery_threshold_inr),
-       gst_percent = COALESCE($4, gst_percent),
-       service_tax_percent = COALESCE($5, service_tax_percent),
-       other_charges_label = COALESCE($6, other_charges_label),
-       other_charges_inr = COALESCE($7, other_charges_inr),
+       min_order_desc = COALESCE($2, min_order_desc),
+       min_order_is_active = COALESCE($3, min_order_is_active),
+       
+       delivery_fee_inr = COALESCE($4, delivery_fee_inr),
+       delivery_fee_desc = COALESCE($5, delivery_fee_desc),
+       delivery_fee_is_active = COALESCE($6, delivery_fee_is_active),
+
+       free_delivery_threshold_inr = COALESCE($7, free_delivery_threshold_inr),
+       free_delivery_desc = COALESCE($8, free_delivery_desc),
+       free_delivery_is_active = COALESCE($9, free_delivery_is_active),
+
+       express_delivery_inr = COALESCE($10, express_delivery_inr),
+       express_delivery_desc = COALESCE($11, express_delivery_desc),
+       express_delivery_is_active = COALESCE($12, express_delivery_is_active),
+
+       late_night_delivery_inr = COALESCE($13, late_night_delivery_inr),
+       late_night_delivery_desc = COALESCE($14, late_night_delivery_desc),
+       late_night_delivery_time = COALESCE($15, late_night_delivery_time),
+       late_night_delivery_is_active = COALESCE($16, late_night_delivery_is_active),
+
+       gst_percent = COALESCE($17, gst_percent),
+       gst_is_active = COALESCE($18, gst_is_active),
+
+       cgst_percent = COALESCE($19, cgst_percent),
+       cgst_is_active = COALESCE($20, cgst_is_active),
+
+       sgst_percent = COALESCE($21, sgst_percent),
+       sgst_is_active = COALESCE($22, sgst_is_active),
+
+       service_tax_percent = COALESCE($23, service_tax_percent),
+       service_tax_label = COALESCE($24, service_tax_label),
+       service_tax_is_active = COALESCE($25, service_tax_is_active),
+
+       packaging_fee_inr = COALESCE($26, packaging_fee_inr),
+       packaging_fee_label = COALESCE($27, packaging_fee_label),
+       packaging_fee_type = COALESCE($28, packaging_fee_type),
+       packaging_fee_is_active = COALESCE($29, packaging_fee_is_active),
+
+       other_charges_label = COALESCE($30, other_charges_label),
+       other_charges_inr = COALESCE($31, other_charges_inr),
+
        updated_at = now()
      WHERE id = 1 RETURNING *`,
     [
       data.minOrderAmountInr ?? null,
+      data.minOrderDesc ?? null,
+      data.minOrderIsActive ?? null,
       data.deliveryFeeInr ?? null,
+      data.deliveryFeeDesc ?? null,
+      data.deliveryFeeIsActive ?? null,
       data.freeDeliveryThresholdInr ?? null,
+      data.freeDeliveryDesc ?? null,
+      data.freeDeliveryIsActive ?? null,
+      data.expressDeliveryInr ?? null,
+      data.expressDeliveryDesc ?? null,
+      data.expressDeliveryIsActive ?? null,
+      data.lateNightDeliveryInr ?? null,
+      data.lateNightDeliveryDesc ?? null,
+      data.lateNightDeliveryTime ?? null,
+      data.lateNightDeliveryIsActive ?? null,
       data.gstPercent ?? null,
+      data.gstIsActive ?? null,
+      data.cgstPercent ?? null,
+      data.cgstIsActive ?? null,
+      data.sgstPercent ?? null,
+      data.sgstIsActive ?? null,
       data.serviceTaxPercent ?? null,
+      data.serviceTaxLabel ?? null,
+      data.serviceTaxIsActive ?? null,
+      data.packagingFeeInr ?? null,
+      data.packagingFeeLabel ?? null,
+      data.packagingFeeType ?? null,
+      data.packagingFeeIsActive ?? null,
       data.otherChargesLabel ?? null,
       data.otherChargesInr ?? null,
     ],

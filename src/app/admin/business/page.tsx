@@ -6,9 +6,9 @@ import { adminNav } from "@/lib/portal-nav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { 
-  Eye, 
-  ArrowUpDown, 
+import {
+  Eye,
+  ArrowUpDown,
   ChevronDown,
   Shirt,
   Gift,
@@ -32,8 +32,7 @@ import { AddonServicesTab } from "@/components/admin/business/AddonServicesTab";
 import { DeliveryChargesTab } from "@/components/admin/business/DeliveryChargesTab";
 import { TaxesFeesTab } from "@/components/admin/business/TaxesFeesTab";
 import { SubscriptionsTab } from "@/components/admin/business/SubscriptionsTab";
-import { BusinessHistoryTab } from "@/components/admin/business/BusinessHistoryTab";
-import { BusinessAnalyticsTab } from "@/components/admin/business/BusinessAnalyticsTab";
+import { PricingHistoryTab } from "@/components/admin/business/PricingHistoryTab";
 
 export default function BusinessManagementPage() {
   const [data, setData] = useState<any>({
@@ -77,7 +76,7 @@ export default function BusinessManagementPage() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.message ?? "Save failed");
       toast("Business configuration updated successfully.", "success");
-      await load(); 
+      await load();
       return true;
     } catch (e: any) {
       toast(e.message, "error");
@@ -106,7 +105,7 @@ export default function BusinessManagementPage() {
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors bg-[#14B8A6] text-white hover:bg-[#14B8A6]/90 h-9 px-3 border-none shadow-sm">
-           Quick Actions <ChevronDown className="ml-2 h-4 w-4" />
+          Quick Actions <ChevronDown className="ml-2 h-4 w-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
           <DropdownMenuItem>New Garment</DropdownMenuItem>
@@ -126,13 +125,13 @@ export default function BusinessManagementPage() {
       greeting="Business Management"
       subtitle="Manage business configuration across pricing, subscriptions, societies and revenue."
     >
-      <div className="mb-6 flex justify-end -mt-14 relative z-10 pr-2">
+      {/* <div className="mb-6 flex justify-end -mt-14 relative z-10 pr-2">
         {HeaderActions}
-      </div>
+      </div> */}
 
       <div className="w-full max-w-[1600px] mx-auto space-y-6">
         {/* Top KPI Cards Dashboard */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card className="rounded-xl border border-border shadow-sm">
             <CardContent className="p-4 flex flex-col justify-between h-full">
               <div className="flex items-start justify-between">
@@ -149,9 +148,9 @@ export default function BusinessManagementPage() {
                 <TrendingUp className="h-3 w-3 mr-1" /> ↑ 12% vs last month
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
-          <Card className="rounded-xl border border-border shadow-sm">
+        {/* <Card className="rounded-xl border border-border shadow-sm">
             <CardContent className="p-4 flex flex-col justify-between h-full">
               <div className="flex items-start justify-between">
                 <div>
@@ -240,58 +239,46 @@ export default function BusinessManagementPage() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6 flex flex-wrap justify-start gap-4 bg-transparent p-0 border-b border-border/60 w-full overflow-x-auto pb-px">
-            <TabsTrigger 
-              value="pricing" 
+            <TabsTrigger
+              value="pricing"
               className="rounded-none border-b-2 border-transparent px-4 py-3 font-semibold data-[state=active]:border-[#14B8A6] data-[state=active]:text-[#14B8A6] data-[state=active]:bg-transparent transition-all hover:text-foreground"
             >
               1. Pricing
             </TabsTrigger>
-            <TabsTrigger 
-              value="addons" 
+            <TabsTrigger
+              value="addons"
               className="rounded-none border-b-2 border-transparent px-4 py-3 font-semibold data-[state=active]:border-[#14B8A6] data-[state=active]:text-[#14B8A6] data-[state=active]:bg-transparent transition-all hover:text-foreground"
             >
               2. Add-on Services
             </TabsTrigger>
-            <TabsTrigger 
-              value="delivery" 
+            <TabsTrigger
+              value="delivery"
               className="rounded-none border-b-2 border-transparent px-4 py-3 font-semibold data-[state=active]:border-[#14B8A6] data-[state=active]:text-[#14B8A6] data-[state=active]:bg-transparent transition-all hover:text-foreground"
             >
               3. Delivery Charges
             </TabsTrigger>
-            <TabsTrigger 
-              value="taxes" 
+            <TabsTrigger
+              value="subscriptions"
               className="rounded-none border-b-2 border-transparent px-4 py-3 font-semibold data-[state=active]:border-[#14B8A6] data-[state=active]:text-[#14B8A6] data-[state=active]:bg-transparent transition-all hover:text-foreground"
             >
-              4. Taxes & Fees
+              4. Subscription Plans
             </TabsTrigger>
-            <TabsTrigger 
-              value="subscriptions" 
+            <TabsTrigger
+              value="history"
               className="rounded-none border-b-2 border-transparent px-4 py-3 font-semibold data-[state=active]:border-[#14B8A6] data-[state=active]:text-[#14B8A6] data-[state=active]:bg-transparent transition-all hover:text-foreground"
             >
-              5. Subscription Plans
-            </TabsTrigger>
-            <TabsTrigger 
-              value="analytics" 
-              className="rounded-none border-b-2 border-transparent px-4 py-3 font-semibold data-[state=active]:border-[#14B8A6] data-[state=active]:text-[#14B8A6] data-[state=active]:bg-transparent transition-all hover:text-foreground"
-            >
-              6. Business Analytics
-            </TabsTrigger>
-            <TabsTrigger 
-              value="history" 
-              className="rounded-none border-b-2 border-transparent px-4 py-3 font-semibold data-[state=active]:border-[#14B8A6] data-[state=active]:text-[#14B8A6] data-[state=active]:bg-transparent transition-all hover:text-foreground"
-            >
-              7. Pricing History
+              5. Pricing History
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="pricing" className="m-0 border-none p-0 outline-none">
             <PricingTab garments={data.garments} addons={data.addons} onUpdate={post} />
           </TabsContent>
-          
+
           <TabsContent value="addons" className="m-0 border-none p-0 outline-none">
             <AddonServicesTab addons={data.addons} onUpdate={post} />
           </TabsContent>
@@ -300,23 +287,15 @@ export default function BusinessManagementPage() {
             <DeliveryChargesTab settings={data.settings} onUpdate={post} />
           </TabsContent>
 
-          <TabsContent value="taxes" className="m-0 border-none p-0 outline-none">
-            <TaxesFeesTab settings={data.settings} onUpdate={post} />
-          </TabsContent>
-
           <TabsContent value="subscriptions" className="m-0 border-none p-0 outline-none">
             <SubscriptionsTab plans={data.plans} onUpdate={post} />
           </TabsContent>
 
-          <TabsContent value="analytics" className="m-0 border-none p-0 outline-none">
-            <BusinessAnalyticsTab analytics={data.analytics} settings={data.settings} garments={data.garments} addons={data.addons} plans={data.plans} />
-          </TabsContent>
-
           <TabsContent value="history" className="m-0 border-none p-0 outline-none">
-            <BusinessHistoryTab history={data.history} />
+            <PricingHistoryTab history={data.history} />
           </TabsContent>
         </Tabs>
       </div>
-    </PortalShell>
+    </PortalShell >
   );
 }

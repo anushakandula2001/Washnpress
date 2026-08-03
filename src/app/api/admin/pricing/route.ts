@@ -63,21 +63,58 @@ const garmentSchema = z.object({
 
 const addonSchema = z.object({
   id: z.string().uuid().optional(),
-  code: z.string().min(2),
-  name: z.string().min(1),
-  description: z.string().min(1),
-  priceInr: z.number().min(0),
+  code: z.string().min(2).optional(),
+  name: z.string().min(1).optional(),
+  description: z.string().min(1).optional(),
+  priceInr: z.number().min(0).optional(),
   icon: z.string().optional(),
+  category: z.string().optional(),
+  priority: z.enum(["Low", "Normal", "High", "Urgent"]).optional(),
+  displayOrder: z.number().int().optional(),
   isActive: z.boolean().optional(),
   action: z.enum(["upsert", "delete", "toggle"]).optional(),
 });
 
 const settingsSchema = z.object({
   minOrderAmountInr: z.number().min(0).optional(),
+  minOrderDesc: z.string().optional(),
+  minOrderIsActive: z.boolean().optional(),
+
   deliveryFeeInr: z.number().min(0).optional(),
+  deliveryFeeDesc: z.string().optional(),
+  deliveryFeeIsActive: z.boolean().optional(),
+
   freeDeliveryThresholdInr: z.number().min(0).optional(),
-  gstPercent: z.number().min(0).optional(),
-  serviceTaxPercent: z.number().min(0).optional(),
+  freeDeliveryDesc: z.string().optional(),
+  freeDeliveryIsActive: z.boolean().optional(),
+
+  expressDeliveryInr: z.number().min(0).optional(),
+  expressDeliveryDesc: z.string().optional(),
+  expressDeliveryIsActive: z.boolean().optional(),
+
+  lateNightDeliveryInr: z.number().min(0).optional(),
+  lateNightDeliveryDesc: z.string().optional(),
+  lateNightDeliveryTime: z.string().optional(),
+  lateNightDeliveryIsActive: z.boolean().optional(),
+
+  gstPercent: z.number().min(0).max(100).optional(),
+  gstIsActive: z.boolean().optional(),
+
+  cgstPercent: z.number().min(0).max(100).optional(),
+  cgstIsActive: z.boolean().optional(),
+
+  sgstPercent: z.number().min(0).max(100).optional(),
+  sgstIsActive: z.boolean().optional(),
+
+  serviceTaxPercent: z.number().min(0).max(100).optional(),
+  serviceTaxLabel: z.string().optional(),
+  serviceTaxIsActive: z.boolean().optional(),
+
+  packagingFeeInr: z.number().min(0).optional(),
+  packagingFeeLabel: z.string().optional(),
+  packagingFeeType: z.string().optional(),
+  packagingFeeIsActive: z.boolean().optional(),
+
   otherChargesLabel: z.string().optional(),
   otherChargesInr: z.number().min(0).optional(),
 });
