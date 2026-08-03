@@ -16,8 +16,6 @@ services:
     ports:
       - "3000:3000"
 
-    profiles:
-      - web
 
     env_file:
       - .env.example
