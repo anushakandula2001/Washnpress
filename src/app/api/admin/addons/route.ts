@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { ok, badRequest, created } from "@/backend/api/response";
@@ -8,7 +9,7 @@ import {
   setAddonActive,
 } from "@/backend/repositories/admin-commerce";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   return ok({ addons: await listAddonsAdmin(true) });
@@ -25,7 +26,7 @@ const schema = z.object({
   action: z.enum(["upsert", "delete", "toggle"]).default("upsert"),
 });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -44,3 +45,7 @@ export async function POST(request: Request) {
     return badRequest(err instanceof Error ? err.message : "Failed");
   }
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

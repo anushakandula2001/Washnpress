@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { findNextPickup } from "@/backend/repositories/pickups";
@@ -11,7 +12,7 @@ const bookSchema = z.object({
   recurring: z.boolean().optional(),
 });
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const pickup = await findNextPickup(auth.session.residentId!);
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
   });
 }
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const parsed = bookSchema.safeParse(await request.json());
@@ -49,3 +50,6 @@ export async function POST(request: Request) {
     return badRequest(e instanceof Error ? e.message : "Booking failed");
   }
 }
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { ok, badRequest, created } from "@/backend/api/response";
 import { createBroadcast, listBroadcasts } from "@/backend/repositories/admin-commerce";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   return ok({ broadcasts: await listBroadcasts() });
@@ -19,7 +20,7 @@ const schema = z.object({
   operatorUserId: z.string().uuid().optional(),
 });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -34,3 +35,7 @@ export async function POST(request: Request) {
     return badRequest(err instanceof Error ? err.message : "Failed to send");
   }
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { upgradeSubscription, pauseSubscription, cancelSubscription, resumeSubscription } from "@/backend/repositories/subscriptions";
@@ -6,7 +7,7 @@ import { ok, unauthorized, badRequest, notFound } from "@/backend/api/response";
 
 const upgradeSchema = z.object({ planId: z.string().uuid() });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const session = auth.session;
@@ -23,3 +24,6 @@ export async function POST(request: Request) {
     return badRequest(error instanceof Error ? error.message : "Upgrade failed");
   }
 }
+
+
+export const POST = withErrorHandling(_POST);

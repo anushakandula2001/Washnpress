@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import {
   listOperatorSocietyIds,
@@ -6,7 +7,7 @@ import {
 import { ok } from "@/backend/api/response";
 import { query } from "@/backend/db/pool";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
@@ -21,3 +22,6 @@ export async function GET(request: Request) {
   const residents = await listResidentsForSocieties(societyIds);
   return ok({ residents, societyIds });
 }
+
+
+export const GET = withErrorHandling(_GET);

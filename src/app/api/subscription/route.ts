@@ -1,10 +1,11 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireResident } from "@/backend/api/guards";
 import { findActiveSubscription } from "@/backend/repositories/subscriptions";
 import { listPaymentMethods, listBillingInvoices, getSustainabilitySummary } from "@/backend/repositories/billing";
 import { toSubscriptionResponse, formatPaymentExpiry } from "@/backend/api/transformers";
 import { ok, unauthorized, notFound } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const session = auth.session;
@@ -57,3 +58,6 @@ export async function GET(request: Request) {
     })),
   });
 }
+
+
+export const GET = withErrorHandling(_GET);

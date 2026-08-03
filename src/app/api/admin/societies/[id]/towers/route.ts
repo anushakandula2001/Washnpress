@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { ok } from "@/backend/api/response";
 import { query } from "@/backend/db/pool";
 
-export async function GET(
+async function _GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -22,3 +23,6 @@ export async function GET(
     return ok({ towers: [] });
   }
 }
+
+
+export const GET = withErrorHandling(_GET);

@@ -9,6 +9,7 @@ const DEMO_PHONE = "9876543210";
 export async function createSession(user: SessionUser): Promise<string> {
   const token = crypto.randomUUID();
   await redis.setex(sessionKey(token), SESSION_TTL_SECONDS, JSON.stringify(user));
+  console.log("[session] Session created");
   return token;
 }
 

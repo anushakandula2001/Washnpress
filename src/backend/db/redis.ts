@@ -16,6 +16,9 @@ function createRedis() {
   client.on("error", (err) => {
     console.error("[redis]", err.message);
   });
+  client.on("ready", () => {
+    console.log("[redis] Redis connected");
+  });
   return client;
 }
 

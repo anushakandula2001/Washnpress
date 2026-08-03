@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireResident } from "@/backend/api/guards";
 import { cancelResidentOrder, findOrderByCode, listOrderEvents, listOrderItems } from "@/backend/repositories/orders";
 import { toResidentOrder } from "@/backend/api/transformers";
 import { ok, badRequest, notFound } from "@/backend/api/response";
 
-export async function GET(
+async function _GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -27,7 +28,7 @@ export async function GET(
   });
 }
 
-export async function DELETE(
+async function _DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
@@ -43,3 +44,7 @@ export async function DELETE(
     return badRequest(error instanceof Error ? error.message : "Unable to cancel order");
   }
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const DELETE = withErrorHandling(_DELETE);

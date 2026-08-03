@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { ok, badRequest } from "@/backend/api/response";
@@ -11,13 +12,13 @@ const addressSchema = z.object({
   pincode: z.string().trim().regex(/^\d{6}$/).optional(),
 });
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   return ok({ addresses: await findResidentAddresses(auth.session.residentId!) });
 }
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
 
@@ -27,3 +28,7 @@ export async function POST(request: Request) {
   const address = await createResidentAddress(auth.session.residentId!, parsed.data);
   return ok({ address });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

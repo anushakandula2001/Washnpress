@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { cookies } from "next/headers";
 import { ok } from "@/backend/api/response";
 import { SESSION_COOKIE, destroySession } from "@/backend/api/session";
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
 
@@ -13,3 +14,6 @@ export async function POST(request: Request) {
   cookieStore.delete(SESSION_COOKIE);
   return ok({ loggedOut: true });
 }
+
+
+export const POST = withErrorHandling(_POST);

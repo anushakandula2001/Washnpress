@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { query, queryOne } from "@/backend/db/pool";
 import { ok, badRequest, notFound } from "@/backend/api/response";
 
-export async function PATCH(
+async function _PATCH(
   request: Request,
   { params }: { params: Promise<{ orderCode: string }> }
 ) {
@@ -58,3 +59,5 @@ export async function PATCH(
     return badRequest("Failed to update delivery status");
   }
 }
+
+export const PATCH = withErrorHandling(_PATCH);

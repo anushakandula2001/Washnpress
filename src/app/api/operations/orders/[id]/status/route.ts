@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { updateOrderStatus } from "@/backend/repositories/orders-ext";
@@ -5,7 +6,7 @@ import { ok, badRequest, notFound } from "@/backend/api/response";
 
 const schema = z.object({ status: z.string().min(1) });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
   const { id } = await params;
@@ -15,3 +16,5 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!order) return notFound("Order not found");
   return ok({ order });
 }
+
+export const PATCH = withErrorHandling(_PATCH);

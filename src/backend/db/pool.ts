@@ -5,7 +5,7 @@ const globalForPg = globalThis as unknown as {
 };
 
 const DEFAULT_DATABASE_URL =
-  "postgresql://washnpress:washnpress@localhost:5434/washnpress";
+  "postgresql://washnpress:washnpress@postgres:5432/washnpress";
 
 function createPool() {
   const connectionString =
@@ -25,7 +25,7 @@ function createPool() {
   });
 
   pool.on("connect", () => {
-    console.log("[db] PostgreSQL connection established.");
+    console.log("[db] PostgreSQL connected");
   });
 
   pool.on("error", (err) => {

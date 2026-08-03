@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { getSession } from "@/backend/api/session";
 import { getSupportTicketDetails, updateTicketFields } from "@/backend/repositories/support-hub";
 
-export async function GET(
+async function _GET(
   request: Request,
   { params }: { params: Promise<{ ticketId: string }> }
 ) {
@@ -28,7 +29,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
+async function _PATCH(
   request: Request,
   { params }: { params: Promise<{ ticketId: string }> }
 ) {
@@ -58,3 +59,7 @@ export async function PATCH(
     );
   }
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

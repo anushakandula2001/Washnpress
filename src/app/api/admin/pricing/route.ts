@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireSession } from "@/backend/api/guards";
 import { forbidden, ok, badRequest, created } from "@/backend/api/response";
@@ -24,7 +25,7 @@ import {
 import { logAudit } from "@/backend/repositories/admin";
 import { queryOne } from "@/backend/db/pool";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireSession(request);
   if ("error" in auth) return auth.error;
 
@@ -146,7 +147,7 @@ const bodySchema = z.object({
   plan: planSchema.optional(),
 });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireSession(request);
   if ("error" in auth) return auth.error;
 
@@ -265,6 +266,11 @@ export async function POST(request: Request) {
 }
 
 /** Keep PATCH for legacy plan price updates */
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   return POST(request);
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);
+export const PATCH = withErrorHandling(_PATCH);

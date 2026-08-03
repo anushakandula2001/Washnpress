@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { getSession } from "@/backend/api/session";
 import { checkExecutiveAssignment, markSocietySetupComplete } from "@/backend/repositories/society-setup";
 
-export async function PATCH(
+async function _PATCH(
   _request: Request,
   { params }: { params: Promise<{ societyId: string }> }
 ) {
@@ -27,3 +28,6 @@ export async function PATCH(
     );
   }
 }
+
+
+export const PATCH = withErrorHandling(_PATCH);

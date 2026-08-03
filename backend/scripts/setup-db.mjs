@@ -51,7 +51,7 @@ loadEnvFile(join(projectRoot, ".env.local"));
 
 const connectionString =
   process.env.DATABASE_URL ??
-  "postgresql://washnpress:washnpress@localhost:5434/washnpress";
+  "postgresql://washnpress:washnpress@postgres:5432/washnpress";
 
 let client = new pg.Client({ connectionString });
 
@@ -225,7 +225,8 @@ async function main() {
   if (!MIGRATE_ONLY) {
     console.log(`✅ Seeds Executed     : ${seedCount}`);
   }
-  console.log("\nDatabase is ready.");
+  console.log("\n[db] Migrations completed");
+  console.log("Database is ready.");
 
   await client.end();
 }

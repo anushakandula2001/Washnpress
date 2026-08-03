@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { getSessionFromRequest } from "@/backend/api/session";
 import { updateOrderQc } from "@/backend/repositories/orders";import { createQcTicket, findOrderResidentId } from "@/backend/repositories/support";
@@ -9,7 +10,7 @@ const qcSchema = z.object({
   reason: z.string().optional(),
 });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const session = await getSessionFromRequest(request);
   const body = await request.json();
   const parsed = qcSchema.safeParse(body);
@@ -52,3 +53,6 @@ export async function POST(request: Request) {
     supportTicketCreated,
   });
 }
+
+
+export const POST = withErrorHandling(_POST);

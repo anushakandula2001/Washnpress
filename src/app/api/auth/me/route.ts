@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { getSession } from "@/backend/api/session";
 import { ok, unauthorized, serverError } from "@/backend/api/response";
 
-export async function GET() {
+async function _GET() {
   try {
     const session = await getSession();
     if (!session) return unauthorized();
@@ -10,3 +11,6 @@ export async function GET() {
     return serverError(error instanceof Error ? error.message : "Failed to load session");
   }
 }
+
+
+export const GET = withErrorHandling(_GET);

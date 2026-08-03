@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { analyzeTicketWithAI, generateAIResponseDraft } from "@/backend/repositories/support-ai";
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   try {
     const body = await request.json();
     const { description, category, residentName, ticketCode } = body;
@@ -25,3 +26,6 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+export const POST = withErrorHandling(_POST);

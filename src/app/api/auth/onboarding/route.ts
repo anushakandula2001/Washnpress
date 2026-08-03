@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireSession } from "@/backend/api/guards";
 import { onboardResident } from "@/backend/repositories/auth-ext";
@@ -19,7 +20,7 @@ const schema = z.object({
     .or(z.literal("")),
 });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireSession(request);
   if ("error" in auth) return auth.error;
   const body = await request.json();
@@ -51,3 +52,6 @@ export async function POST(request: Request) {
     return badRequest(error instanceof Error ? error.message : "Onboarding failed");
   }
 }
+
+
+export const POST = withErrorHandling(_POST);

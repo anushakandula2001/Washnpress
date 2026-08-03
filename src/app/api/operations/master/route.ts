@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireSession, hasRole } from "@/backend/api/guards";
 import {
@@ -22,7 +23,7 @@ async function requireOpsOrAdmin(request: Request) {
   return auth;
 }
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireOpsOrAdmin(request);
   if ("error" in auth) return auth.error;
 
@@ -87,7 +88,7 @@ const createSchema = z.discriminatedUnion("kind", [
   executiveSchema,
 ]);
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireOpsOrAdmin(request);
   if ("error" in auth) return auth.error;
 
@@ -127,3 +128,7 @@ export async function POST(request: Request) {
     return badRequest(error instanceof Error ? error.message : "Create failed");
   }
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

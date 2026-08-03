@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { getRouteStops } from "@/backend/repositories/operations";
 import { ok, badRequest } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
   const routeId = new URL(request.url).searchParams.get("routeId");
@@ -16,3 +17,5 @@ export async function GET(request: Request) {
     polyline: "encoded_polyline_placeholder",
   });
 }
+
+export const GET = withErrorHandling(_GET);

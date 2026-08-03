@@ -3,9 +3,18 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      target: dev
+    volumes:
+      - ..:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://washnpress:washnpress@postgres:5432/washnpress
+      - REDIS_URL=redis://redis:6379
 
     ports:
-      - "3002:3000"
+      - "3000:3000"
 
     profiles:
       - web
@@ -30,7 +39,6 @@ services:
       POSTGRES_DB: washnpress
       POSTGRES_USER: washnpress
       POSTGRES_PASSWORD: washnpress
-
     ports:
       - "5434:5432"
 
@@ -48,7 +56,6 @@ services:
     image: redis:7-alpine
 
     restart: unless-stopped
-
     ports:
       - "6379:6379"
 

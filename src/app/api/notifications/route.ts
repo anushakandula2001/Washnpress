@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireResident } from "@/backend/api/guards";
 import { listNotifications, markNotificationRead } from "@/backend/repositories/billing";
 import { ok } from "@/backend/api/response";
 import { countUnreadResidentNotifications } from "@/backend/repositories/notifications";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const session = auth.session;
@@ -23,7 +24,7 @@ export async function GET(request: Request) {
   });
 }
 
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const session = auth.session;
@@ -35,3 +36,7 @@ export async function PATCH(request: Request) {
 
   return ok({ updated: true });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

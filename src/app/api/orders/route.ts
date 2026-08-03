@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireResident } from "@/backend/api/guards";
 import { listOrdersByResident } from "@/backend/repositories/orders";
 import { toResidentOrder } from "@/backend/api/transformers";
 import { ok, serverError } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   try {
     const auth = await requireResident(request);
     if ("error" in auth) return auth.error;
@@ -14,3 +15,6 @@ export async function GET(request: Request) {
     return serverError(error instanceof Error ? error.message : "Failed to load orders");
   }
 }
+
+
+export const GET = withErrorHandling(_GET);

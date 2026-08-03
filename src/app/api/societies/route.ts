@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { listSocieties } from "@/backend/repositories/societies";
 import { ok } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const url = new URL(request.url);
   const city = url.searchParams.get("city") ?? undefined;
 
@@ -19,3 +20,6 @@ export async function GET(request: Request) {
     })),
   });
 }
+
+
+export const GET = withErrorHandling(_GET);

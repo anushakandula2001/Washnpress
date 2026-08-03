@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { ok, badRequest } from "@/backend/api/response";
@@ -8,7 +9,7 @@ import {
   listTicketMessages,
 } from "@/backend/repositories/admin-commerce";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const ticketId = new URL(request.url).searchParams.get("ticketId");
@@ -29,7 +30,7 @@ const schema = z.object({
   reply: z.string().optional(),
 });
 
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -40,3 +41,7 @@ export async function PATCH(request: Request) {
   }
   return ok({ ticket, messages: await listTicketMessages(parsed.data.ticketId) });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { getSession } from "@/backend/api/session";
 import { checkExecutiveAssignment, getSocietyMasterData, updateMasterDataHierarchy } from "@/backend/repositories/society-setup";
 
-export async function GET(
+async function _GET(
   _request: Request,
   { params }: { params: Promise<{ societyId: string }> }
 ) {
@@ -28,7 +29,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+async function _PUT(
   request: Request,
   { params }: { params: Promise<{ societyId: string }> }
 ) {
@@ -54,3 +55,7 @@ export async function PUT(
     );
   }
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PUT = withErrorHandling(_PUT);

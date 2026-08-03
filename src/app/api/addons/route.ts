@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { listAddons } from "@/backend/repositories/billing";
 import { ok } from "@/backend/api/response";
 
-export async function GET() {
+async function _GET() {
   const addons = await listAddons();
   return ok({
     addons: addons.map((a) => ({
@@ -14,3 +15,6 @@ export async function GET() {
     })),
   });
 }
+
+
+export const GET = withErrorHandling(_GET);

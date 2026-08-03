@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { getSupportDashboardStats } from "@/backend/repositories/support";
 
-export async function GET() {
+async function _GET() {
   try {
     const stats = await getSupportDashboardStats();
     return NextResponse.json(stats);
@@ -12,3 +13,6 @@ export async function GET() {
     );
   }
 }
+
+
+export const GET = withErrorHandling(_GET);

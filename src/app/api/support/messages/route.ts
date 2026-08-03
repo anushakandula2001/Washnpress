@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { addTicketMessage } from "@/backend/repositories/support";
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   try {
     const body = await request.json();
     const { ticketId, senderUserId, senderName, senderType, channel, message } = body;
@@ -27,3 +28,6 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
+export const POST = withErrorHandling(_POST);

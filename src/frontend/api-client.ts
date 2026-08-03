@@ -263,7 +263,7 @@ export const api = {
 
   auth: {
     sendOtp: (phone: string, purpose: "login" | "register" = "login") =>
-      apiFetch<{ sent: boolean; expiresInSeconds: number; message?: string }>("/api/auth/otp/send", {
+      apiFetch<{ sent: boolean; expiresInSeconds: number; message?: string; devOtp?: string }>("/api/auth/otp/send", {
         method: "POST",
         body: JSON.stringify({ phone, purpose }),
       }),

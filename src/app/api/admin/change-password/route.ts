@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { ok, badRequest } from "@/backend/api/response";
@@ -21,7 +22,7 @@ const changePasswordSchema = z
     path: ["confirmPassword"],
   });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
 
@@ -39,3 +40,6 @@ export async function POST(request: Request) {
     message: "Password changed successfully. Please log in with your new password on your next session.",
   });
 }
+
+
+export const POST = withErrorHandling(_POST);

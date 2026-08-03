@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { z } from "zod";
 import {
@@ -17,7 +18,7 @@ const schema = z.object({
   status: z.string().optional(),
 });
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const id = new URL(request.url).searchParams.get("id");
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
   return ok({ societies: await listSocietiesAdmin() });
 }
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -45,3 +46,7 @@ export async function POST(request: Request) {
   });
   return created({ society });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

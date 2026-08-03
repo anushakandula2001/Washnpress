@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { getSession } from "@/backend/api/session";
 import { listUnifiedSupportTickets } from "@/backend/repositories/support-hub";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   try {
     const session = await getSession();
     if (!session || !session.userId) {
@@ -42,3 +43,6 @@ export async function GET(request: Request) {
     );
   }
 }
+
+
+export const GET = withErrorHandling(_GET);

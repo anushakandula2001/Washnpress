@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireResident } from "@/backend/api/guards";
 import { findInvoiceById } from "@/backend/repositories/billing-ext";
 import { notFound } from "@/backend/api/response";
 
-export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const { id } = await params;
@@ -12,3 +13,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const html = `<html><body><h1>Invoice ${inv.invoice_code}</h1><p>${inv.billing_month}</p><p>Amount: Rs.${inv.amount_inr}</p></body></html>`;
   return new Response(html, { headers: { "Content-Type": "text/html", "Content-Disposition": `attachment; filename="${inv.invoice_code}.html"` } });
 }
+
+export const GET = withErrorHandling(_GET);

@@ -93,23 +93,24 @@ export async function sendOtp(phone: string, purpose: OtpPurpose = "login") {
 
   // Development: OTP is printed in the Next.js server terminal (never in the browser)
   const banner = [
-    "",
     "========================================",
-    "  WASHNPRESS DEV OTP",
-    `  Purpose: ${purpose.toUpperCase()}`,
-    `  Phone: +91 ${phone}`,
-    `  Code:  ${otp}`,
-    `  Expires in ${OTP_TTL_SECONDS / 60} minutes`,
+    "🔐 WASHNPRESS DEV OTP",
     "========================================",
-    "",
+    `Phone   : +91 ${phone}`,
+    `Purpose : ${purpose.toUpperCase()}`,
+    `OTP     : ${otp}`,
+    `Expires : ${OTP_TTL_SECONDS / 60} minutes`,
+    "========================================",
   ].join("\n");
-  process.stdout.write(banner);
+  console.log("[auth] OTP generated");
+  console.log(banner);
 
   return {
     sent: true,
     expiresInSeconds: OTP_TTL_SECONDS,
     purpose,
     message: "OTP sent successfully",
+    ...(process.env.NODE_ENV === "development" ? { devOtp: otp } : {}),
   };
 }
 
@@ -196,6 +197,7 @@ export async function verifyOtp(phone: string, otp: string): Promise<SessionUser
     roles,
   });
 
+  console.log("[auth] User authenticated");
   return { ...sessionUser, roles, token } as SessionUser & { token: string };
 }
 

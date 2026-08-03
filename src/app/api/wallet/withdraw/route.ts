@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { debitWallet } from "@/backend/repositories/wallet";
@@ -5,7 +6,7 @@ import { ok, badRequest } from "@/backend/api/response";
 
 const schema = z.object({ amount: z.number().positive() });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -17,3 +18,5 @@ export async function POST(request: Request) {
     return badRequest(e instanceof Error ? e.message : "Withdrawal failed");
   }
 }
+
+export const POST = withErrorHandling(_POST);

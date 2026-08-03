@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { createPaymentCharge } from "@/backend/repositories/billing-ext";
@@ -9,7 +10,7 @@ const schema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -23,3 +24,5 @@ export async function POST(request: Request) {
   });
   return created({ transaction: txn });
 }
+
+export const POST = withErrorHandling(_POST);

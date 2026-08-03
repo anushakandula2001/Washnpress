@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireResident } from "@/backend/api/guards";
 import { pauseSubscription, resumeSubscription } from "@/backend/repositories/subscriptions";
 import { toSubscriptionResponse } from "@/backend/api/transformers";
 import { ok, unauthorized, notFound, badRequest } from "@/backend/api/response";
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const session = auth.session;
@@ -22,3 +23,6 @@ export async function POST(request: Request) {
     return badRequest(error instanceof Error ? error.message : "Action failed");
   }
 }
+
+
+export const POST = withErrorHandling(_POST);

@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { otpSendSchema, sendOtp } from "@/backend/services/auth-service";
 import { ok, badRequest } from "@/backend/api/response";
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = otpSendSchema.safeParse(body);
@@ -13,3 +14,6 @@ export async function POST(request: Request) {
     return badRequest(error instanceof Error ? error.message : "Failed to send OTP");
   }
 }
+
+
+export const POST = withErrorHandling(_POST);

@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { ok, badRequest } from "@/backend/api/response";
@@ -11,7 +12,7 @@ const updateProfileSchema = z.object({
   avatarUrl: z.string().optional(),
 });
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
 
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
   });
 }
 
-export async function PUT(request: Request) {
+async function _PUT(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
 
@@ -87,3 +88,7 @@ export async function PUT(request: Request) {
     },
   });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PUT = withErrorHandling(_PUT);

@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
 
+export function withErrorHandling(handler: Function) {
+  return async (...args: any[]) => {
+    try {
+      return await handler(...args);
+    } catch (error) {
+      console.error("[api] Unhandled server error:", error);
+      return serverError(error instanceof Error ? error.message : "Internal server error");
+    }
+  };
+}
+
 interface ApiSuccess<T> {
   success: true;
   status: number;

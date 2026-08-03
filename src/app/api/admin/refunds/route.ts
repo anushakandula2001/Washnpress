@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { z } from "zod";
 import { createRefund } from "@/backend/repositories/admin";
@@ -8,7 +9,7 @@ const schema = z.object({
   reason: z.string().min(5), orderId: z.string().uuid().optional(), approve: z.boolean().optional(),
 });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -20,3 +21,5 @@ export async function POST(request: Request) {
   });
   return created({ refund });
 }
+
+export const POST = withErrorHandling(_POST);
