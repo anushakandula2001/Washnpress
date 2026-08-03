@@ -60,7 +60,7 @@ export async function GET(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const allowedSocieties = await getOperatorSocieties(auth.session.userId, isAdmin);
   const allowed = allowedSocieties.map((s) => s.id);
   const societyId = new URL(request.url).searchParams.get("societyId");
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
   const parsed = createSchema.safeParse(await request.json());
   if (!parsed.success) return badRequest("Invalid request", parsed.error.flatten());
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const allowed = (await getOperatorSocieties(auth.session.userId, isAdmin)).map(s => s.id);
   if (!allowed.includes(parsed.data.societyId) && !isAdmin) {
     return forbidden("Society not assigned to this operator");
@@ -133,7 +133,7 @@ export async function PATCH(request: Request) {
   const existing = await findSlotById(parsed.data.slotId);
   if (!existing) return notFound("Slot not found");
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const allowed = (await getOperatorSocieties(auth.session.userId, isAdmin)).map(s => s.id);
   if (!allowed.includes(existing.society_id) && !isAdmin) {
     return forbidden("Society not assigned to this operator");
@@ -154,7 +154,7 @@ export async function DELETE(request: Request) {
   const existing = await findSlotById(slotId);
   if (!existing) return notFound("Slot not found");
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const allowed = (await getOperatorSocieties(auth.session.userId, isAdmin)).map(s => s.id);
   if (!allowed.includes(existing.society_id) && !isAdmin) {
     return forbidden("Society not assigned to this operator");

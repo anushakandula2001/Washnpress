@@ -199,9 +199,9 @@ export async function updateTicketFields(ticketId: string, fields: { status?: st
 
 export async function addTicketMessage(ticketId: string, senderUserId: string, body: string) {
   const sql = `
-    INSERT INTO ticket_messages (ticket_id, sender_user_id, body)
-    VALUES ($1, $2, $3)
-    RETURNING id, sender_user_id, body, created_at
+    INSERT INTO ticket_messages (ticket_id, sender_user_id, body, message, sender_type, channel)
+    VALUES ($1, $2, $3, $3, 'operations', 'customer')
+    RETURNING id, sender_user_id, body, message, created_at
   `;
   const res = await queryOne(sql, [ticketId, senderUserId, body]);
   return res;

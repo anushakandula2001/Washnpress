@@ -4,7 +4,8 @@ INSERT INTO roles (id, name) VALUES
   (1, 'resident'),
   (2, 'operator'),
   (3, 'admin')
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE
+SET name = EXCLUDED.name;
 
 INSERT INTO plans (tier, garment_cap, turnaround_hours, monthly_inr, annual_discount_percent)
 VALUES

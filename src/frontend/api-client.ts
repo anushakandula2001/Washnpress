@@ -1,5 +1,33 @@
 type FetchOptions = RequestInit & { params?: Record<string, string> };
 
+/** Unwrap standard `{ success, data }` API envelopes used by backend response helpers. */
+export function unwrapApiPayload<T = any>(json: unknown): T {
+  if (
+    json &&
+    typeof json === "object" &&
+    "success" in json &&
+    "data" in json &&
+    (json as { success: unknown }).success === true
+  ) {
+    return (json as { data: T }).data;
+  }
+  return json as T;
+}
+
+export async function readApiJson<T = any>(res: Response): Promise<T> {
+  const text = await res.text();
+  if (!text) {
+    return {} as T;
+  }
+  try {
+    return unwrapApiPayload<T>(JSON.parse(text));
+  } catch {
+    throw new Error(
+      `Invalid JSON response (${res.status}): ${text.slice(0, 200)}`,
+    );
+  }
+}
+
 export type AuthUser = {
   userId: string;
   residentId: string | null;
@@ -48,12 +76,25 @@ async function apiFetch<T>(path: string, options: FetchOptions = {}): Promise<T>
     },
   });
 
+  const text = await res.text();
+  let json: unknown = {};
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      if (!res.ok) {
+        throw new Error(text.slice(0, 200) || `API error ${res.status}`);
+      }
+      throw new Error(`Invalid JSON response (${res.status})`);
+    }
+  }
+
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
+    const err = json as { message?: string };
     throw new Error(err.message ?? `API error ${res.status}`);
   }
 
-  return res.json() as Promise<T>;
+  return unwrapApiPayload<T>(json);
 }
 
 export const api = {

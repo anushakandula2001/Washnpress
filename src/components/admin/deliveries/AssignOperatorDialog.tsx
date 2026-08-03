@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -45,7 +47,7 @@ export function AssignOperatorDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: delivery.id, operatorId }),
       });
-      const json = await res.json();
+      const json = await readApiJson(res);
       if (!res.ok) throw new Error(json.message ?? "Assign failed");
       toast("Operator assigned — order marked out for delivery", "success");
       onOpenChange(false);

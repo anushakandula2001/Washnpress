@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -39,7 +41,7 @@ function SupportCenterContent() {
       
       const res = await fetch(`/api/operations/support?${params.toString()}`);
       if (res.ok) {
-        const data = await res.json();
+        const data = await readApiJson(res);
         setTickets(data.data || []);
       }
     } catch (err) {

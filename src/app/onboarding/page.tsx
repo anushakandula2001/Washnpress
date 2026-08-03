@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { api, needsOnboarding, type AuthUser } from "@/frontend/api-client";
+import { api, needsOnboarding, type AuthUser, readApiJson } from "@/frontend/api-client";
 
 type SocietyOption = { id: string; name: string; city: string; address: string; status: string };
 type TowerOption = { id: string; name: string };
@@ -90,7 +90,7 @@ export default function OnboardingPage() {
     (async () => {
       try {
         const res = await fetch(`/api/resident/societies/${societyId}/buildings`, { credentials: "same-origin" });
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (cancelled) return;
         const bList = (data.buildings || []).map((b: any) => ({ id: b.id, name: b.name }));
         setTowers(bList);
@@ -120,7 +120,7 @@ export default function OnboardingPage() {
     (async () => {
       try {
         const res = await fetch(`/api/buildings/${towerId}/floors`, { credentials: "same-origin" });
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (cancelled) return;
         const fList = (data.floors || []).map((f: any) => ({
           id: f.id,
@@ -150,7 +150,7 @@ export default function OnboardingPage() {
     (async () => {
       try {
         const res = await fetch(`/api/floors/${floorId}/flats`, { credentials: "same-origin" });
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (cancelled) return;
         const fltList = (data.flats || [])
           .filter((f: any) => f.status !== "Occupied" && f.status !== "Blocked" && f.status !== "occupied")

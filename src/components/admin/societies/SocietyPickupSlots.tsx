@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +21,7 @@ export function SocietyPickupSlots({ societyId }: { societyId: string }) {
       setLoading(true);
       try {
         const res = await fetch(`/api/admin/slots?societyId=${societyId}`, { credentials: "same-origin" });
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (!res.ok) throw new Error(data.message ?? "Failed");
         if (!cancelled) setSlots((data.slots as PickupSlot[]) ?? []);
       } catch (err) {

@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import {
   createContext,
   useCallback,
@@ -90,7 +92,7 @@ export function PickupProvider({ children }: { children: ReactNode }) {
       try {
         const res = await fetch("/api/catalog/pricing", { credentials: "same-origin" });
         if (!res.ok) return;
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (cancelled) return;
         const garments = (data.garments as Array<Record<string, unknown>>) ?? [];
         const addons = (data.addons as Array<Record<string, unknown>>) ?? [];

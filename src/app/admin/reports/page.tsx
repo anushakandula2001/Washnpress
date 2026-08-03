@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Button } from "@/components/ui/button";
@@ -53,7 +55,7 @@ export default function AdminReportsPage() {
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/reports", { credentials: "same-origin" });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.message ?? "Failed");
     setData(json as ReportsData);
   }, []);

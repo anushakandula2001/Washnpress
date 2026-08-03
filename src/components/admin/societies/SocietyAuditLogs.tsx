@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { readApiJson } from "@/frontend/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
@@ -13,7 +14,7 @@ export function SocietyAuditLogs({ societyId }: { societyId: string }) {
   useEffect(() => {
     let cancelled = false;
     void fetch("/api/admin/audit-logs?limit=100", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) => {
         if (cancelled) return;
         const all = (d.logs as AuditLogRow[]) ?? [];

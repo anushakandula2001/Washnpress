@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
@@ -63,7 +65,7 @@ export function SupportTicketDrawer({ ticketId, open, onOpenChange, onUpdated }:
     try {
       const res = await fetch(`/api/operations/support/${id}`);
       if (res.ok) {
-        const data = await res.json();
+        const data = await readApiJson(res);
         setTicket(data);
       }
     } catch (err) {

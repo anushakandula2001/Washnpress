@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -62,7 +64,7 @@ export default function AdminPaymentsPage() {
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/payments", { credentials: "same-origin" });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Failed");
     setOnlinePayments((data.onlinePayments as OnlinePayment[]) ?? []);
     setWalletTransactions((data.walletTransactions as WalletTx[]) ?? []);
@@ -83,7 +85,7 @@ export default function AdminPaymentsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refundId, status }),
     });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Update failed");
     setMsg(`Refund ${status}.`);
     await load();

@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Button } from "@/components/ui/button";
@@ -23,7 +25,7 @@ export default function OperationsNotificationsPage() {
   const load = useCallback(async () => {
     try {
       const res = await fetch("/api/operations/notifications", { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load");
       setItems((data.notifications as Notif[]) ?? []);
       setUnreadCount(data.unreadCount ?? 0);

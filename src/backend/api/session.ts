@@ -68,71 +68,102 @@ export function getTokenFromRequest(request: Request): string | undefined {
 }
 
 async function getDemoSession(): Promise<SessionUser | null> {
-  const row = await queryOne<{
-    user_id: string;
-    resident_id: string;
-    phone: string;
-    full_name: string | null;
-    unit_number: string;
-    tower_block: string | null;
-    society_id: string;
-    society_name: string;
-    roles: string[];
-  }>(
-    `SELECT u.id AS user_id, r.id AS resident_id, u.phone, u.full_name,
-            r.unit_number, r.tower_block, r.society_id, s.name AS society_name,
-            COALESCE(array_agg(DISTINCT ro.name) FILTER (WHERE ro.name IS NOT NULL), '{}') AS roles
-     FROM users u
-     JOIN residents r ON r.user_id = u.id
-     JOIN societies s ON s.id = r.society_id
-     LEFT JOIN user_roles ur ON ur.user_id = u.id
-     LEFT JOIN roles ro ON ro.id = ur.role_id
-     WHERE u.phone = $1
-     GROUP BY u.id, r.id, s.name`,
-    [DEMO_PHONE],
-  );
+  try {
+    const row = await queryOne<{
+      user_id: string;
+      resident_id: string;
+      phone: string;
+      full_name: string | null;
+      unit_number: string;
+      tower_block: string | null;
+      society_id: string;
+      society_name: string;
+      roles: string[];
+    }>(
+      `SELECT u.id AS user_id, r.id AS resident_id, u.phone, u.full_name,
+              r.unit_number, r.tower_block, r.society_id, s.name AS society_name,
+              COALESCE(array_agg(DISTINCT ro.name) FILTER (WHERE ro.name IS NOT NULL), '{}') AS roles
+       FROM users u
+       JOIN residents r ON r.user_id = u.id
+       JOIN societies s ON s.id = r.society_id
+       LEFT JOIN user_roles ur ON ur.user_id = u.id
+       LEFT JOIN roles ro ON ro.id = ur.role_id
+       WHERE u.phone = $1
+       GROUP BY u.id, r.id, s.name`,
+      [DEMO_PHONE],
+    );
 
-  if (!row) return null;
+    if (!row) return null;
 
-  return {
-    userId: row.user_id,
-    residentId: row.resident_id,
-    phone: row.phone,
-    fullName: row.full_name,
-    unitNumber: row.unit_number,
-    towerBlock: row.tower_block,
-    societyId: row.society_id,
-    societyName: row.society_name,
-    roles: row.roles,
-  };
+    return {
+      userId: row.user_id,
+      residentId: row.resident_id,
+      phone: row.phone,
+      fullName: row.full_name,
+      unitNumber: row.unit_number,
+      towerBlock: row.tower_block,
+      societyId: row.society_id,
+      societyName: row.society_name,
+      roles: row.roles ?? [],
+    };
+  } catch (err) {
+    console.error("[session] Failed to load demo session:", err instanceof Error ? err.message : err);
+    return null;
+  }
 }
 
 export async function getSession(): Promise<SessionUser | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  const session = await getSessionFromToken(token);
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(SESSION_COOKIE)?.value;
+    const session = await getSessionFromToken(token);
 
-  if (session) return session;
+    if (session) {
+      return {
+        ...session,
+        roles: session.roles ?? [],
+      };
+    }
 
-  if (process.env.NODE_ENV === "development") {
-    return getDemoSession();
+    if (process.env.NODE_ENV === "development") {
+      return getDemoSession();
+    }
+
+    return null;
+  } catch (err) {
+    console.error("[session] getSession failed:", err instanceof Error ? err.message : err);
+    if (process.env.NODE_ENV === "development") {
+      return getDemoSession();
+    }
+    return null;
   }
-
-  return null;
 }
 
 export async function getSessionFromRequest(request: Request): Promise<SessionUser | null> {
-  const cookieHeader = request.headers.get("cookie") ?? "";
-  const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
-  const session = await getSessionFromToken(match?.[1]);
+  try {
+    const cookieHeader = request.headers.get("cookie") ?? "";
+    const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
+    const session = await getSessionFromToken(match?.[1]);
 
-  if (session) return session;
+    if (session) {
+      return {
+        ...session,
+        roles: session.roles ?? [],
+      };
+    }
 
-  if (process.env.NODE_ENV === "development") {
-    return getDemoSession();
+    if (process.env.NODE_ENV === "development") {
+      return getDemoSession();
+    }
+
+    return null;
+  } catch (err) {
+    console.error("[session] getSessionFromRequest failed:", err instanceof Error ? err.message : err);
+    if (process.env.NODE_ENV === "development") {
+      return getDemoSession();
+    }
+    return null;
   }
-
-  return null;
 }
 
 export { SESSION_COOKIE };

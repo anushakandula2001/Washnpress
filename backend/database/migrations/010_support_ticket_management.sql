@@ -23,23 +23,27 @@ ADD COLUMN IF NOT EXISTS society_id UUID REFERENCES societies(id) ON DELETE SET 
 ALTER TABLE support_tickets
 ADD COLUMN IF NOT EXISTS assigned_team VARCHAR(50) NOT NULL DEFAULT 'Customer Support';
 
+-- Keep assigned_to_user_id (matches application repositories).
+-- Reconcile any prior rename to assigned_user_id from older 010 versions.
 DO $$
 BEGIN
-    IF EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_name = 'support_tickets'
-          AND column_name = 'assigned_to_user_id'
-    ) AND NOT EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_name = 'support_tickets'
-          AND column_name = 'assigned_user_id'
-    ) THEN
-        ALTER TABLE support_tickets
-        RENAME COLUMN assigned_to_user_id TO assigned_user_id;
-    END IF;
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'support_tickets'
+      AND column_name = 'assigned_user_id'
+  ) AND NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'support_tickets'
+      AND column_name = 'assigned_to_user_id'
+  ) THEN
+    ALTER TABLE support_tickets RENAME COLUMN assigned_user_id TO assigned_to_user_id;
+  END IF;
 END $$;
+
+ALTER TABLE support_tickets
+  ADD COLUMN IF NOT EXISTS assigned_to_user_id UUID REFERENCES users(id);
 
 ALTER TABLE support_tickets
 ADD COLUMN IF NOT EXISTS sla_first_response_due_at TIMESTAMPTZ;
@@ -62,29 +66,56 @@ ADD COLUMN IF NOT EXISTS csat_rating INTEGER;
 ALTER TABLE support_tickets
 ADD COLUMN IF NOT EXISTS csat_feedback TEXT;
 
--- 3. Create ticket_messages table (Public vs Internal channels)
+-- 3. Ensure ticket_messages exists, then upgrade columns (005 may have created a slim version)
 CREATE TABLE IF NOT EXISTS ticket_messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
   sender_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-  sender_name VARCHAR(120),
-  sender_type VARCHAR(30) NOT NULL DEFAULT 'resident', -- resident, support, operations, manager, system
-  channel VARCHAR(30) NOT NULL DEFAULT 'customer', -- customer, internal
-  message TEXT NOT NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CHECK (channel IN ('customer', 'internal'))
+  body TEXT NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- 4. Create ticket_attachments table
+ALTER TABLE ticket_messages
+  ADD COLUMN IF NOT EXISTS sender_name VARCHAR(120),
+  ADD COLUMN IF NOT EXISTS sender_type VARCHAR(30) NOT NULL DEFAULT 'resident',
+  ADD COLUMN IF NOT EXISTS channel VARCHAR(30) NOT NULL DEFAULT 'customer',
+  ADD COLUMN IF NOT EXISTS message TEXT;
+
+UPDATE ticket_messages
+SET message = COALESCE(NULLIF(message, ''), NULLIF(body, ''), '')
+WHERE message IS NULL OR message = '';
+
+UPDATE ticket_messages
+SET body = COALESCE(NULLIF(body, ''), NULLIF(message, ''), '')
+WHERE body IS NULL OR body = '';
+
+ALTER TABLE ticket_messages
+  ALTER COLUMN message SET DEFAULT '',
+  ALTER COLUMN message SET NOT NULL;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'ticket_messages_channel_check'
+  ) THEN
+    ALTER TABLE ticket_messages
+      ADD CONSTRAINT ticket_messages_channel_check
+      CHECK (channel IN ('customer', 'internal'));
+  END IF;
+END $$;
+
+-- 4. Ensure ticket_attachments exists, then upgrade columns
 CREATE TABLE IF NOT EXISTS ticket_attachments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ticket_id UUID NOT NULL REFERENCES support_tickets(id) ON DELETE CASCADE,
-  message_id UUID REFERENCES ticket_messages(id) ON DELETE CASCADE,
-  file_url TEXT NOT NULL,
   file_name VARCHAR(255) NOT NULL,
-  file_type VARCHAR(50),
+  file_url TEXT NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE ticket_attachments
+  ADD COLUMN IF NOT EXISTS message_id UUID REFERENCES ticket_messages(id) ON DELETE CASCADE,
+  ADD COLUMN IF NOT EXISTS file_type VARCHAR(50);
 
 -- 5. Create ticket_notes table (Internal staff notes)
 CREATE TABLE IF NOT EXISTS ticket_notes (
@@ -110,7 +141,7 @@ CREATE TABLE IF NOT EXISTS ticket_history (
 -- Indexes for high performance
 CREATE INDEX IF NOT EXISTS idx_support_tickets_resident ON support_tickets(resident_id);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_society ON support_tickets(society_id);
-CREATE INDEX IF NOT EXISTS idx_support_tickets_assigned_user ON support_tickets(assigned_user_id);
+CREATE INDEX IF NOT EXISTS idx_support_tickets_assigned_to_user ON support_tickets(assigned_to_user_id);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets(status);
 CREATE INDEX IF NOT EXISTS idx_support_tickets_priority ON support_tickets(priority);
 CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket ON ticket_messages(ticket_id);

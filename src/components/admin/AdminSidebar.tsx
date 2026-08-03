@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -172,7 +174,7 @@ function SidebarSearch({ collapsed, onResult }: { collapsed?: boolean; onResult?
     setLoading(true);
     const delayDebounce = setTimeout(() => {
       fetch(`/api/admin/search?q=${encodeURIComponent(term)}`)
-        .then((res) => res.json())
+        .then((res) => readApiJson(res))
         .then((data) => {
           if (data && data.results) {
             setDbResults(data.results);
@@ -244,7 +246,7 @@ function SidebarFooter({ collapsed }: { collapsed?: boolean }) {
 
   useEffect(() => {
     void fetch("/api/health")
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) => {
         setHealth({
           db: d.services?.database ?? "unknown",

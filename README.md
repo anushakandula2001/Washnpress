@@ -46,13 +46,17 @@ Health check: `GET /api/health`
 
 | Command | Description |
 |---------|-------------|
+| `npm run setup` | Install deps, start Postgres/Redis, run migrations + seeds |
 | `npm run dev` | Start Next.js dev server |
 | `npm run build` | Production build |
 | `npm run test` | Run Vitest tests |
 | `npm run db:up` | Start Postgres + Redis (Docker) |
-| `npm run db:setup` | Run migrations + seeds |
+| `npm run db:setup` | Apply pending migrations; seed if DB is empty |
+| `npm run db:migrate` | Apply pending migrations only (never wipes data) |
+| `npm run db:reset` | Wipe volumes, recreate DB, migrate + seed |
 | `npm run db:down` | Stop database containers |
-| `npm run docker:up` | Start full stack (web + db + redis) |
+| `npm run docker:up` | Start Postgres + Redis |
+| `npm run docker:web` | Start web + db + redis (compose profile) |
 | `npm run docker:down` | Stop all containers |
 
 ## Tech stack

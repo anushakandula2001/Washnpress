@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,7 +33,7 @@ export function PickupNotes({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pickupId, specialInstructions: note }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Save failed");
       toast("Notes saved", "success");
       onSaved();

@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,7 +47,7 @@ export function ResidentsFilters({
   // Load plans dynamically
   useEffect(() => {
     fetch("/api/admin/subscriptions")
-      .then((res) => res.ok ? res.json() : null)
+      .then((res) => res.ok ? readApiJson(res) : null)
       .then((data) => {
         if (data && data.plans) {
           setPlans(data.plans);
@@ -65,7 +67,7 @@ export function ResidentsFilters({
     }
 
     fetch(`/api/admin/societies/${filters.societyId}/towers`)
-      .then((res) => res.ok ? res.json() : null)
+      .then((res) => res.ok ? readApiJson(res) : null)
       .then((data) => {
         if (data && data.towers) {
           setTowers(data.towers);
@@ -88,7 +90,7 @@ export function ResidentsFilters({
     }
 
     fetch(`/api/admin/towers/${selectedTowerId}/floors`)
-      .then((res) => res.ok ? res.json() : null)
+      .then((res) => res.ok ? readApiJson(res) : null)
       .then((data) => {
         if (data && data.floors) {
           setFloors(data.floors);

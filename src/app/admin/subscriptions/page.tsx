@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -68,7 +70,7 @@ export default function AdminSubscriptionsPage() {
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/subscriptions", { credentials: "same-origin" });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Failed");
     setPlans((data.plans as Plan[]) ?? []);
     setEnrollments((data.enrollments as Enrollment[]) ?? []);
@@ -87,7 +89,7 @@ export default function AdminSubscriptionsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Save failed");
     setMsg("Plan saved.");
     setForm(emptyPlan);

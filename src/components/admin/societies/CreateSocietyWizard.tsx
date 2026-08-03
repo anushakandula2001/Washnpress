@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +42,7 @@ export function CreateSocietyWizard({
   useEffect(() => {
     if (!open) return;
     void fetch("/api/admin/operators", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) => setOperators((d.operators as OperatorOpt[]) ?? []))
       .catch(() => null);
   }, [open]);
@@ -70,7 +72,7 @@ export function CreateSocietyWizard({
           status: form.status,
         }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to create society");
 
       const societyId = (data.society as { id: string }).id;

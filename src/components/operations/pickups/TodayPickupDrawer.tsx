@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import * as React from "react";
 import { Sheet, SheetBody, SheetContent, SheetHeader } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -50,7 +52,7 @@ export function TodayPickupDrawer({
     setError(null);
     void fetch(`/api/operations/orders?id=${encodeURIComponent(orderId)}`, { credentials: "same-origin" })
       .then(async (res) => {
-        const json = await res.json();
+        const json = await readApiJson(res);
         if (!res.ok) throw new Error(json.message ?? "Failed");
         setData(json);
       })

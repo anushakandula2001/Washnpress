@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Button } from "@/components/ui/button";
@@ -76,7 +78,7 @@ export default function AdminResidentsPage() {
       if (filters.subscription) params.set("subscription", filters.subscription);
       if (filters.status) params.set("status", filters.status);
       const res = await fetch(`/api/admin/residents?${params}`, { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load");
       setRows((data.residents as ResidentRow[]) ?? []);
     } catch (err) {
@@ -88,7 +90,7 @@ export default function AdminResidentsPage() {
 
   useEffect(() => {
     void fetch("/api/admin/societies", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) =>
         setSocieties(
           ((d.societies as Array<{ id: string; name: string }>) ?? []).map((s) => ({
@@ -121,7 +123,7 @@ export default function AdminResidentsPage() {
       body: JSON.stringify({ residentId: id, status }),
     });
     if (!res.ok) {
-      const data = await res.json();
+      const data = await readApiJson(res);
       toast(data.message ?? "Update failed", "error");
       return;
     }

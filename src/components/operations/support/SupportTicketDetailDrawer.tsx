@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import {
   X,
@@ -52,7 +54,7 @@ export function SupportTicketDetailDrawer({
     try {
       const res = await fetch(`/api/support/tickets/${ticketId}?channel=all`);
       if (res.ok) {
-        const json = await res.json();
+        const json = await readApiJson(res);
         setData(json);
       }
     } catch (e) {

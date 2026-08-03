@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -86,7 +88,7 @@ export default function AdminSettingsPage() {
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/settings", { credentials: "same-origin" });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Failed");
     const settings = (data.settings as Record<string, unknown>) ?? {};
     setTexts({
@@ -102,7 +104,7 @@ export default function AdminSettingsPage() {
         credentials: "same-origin",
       });
       if (res.ok) {
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (data.preferences) {
           setPrefs({ ...DEFAULT_PREFS, ...(data.preferences as Partial<NotifPrefs>) });
         }
@@ -145,7 +147,7 @@ export default function AdminSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ key, value }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Save failed");
       setMsg(`${key} saved.`);
       await load();
@@ -165,7 +167,7 @@ export default function AdminSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(prefs),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Save failed");
       toast("Notification preferences saved!", "success");
     } catch (err) {

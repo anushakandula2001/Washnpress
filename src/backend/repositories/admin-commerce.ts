@@ -1066,8 +1066,8 @@ export async function updateSupportTicket(data: {
 
 export async function addTicketReply(ticketId: string, senderUserId: string, body: string) {
   return queryOne(
-    `INSERT INTO ticket_messages (ticket_id, sender_user_id, body)
-     VALUES ($1, $2, $3) RETURNING *`,
+    `INSERT INTO ticket_messages (ticket_id, sender_user_id, body, message, sender_type, channel)
+     VALUES ($1, $2, $3, $3, 'admin', 'customer') RETURNING *`,
     [ticketId, senderUserId, body],
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -17,7 +19,7 @@ export default function AdminOperatorProfilePage() {
 
   async function load() {
     const res = await fetch(`/api/admin/operators?id=${params.id}`, { credentials: "same-origin" });
-    const json = await res.json();
+    const json = await readApiJson(res);
     if (!res.ok) throw new Error(json.message ?? "Failed to load");
     setData(json);
   }
@@ -37,7 +39,7 @@ export default function AdminOperatorProfilePage() {
         body: JSON.stringify({ operatorId: op.id, status }),
       });
       if (!res.ok) {
-        const j = await res.json();
+        const j = await readApiJson(res);
         throw new Error(j.message ?? "Update failed");
       }
       await load();

@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -62,7 +64,7 @@ function PickupsContent() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetch("/api/operations/queue", { credentials: "same-origin" }).then((r) => r.json());
+      const data = await fetch("/api/operations/queue", { credentials: "same-origin" }).then((r) => readApiJson(r));
       const pickupStatuses = ["Scheduled", "Pickup Scheduled"];
       const orders = data.queue?.filter((q: any) => pickupStatuses.includes(q.status)) || [];
       setRows((orders as Array<Record<string, unknown>>).map(normalizeOrderRow));

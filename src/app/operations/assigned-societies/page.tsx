@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Building2, Search, ArrowRight, Activity, Users, Box, Truck } from "lucide-react";
@@ -24,7 +26,7 @@ function AssignedSocietiesContent() {
   const fetchSocieties = () => {
     setLoading(true);
     fetch("/api/operations/societies/pending", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) => setSocieties(d.societies || []))
       .catch(() => null)
       .finally(() => setLoading(false));

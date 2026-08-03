@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const filter = await societyFilter(auth.session.userId, isAdmin);
 
   const counts = await queryOne<Record<string, string>>(

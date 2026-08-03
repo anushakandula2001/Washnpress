@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Button } from "@/components/ui/button";
@@ -86,7 +88,7 @@ export default function AdminDeliveriesPage() {
       if (filters.societyId) params.set("societyId", filters.societyId);
       if (filters.operatorId) params.set("operatorId", filters.operatorId);
       const res = await fetch(`/api/admin/deliveries?${params}`, { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load");
       setRows(((data.deliveries as Array<Record<string, unknown>>) ?? []).map(normalizeDeliveryRow));
     } catch (err) {
@@ -99,7 +101,7 @@ export default function AdminDeliveriesPage() {
   const loadStats = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/deliveries", { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (res.ok) {
         setStatsRows(((data.deliveries as Array<Record<string, unknown>>) ?? []).map(normalizeDeliveryRow));
       }
@@ -110,7 +112,7 @@ export default function AdminDeliveriesPage() {
 
   useEffect(() => {
     void fetch("/api/admin/societies", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) =>
         setSocieties(
           ((d.societies as Array<{ id: string; name: string }>) ?? []).map((s) => ({
@@ -122,7 +124,7 @@ export default function AdminDeliveriesPage() {
       .catch(() => null);
 
     void fetch("/api/admin/operators", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) =>
         setOperators(
           ((d.operators as Array<Record<string, unknown>>) ?? []).map((o) => ({

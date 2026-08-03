@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { Building2, Check, ChevronRight, Plus, Trash2, Edit3, ArrowLeft, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -104,7 +106,7 @@ export function SocietySetupWizard({
     setLoadingSocieties(true);
     try {
       const res = await fetch("/api/operations/societies/pending", { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (res.ok) {
         setSocieties(data.societies || []);
         if (!selectedSocietyId && data.societies?.length > 0) {
@@ -122,7 +124,7 @@ export function SocietySetupWizard({
     setLoadingHierarchy(true);
     try {
       const res = await fetch(`/api/operations/societies/${socId}/master-data`, { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (res.ok) {
         const hasBuildings = data.buildings && data.buildings.length > 0;
         setHierarchy(data.buildings || []);
@@ -167,7 +169,7 @@ export function SocietySetupWizard({
         }),
       });
 
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message || "Generation failed");
 
       toast(`Building '${buildingName}' generated with ${floorsCount} floors and ${flatsPerFloor} flats/floor`, "success");
@@ -317,7 +319,7 @@ export function SocietySetupWizard({
         credentials: "same-origin",
       });
 
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message || "Failed to mark setup complete");
 
       toast(`Society '${selectedSociety?.name || "Society"}' setup complete!`, "success");

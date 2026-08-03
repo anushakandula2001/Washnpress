@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { readApiJson } from "@/frontend/api-client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
@@ -27,7 +28,7 @@ export function SocietySubscriptions({ societyId, societyName }: { societyId: st
   useEffect(() => {
     let cancelled = false;
     void fetch("/api/admin/subscriptions", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) => {
         if (cancelled) return;
         const all = (d.enrollments as Enrollment[]) ?? [];

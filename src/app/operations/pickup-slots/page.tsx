@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +40,7 @@ async function slotsApi(method: string, body?: Record<string, unknown>, params?:
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
-  const data = await res.json().catch(() => ({}));
+  const data = await readApiJson(res).catch(() => ({} as any));
   if (!res.ok) throw new Error(data.message ?? `Request failed (${res.status})`);
   return data;
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { useToast } from "@/components/ui/toast";
@@ -100,7 +102,7 @@ export default function AdminRolesPage() {
     setError(null);
     try {
       const res = await fetch("/api/admin/roles", { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load roles");
       setUsers(((data.users as Array<Record<string, unknown>>) ?? []).map(normalizeUser));
     } catch (err) {
@@ -114,7 +116,7 @@ export default function AdminRolesPage() {
     setLogsLoading(true);
     try {
       const res = await fetch("/api/admin/audit-logs?limit=50", { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load audit logs");
       setAuditLogs((data.logs as AuditLogRow[]) ?? []);
     } catch {
@@ -131,7 +133,7 @@ export default function AdminRolesPage() {
 
   useEffect(() => {
     void fetch("/api/admin/societies", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) =>
         setSocieties(
           ((d.societies as Array<{ id: string; name: string }>) ?? []).map((s) => ({
@@ -160,7 +162,7 @@ export default function AdminRolesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ roles: [role] }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Role update failed");
       toast(`Role updated to ${role}`, "success");
       setChangeOpen(false);
@@ -182,7 +184,7 @@ export default function AdminRolesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStatus }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Status update failed");
       toast(nextStatus === "active" ? "User activated" : "User deactivated", "success");
       await Promise.all([loadRoles(), loadAuditLogs()]);

@@ -13,7 +13,7 @@
     "test:watch": "vitest",
 
     "db:setup": "node backend/scripts/setup-db.mjs",
-    "db:migrate": "node backend/scripts/setup-db.mjs",
+    "db:migrate": "node backend/scripts/setup-db.mjs --migrate-only",
 
     "db:up": "docker compose -f docker/docker-compose.yml up -d postgres redis",
     "db:down": "docker compose -f docker/docker-compose.yml stop postgres redis",
@@ -22,7 +22,7 @@
     "docker:down": "docker compose -f docker/docker-compose.yml down",
     "docker:web": "docker compose -f docker/docker-compose.yml --profile web up -d --build",
 
-    "db:reset": "docker compose -f docker/docker-compose.yml down -v && docker compose -f docker/docker-compose.yml up -d postgres redis && node backend/scripts/setup-db.mjs",
+    "db:reset": "docker compose -f docker/docker-compose.yml down -v && docker compose -f docker/docker-compose.yml up -d postgres redis && node backend/scripts/setup-db.mjs --reset",
 
     "setup": "npm install && npm run docker:up && npm run db:setup",
 

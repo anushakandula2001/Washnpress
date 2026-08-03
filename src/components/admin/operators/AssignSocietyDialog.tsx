@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -43,7 +45,7 @@ export function AssignSocietyDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ operatorId, transferSocietyId: selected }),
       });
-      const json = await res.json();
+      const json = await readApiJson(res);
       if (!res.ok) throw new Error(json.message ?? "Assign failed");
       toast("Society assigned successfully", "success");
       setSelected("");

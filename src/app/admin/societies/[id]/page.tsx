@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
@@ -24,7 +26,7 @@ export default function AdminSocietyDetailPage() {
     setError(null);
     try {
       const res = await fetch(`/api/admin/societies?id=${params.id}`, { credentials: "same-origin" });
-      const json = await res.json();
+      const json = await readApiJson(res);
       if (!res.ok) throw new Error(json.message ?? "Failed to load");
       setData(json as SocietyDetailData);
     } catch (err) {

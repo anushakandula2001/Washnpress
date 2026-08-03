@@ -1,8 +1,12 @@
 import { getSession } from "@/backend/api/session";
-import { ok, unauthorized } from "@/backend/api/response";
+import { ok, unauthorized, serverError } from "@/backend/api/response";
 
 export async function GET() {
-  const session = await getSession();
-  if (!session) return unauthorized();
-  return ok({ user: session });
+  try {
+    const session = await getSession();
+    if (!session) return unauthorized();
+    return ok({ user: { ...session, roles: session.roles ?? [] } });
+  } catch (error) {
+    return serverError(error instanceof Error ? error.message : "Failed to load session");
+  }
 }

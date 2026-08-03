@@ -180,6 +180,7 @@ export async function POST(request: Request) {
         return ok({ garment: toggled });
       }
       const garment = await upsertGarment(g);
+      if (!garment) return badRequest("Garment not found");
       await logPricingHistory("garment", garment.name, prevGarment, garment, g.id ? "Garment updated" : "Garment created", auth.session.userId);
       await logAudit({
         actorUserId: auth.session.userId,
@@ -211,6 +212,7 @@ export async function POST(request: Request) {
         return ok({ addon: toggled });
       }
       const addon = await upsertAddon(a);
+      if (!addon) return badRequest("Addon not found");
       await logPricingHistory("addon", addon.name, prevAddon, addon, a.id ? "Addon updated" : "Addon created", auth.session.userId);
       return created({ addon });
     }
@@ -218,6 +220,7 @@ export async function POST(request: Request) {
     if (section === "settings" && parsed.data.settings) {
       const prevSettings = await getCommerceSettings();
       const settings = await updateCommerceSettings(parsed.data.settings);
+      if (!settings) return badRequest("Failed to update settings");
       
       await logPricingHistory("delivery_taxes", "Platform Settings", prevSettings, settings, "Commerce settings updated", auth.session.userId);
       
@@ -250,6 +253,7 @@ export async function POST(request: Request) {
         return ok({ plan: toggled });
       }
       const plan = await upsertPlan(p);
+      if (!plan) return badRequest("Plan not found");
       await logPricingHistory("plan", plan.tier, prevPlan, plan, p.id ? "Plan updated" : "Plan created", auth.session.userId);
       return created({ plan });
     }

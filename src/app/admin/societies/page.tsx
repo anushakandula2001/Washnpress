@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -111,7 +113,7 @@ export default function AdminSocietiesPage() {
     setError(null);
     try {
       const res = await fetch("/api/admin/societies", { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load");
       setRows((data.societies as SocietyRow[]) ?? []);
     } catch (err) {
@@ -141,7 +143,7 @@ export default function AdminSocietiesPage() {
       body: JSON.stringify({ status }),
     });
     if (!res.ok) {
-      const data = await res.json();
+      const data = await readApiJson(res);
       toast(data.message ?? "Update failed", "error");
       return;
     }

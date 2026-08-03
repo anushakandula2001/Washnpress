@@ -7,7 +7,7 @@ export async function GET(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const assignedSocieties = isAdmin ? [] : await listOperatorSocietyIds(auth.session.userId);
 
   if (!isAdmin && assignedSocieties.length === 0) {
