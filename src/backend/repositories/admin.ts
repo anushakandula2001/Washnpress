@@ -937,10 +937,11 @@ export async function getOrderDetailAdmin(orderCode: string) {
     console.log("✓ events");
 
     const items = await query(
-      `SELECT id, category, quantity, created_at
-       FROM order_items
-       WHERE order_id = $1
-       ORDER BY category`,
+      `SELECT oi.id, COALESCE(gc.name, oi.category) AS category, oi.quantity, oi.created_at
+       FROM order_items oi
+       LEFT JOIN garment_catalog gc ON gc.id::text = oi.category
+       WHERE oi.order_id = $1
+       ORDER BY gc.name NULLS LAST, oi.category`,
       [order.id],
     ).then((r) => r.rows);
     console.log("✓ items");

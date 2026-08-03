@@ -15,11 +15,13 @@
 \i backend/database/migrations/013_allow_order_cancellation.sql
 \i backend/database/migrations/014_delivery_tax_settings.sql
 
-\echo 'Running Wash N Press seeds'
+\echo 'Running Seeds'
 
 \i backend/database/seeds/001_seed_reference_data.sql
 \i backend/database/seeds/002_seed_demo_data.sql
 \i backend/database/seeds/003_seed_extended_demo.sql
 \i backend/database/seeds/004_seed_extended_features.sql
+\i backend/database/seeds/005_seed_society_hierarchy.sql
+\i backend/database/seeds/006_seed_commerce_defaults.sql
 
-\echo 'Done.'
+\echo 'Done'
