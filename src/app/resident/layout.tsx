@@ -1,13 +1,15 @@
-import { RoleGuard } from "@/components/portal/role-guard";
-import { ToastProvider } from "@/components/ui/toast";
+import { ResidentAuthGuard } from "@/components/auth/resident-auth-guard";
+import { ResidentProvider } from "@/components/resident/resident-provider";
 import { RealtimeProvider } from "@/components/providers/realtime-provider";
 
 export default function ResidentLayout({ children }: { children: React.ReactNode }) {
   return (
-    <RoleGuard allow={["resident"]}>
-      <RealtimeProvider>
-        <ToastProvider>{children}</ToastProvider>
-      </RealtimeProvider>
-    </RoleGuard>
+    <ResidentAuthGuard>
+      <ResidentProvider>
+        <RealtimeProvider>
+          {children}
+        </RealtimeProvider>
+      </ResidentProvider>
+    </ResidentAuthGuard>
   );
 }
