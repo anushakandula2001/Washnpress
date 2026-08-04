@@ -17,24 +17,7 @@ export const PICKUP_STEPS: PickupStepMeta[] = [
 
 export const STEP_ORDER = [...PICKUP_STEPS.map((s) => s.id), "success"] as const;
 
-export const GARMENT_OPTIONS: GarmentOption[] = [
-  { id: "shirts", name: "Shirts & Tops", description: "Casual & formal tops", icon: "shirt", weightKg: 0.25, washPriceInr: 40 },
-  { id: "trousers", name: "Trousers & Jeans", description: "Pants, denim, chinos", icon: "pants", weightKg: 0.4, washPriceInr: 50 },
-  { id: "dresses", name: "Dresses & Kurtas", description: "Ethnic & western wear", icon: "dress", weightKg: 0.35, washPriceInr: 55 },
-  { id: "bedding", name: "Bedding", description: "Sheets, covers, pillowcases", icon: "bed", weightKg: 0.8, washPriceInr: 70 },
-  { id: "towels", name: "Towels", description: "Bath & hand towels", icon: "towel", weightKg: 0.45, washPriceInr: 45 },
-  { id: "others", name: "Other Items", description: "Misc. garments & soft goods", icon: "package", weightKg: 0.3, washPriceInr: 35 },
-];
-
-export const SERVICE_OPTIONS: ServiceOption[] = [
-  { id: "wash-fold", name: "Wash & Fold", description: "Everyday laundry, neatly folded", priceInr: 0, icon: "fold" },
-  { id: "wash-iron", name: "Wash & Iron", description: "Wash plus crisp professional press", priceInr: 49, icon: "iron" },
-  { id: "dry-cleaning", name: "Dry Cleaning", description: "Premium care for suits & sarees", priceInr: 80, icon: "shirt" },
-  { id: "steam-iron", name: "Steam Iron", description: "Gentle steam press for delicate fabrics", priceInr: 39, icon: "steam" },
-  { id: "express", name: "Express Delivery", description: "Priority turnaround within 12 hours", priceInr: 199, icon: "zap" },
-  { id: "shoes", name: "Shoe Cleaning", description: "Deep clean for leather & canvas", priceInr: 150, icon: "footprints" },
-  { id: "curtains", name: "Curtain Cleaning", description: "Specialized wash for home textiles", priceInr: 249, icon: "curtains" },
-];
+export const MAX_INSTRUCTIONS = 240;
 
 export const PRIMARY_LAUNDRY_TYPES = [
   "wash-fold",
@@ -42,12 +25,6 @@ export const PRIMARY_LAUNDRY_TYPES = [
   "dry-cleaning",
   "steam-iron",
 ] as const;
-
-export const ADDON_SERVICE_IDS = ["express", "shoes", "curtains"] as const;
-
-export const MAX_INSTRUCTIONS = 240;
-export const TAX_RATE = 0.05;
-export const BASE_PICKUP_FEE = 0;
 
 const WINDOW_SLOTS: Record<TimeWindow, Array<{ start: string; end: string; label: string }>> = {
   Morning: [
@@ -157,9 +134,9 @@ export function formatSlotSummary(slot: PickupSlotOption): string {
 
 export function estimateWeightKg(
   garments: Record<string, number>,
-  options: GarmentOption[] = GARMENT_OPTIONS,
+  options: GarmentOption[],
 ): number {
-  return options.reduce((sum, g) => sum + (garments[g.id] ?? 0) * g.weightKg, 0);
+  return options.reduce((sum, g) => sum + (garments[g.id] ?? 0) * (g.weightKg ?? 0.3), 0);
 }
 
 export function totalGarmentCount(garments: Record<string, number>): number {
@@ -168,14 +145,14 @@ export function totalGarmentCount(garments: Record<string, number>): number {
 
 export function servicesTotal(
   selectedIds: string[],
-  options: ServiceOption[] = SERVICE_OPTIONS,
+  options: ServiceOption[],
 ): number {
   return options.filter((s) => selectedIds.includes(s.id)).reduce((sum, s) => sum + s.priceInr, 0);
 }
 
 export function garmentCostsTotal(
   garments: Record<string, number>,
-  garmentOptions: GarmentOption[] = GARMENT_OPTIONS,
+  garmentOptions: GarmentOption[],
 ): number {
   return garmentOptions.reduce(
     (sum, g) => sum + (garments[g.id] ?? 0) * (g.washPriceInr ?? 0),
@@ -186,10 +163,10 @@ export function garmentCostsTotal(
 export function computeCharges(
   selectedServiceIds: string[],
   garments: Record<string, number> = {},
-  garmentOptions: GarmentOption[] = GARMENT_OPTIONS,
-  serviceOptions: ServiceOption[] = SERVICE_OPTIONS,
-  taxRate = TAX_RATE,
-  deliveryFee = BASE_PICKUP_FEE,
+  garmentOptions: GarmentOption[],
+  serviceOptions: ServiceOption[],
+  taxRate: number,
+  deliveryFee: number,
 ) {
   const garmentCosts = garmentCostsTotal(garments, garmentOptions);
   const services = servicesTotal(selectedServiceIds, serviceOptions);

@@ -18,6 +18,8 @@ import {
   upsertPlan,
   setPlanActive,
   deletePlan,
+  archivePlan,
+  setPlanPopular,
   logPricingHistory,
   getPricingHistory,
   getPricingAnalytics
@@ -136,7 +138,11 @@ const planSchema = z.object({
   expressDiscountPercent: z.number().min(0).optional(),
   validityDays: z.number().int().positive().optional(),
   isActive: z.boolean().optional(),
-  action: z.enum(["upsert", "delete", "toggle"]).optional(),
+  features: z.array(z.string()).optional(),
+  displayOrder: z.number().int().optional(),
+  isPopular: z.boolean().optional(),
+  supportType: z.string().optional(),
+  action: z.enum(["upsert", "delete", "toggle", "archive", "restore", "popular"]).optional(),
 });
 
 const bodySchema = z.object({
@@ -252,6 +258,21 @@ async function _POST(request: Request) {
         const toggled = await setPlanActive(p.id, Boolean(p.isActive));
         await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, toggled, "Plan toggled", auth.session.userId);
         return ok({ plan: toggled });
+      }
+      if (p.action === "archive" && p.id) {
+        const archived = await archivePlan(p.id, true);
+        await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, archived, "Plan archived", auth.session.userId);
+        return ok({ plan: archived });
+      }
+      if (p.action === "restore" && p.id) {
+        const restored = await archivePlan(p.id, false);
+        await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, restored, "Plan restored", auth.session.userId);
+        return ok({ plan: restored });
+      }
+      if (p.action === "popular" && p.id) {
+        const popular = await setPlanPopular(p.id);
+        await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, popular, "Plan marked popular", auth.session.userId);
+        return ok({ plan: popular });
       }
       const plan = await upsertPlan(p);
       if (!plan) return badRequest("Plan not found");

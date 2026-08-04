@@ -84,7 +84,7 @@ export const adminNavGroups: AdminNavGroup[] = [
     defaultExpanded: true,
     items: [
       { href: "/admin/business", label: "Business Management", icon: LayoutDashboard, keywords: ["business", "pricing", "subscriptions"] },
-      { href: "/admin/wallet-transactions", label: "Wallet", icon: Wallet, keywords: ["wallet", "credits", "refund"] },
+      { href: "/admin/payments", label: "Wallet", icon: Wallet, keywords: ["wallet", "credits", "refund"] },
       { href: "/admin/payments", label: "Payments", icon: Banknote, keywords: ["payment", "invoice"] },
     ],
   },

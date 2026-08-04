@@ -1,4 +1,5 @@
 import { query, queryOne } from "@/backend/db/pool";
+import { publishEvent } from "@/backend/lib/realtime";
 import type { DbOrder } from "@/backend/types";
 
 export async function listOrdersByResident(residentId: string) {
@@ -54,7 +55,11 @@ export async function cancelResidentOrder(orderCode: string, residentId: string)
     [order.id, JSON.stringify({ status: "cancelled", orderCode })],
   );
 
-  return findOrderByCode(orderCode, residentId);
+  const finalOrder = await findOrderByCode(orderCode, residentId);
+  publishEvent("sync:operations", "order_cancelled", { orderCode });
+  publishEvent(`sync:resident:${residentId}`, "order_cancelled", { orderCode });
+  publishEvent("sync:admin", "order_cancelled", { orderCode });
+  return finalOrder;
 }
 
 export async function findOrderById(orderId: string) {
@@ -106,7 +111,13 @@ export async function updateOrderQc(
     [order.id, JSON.stringify({ pass, reason }), actorUserId ?? null],
   );
 
-  return findOrderById(order.id);
+  const finalOrder = await findOrderById(order.id);
+  publishEvent("sync:operations", "order_qc_updated", { orderId: order.id });
+  if (finalOrder?.order_code) {
+    publishEvent("sync:admin", "order_qc_updated", { orderCode: finalOrder.order_code });
+    // We don't have residentId here immediately, but if we did, we could publish to resident.
+  }
+  return finalOrder;
 }
 
 export async function listOrderItems(orderId: string) {
@@ -160,5 +171,7 @@ export async function createOrderForPickup(data: {
     [order.id, JSON.stringify({ status: "Pickup Scheduled", orderCode })],
   );
 
+  publishEvent("sync:operations", "order_created", { orderCode });
+  publishEvent("sync:admin", "order_created", { orderCode });
   return order;
 }

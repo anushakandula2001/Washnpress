@@ -1,4 +1,5 @@
 import { query, queryOne } from "@/backend/db/pool";
+import { publishEvent } from "@/backend/lib/realtime";
 import { analyzeTicketWithAI, generateAIResponseDraft, type TicketCategory, type AssignedTeam, type TicketPriority } from "./support-ai";
 
 export type TicketStatus =
@@ -347,6 +348,9 @@ export async function createSupportTicket(data: {
          VALUES ($1, 'System AI', 'Ticket Created & Auto Assigned', $2::jsonb)`,
         [res.id, JSON.stringify({ status: "open", team: ai.assignedTeam, priority: ai.priority })]
       );
+      publishEvent("sync:admin", "ticket_created", res);
+      publishEvent("sync:operations", "ticket_created", res);
+      publishEvent(`sync:resident:${data.residentId}`, "ticket_created", res);
       return res;
     }
   } catch {
@@ -404,6 +408,9 @@ export async function createSupportTicket(data: {
     },
   ]);
 
+  publishEvent("sync:admin", "ticket_created", newTicket);
+  publishEvent("sync:operations", "ticket_created", newTicket);
+  publishEvent(`sync:resident:${data.residentId}`, "ticket_created", newTicket);
   return newTicket;
 }
 
@@ -620,6 +627,11 @@ export async function addTicketMessage(data: {
   msgs.push(newMsg);
   inMemoryMessages.set(data.ticketId, msgs);
 
+  publishEvent("sync:admin", "ticket_message", newMsg);
+  publishEvent("sync:operations", "ticket_message", newMsg);
+  if (ticket?.resident_id) {
+    publishEvent(`sync:resident:${ticket.resident_id}`, "ticket_message", newMsg);
+  }
   return newMsg;
 }
 
@@ -652,6 +664,9 @@ export async function updateTicketStatus(ticketId: string, status: TicketStatus,
       if (!t.sla_resolved_at) t.sla_resolved_at = now;
     }
     t.updated_at = now;
+    publishEvent("sync:admin", "ticket_status", t);
+    publishEvent("sync:operations", "ticket_status", t);
+    if (t.resident_id) publishEvent(`sync:resident:${t.resident_id}`, "ticket_status", t);
   }
 
   const hList = inMemoryHistory.get(ticketId) || [];

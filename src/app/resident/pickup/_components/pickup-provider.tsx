@@ -12,12 +12,11 @@ import {
   type ReactNode,
 } from "react";
 import { useResident } from "@/components/resident/resident-provider";
+import { useCatalog } from "../../catalog-provider";
 import {
   buildDateOptions,
-  GARMENT_OPTIONS,
   PICKUP_STEPS,
   PRIMARY_LAUNDRY_TYPES,
-  SERVICE_OPTIONS,
   STEP_ORDER,
   totalGarmentCount,
 } from "../_data/pickup-constants";
@@ -79,83 +78,63 @@ export function PickupProvider({ children }: { children: ReactNode }) {
   const { reschedulePickup, refresh } = useResident();
   const [state, setState] = useState<PickupBookingState>(createInitialState);
   const [slots, setSlots] = useState<PickupSlotOption[]>([]);
-  const [garmentOptions, setGarmentOptions] = useState<GarmentOption[]>(GARMENT_OPTIONS);
-  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>(SERVICE_OPTIONS);
+  const [garmentOptions, setGarmentOptions] = useState<GarmentOption[]>([]);
+  const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
   const [taxRate, setTaxRate] = useState(0.05);
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const dates = useMemo(() => buildDateOptions(), []);
 
+  const { garments: catalogGarments, addons: catalogAddons, settings: catalogSettings, loading: catalogLoading } = useCatalog();
+
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/catalog/pricing", { credentials: "same-origin" });
-        if (!res.ok) return;
-        const data = await readApiJson(res);
-        if (cancelled) return;
-        const garments = (data.garments as Array<Record<string, unknown>>) ?? [];
-        const addons = (data.addons as Array<Record<string, unknown>>) ?? [];
-        const settings = data.settings as Record<string, unknown> | undefined;
+    if (catalogLoading) return;
 
-        if (garments.length) {
-          const mapped: GarmentOption[] = garments.map((g) => ({
-            id: String(g.id),
-            name: String(g.name),
-            description: `Wash ₹${g.wash_price_inr} · Iron ₹${g.iron_price_inr} · Dry clean ₹${g.dry_clean_price_inr}`,
-            icon: "shirt",
-            weightKg: 0.3,
-            washPriceInr: Number(g.wash_price_inr ?? 0),
-            ironPriceInr: Number(g.iron_price_inr ?? 0),
-            dryCleanPriceInr: Number(g.dry_clean_price_inr ?? 0),
-          }));
-          setGarmentOptions(mapped);
-          setState((s) => ({
-            ...s,
-            garments: Object.fromEntries(mapped.map((g) => [g.id, s.garments[g.id] ?? 0])),
-          }));
-        }
+    if (catalogGarments.length > 0) {
+      const mapped: GarmentOption[] = catalogGarments.map((g) => ({
+        id: String(g.id),
+        name: String(g.name),
+        description: `Wash ₹${g.wash_price_inr} · Iron ₹${g.iron_price_inr} · Dry clean ₹${g.dry_clean_price_inr}`,
+        icon: "shirt",
+        weightKg: 0.3,
+        washPriceInr: Number(g.wash_price_inr ?? 0),
+        ironPriceInr: Number(g.iron_price_inr ?? 0),
+        dryCleanPriceInr: Number(g.dry_clean_price_inr ?? 0),
+      }));
+      setGarmentOptions(mapped);
+      setState((s) => ({
+        ...s,
+        garments: Object.fromEntries(mapped.map((g) => [g.id, s.garments[g.id] ?? 0])),
+      }));
+    }
 
-        if (addons.length) {
-          const mapped: ServiceOption[] = addons.map((a) => ({
-            id: String(a.id),
-            name: String(a.name),
-            description: String(a.description ?? ""),
-            priceInr: Number(a.price_inr ?? 0),
-            icon: String(a.icon ?? "sparkles"),
-          }));
-          const mergedOptions = [
-            ...SERVICE_OPTIONS.filter((option) => !mapped.some((m) => m.id === option.id)),
-            ...mapped,
-          ];
-          setServiceOptions(mergedOptions);
-          setState((s) => ({
-            ...s,
-            selectedServiceIds:
-              s.selectedServiceIds.filter((id) => mergedOptions.some((m) => m.id === id)).length > 0
-                ? s.selectedServiceIds.filter((id) => mergedOptions.some((m) => m.id === id))
-                : mergedOptions[0]
-                  ? [mergedOptions[0].id]
-                  : [],
-          }));
-        }
+    if (catalogAddons.length > 0) {
+      const mapped: ServiceOption[] = catalogAddons.map((a) => ({
+        id: String(a.id),
+        name: String(a.name),
+        description: String(a.description ?? ""),
+        priceInr: Number(a.price_inr ?? 0),
+        icon: String(a.icon ?? "sparkles"),
+      }));
+      setServiceOptions(mapped);
+      setState((s) => ({
+        ...s,
+        selectedServiceIds:
+          s.selectedServiceIds.filter((id) => mapped.some((m) => m.id === id)).length > 0
+            ? s.selectedServiceIds.filter((id) => mapped.some((m) => m.id === id))
+            : mapped[0]
+              ? [mapped[0].id]
+              : [],
+      }));
+    }
 
-        if (settings) {
-          const gst = Number(settings.gst_percent ?? 5) / 100;
-          setTaxRate(gst);
-          const fee = Number(settings.delivery_fee_inr ?? 0);
-          const thr = Number(settings.free_delivery_threshold_inr ?? 0);
-          setDeliveryFee(fee);
-          void thr;
-        }
-      } catch {
-        // Keep fallback constants
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (catalogSettings) {
+      const gst = Number(catalogSettings.gst_percent ?? 5) / 100;
+      setTaxRate(gst);
+      const fee = Number(catalogSettings.delivery_fee_inr ?? 0);
+      setDeliveryFee(fee);
+    }
+  }, [catalogGarments, catalogAddons, catalogSettings, catalogLoading]);
 
   useEffect(() => {
     let cancelled = false;

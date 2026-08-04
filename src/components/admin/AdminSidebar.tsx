@@ -103,7 +103,7 @@ function NavGroup({
     return (
       <div className="space-y-0.5">
         {group.items.map((item) => (
-          <NavLink key={item.href} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+          <NavLink key={`${item.href}-${item.label}`} item={item} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
       </div>
     );
@@ -113,7 +113,7 @@ function NavGroup({
     return (
       <div className="space-y-1 border-t border-border/40 pt-2 first:border-0 first:pt-0">
         {group.items.map((item) => (
-          <NavLink key={item.href} item={item} collapsed onNavigate={onNavigate} />
+          <NavLink key={`${item.href}-${item.label}`} item={item} collapsed onNavigate={onNavigate} />
         ))}
       </div>
     );
@@ -138,7 +138,7 @@ function NavGroup({
         <div className="overflow-hidden">
           <div className="space-y-0.5 pb-1">
             {group.items.map((item) => (
-              <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+              <NavLink key={`${item.href}-${item.label}`} item={item} onNavigate={onNavigate} />
             ))}
           </div>
         </div>

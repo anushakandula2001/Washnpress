@@ -173,7 +173,14 @@ export function PhoneOtpForm({ mode }: PhoneOtpFormProps) {
                 placeholder="10-digit mobile number"
                 value={phone}
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    e.preventDefault();
+                    void handleSendOtp();
+                  }
+                }}
                 disabled={loading}
+                autoFocus
               />
             </label>
             <Button className="w-full" onClick={() => void handleSendOtp()} disabled={loading}>
@@ -208,7 +215,14 @@ export function PhoneOtpForm({ mode }: PhoneOtpFormProps) {
                 maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    e.preventDefault();
+                    void handleVerifyOtp();
+                  }
+                }}
                 disabled={loading}
+                autoFocus
               />
             </label>
             <div className="flex flex-col gap-3 sm:flex-row">

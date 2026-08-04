@@ -89,7 +89,8 @@ export function toSubscriptionResponse(sub: DbSubscription) {
 }
 
 export function toPlanResponse(plan: DbPlan, currentPlanId?: string) {
-  const features = [
+  // Use db features if available, otherwise fallback to dynamically generated features
+  const features = (plan.features && plan.features.length > 0) ? plan.features : [
     `${plan.garment_cap} Garments / month`,
     `${plan.turnaround_hours}h Turnaround`,
     plan.max_pickups ? `${plan.max_pickups} Pickups / cycle` : null,
@@ -120,6 +121,9 @@ export function toPlanResponse(plan: DbPlan, currentPlanId?: string) {
     validityDays: plan.validity_days ?? 30,
     isCurrent: plan.id === currentPlanId,
     features,
+    displayOrder: plan.display_order ?? 0,
+    isPopular: plan.is_popular ?? false,
+    supportType: plan.support_type ?? 'Standard',
   };
 }
 
