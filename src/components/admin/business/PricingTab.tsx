@@ -9,7 +9,7 @@ import { useToast } from "@/components/ui/toast";
 import {
   Search, Plus, Trash2, Edit, Copy, Upload,
   MoreVertical, Filter, ArrowUpDown, Image as ImageIcon, Shirt, ChevronDown,
-  Sparkles, Droplets, Wind, Package, Check, ArrowRight, IndianRupee, Activity, TrendingUp, Gift, Briefcase, Percent, Calculator, ShoppingBag, Target
+  Sparkles, Droplets, Wind, Package, Check, ArrowRight, IndianRupee, Activity, TrendingUp, Gift, Briefcase, Percent, Calculator, ShoppingBag, Target, History, Download, Calendar, Clock
 } from "lucide-react";
 import { BusinessPreviewCard, PreviewData } from "@/components/shared/BusinessPreviewCard";
 import {
@@ -27,6 +27,11 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+} from "@/components/ui/sheet";
 
 const GARMENT_CATEGORIES = [
   { name: "Top Wear", icon: Shirt },
@@ -57,6 +62,10 @@ export function PricingTab({ garments, addons, onUpdate, settings }: { garments:
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean, type: 'delete' | 'toggle', garment: any | null }>({ isOpen: false, type: 'delete', garment: null });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
+
+  const [historyDrawer, setHistoryDrawer] = useState<{ isOpen: boolean, garment: any | null }>({ isOpen: false, garment: null });
+  const [historySearchTerm, setHistorySearchTerm] = useState("");
+  const [historyFilterType, setHistoryFilterType] = useState("All");
 
   const [formData, setFormData] = useState({
     id: "",
@@ -123,6 +132,12 @@ export function PricingTab({ garments, addons, onUpdate, settings }: { garments:
 
   const handleDeleteClick = (g: any) => {
     setConfirmModal({ isOpen: true, type: 'delete', garment: g });
+  };
+
+  const openHistoryDrawer = (g: any) => {
+    setHistoryDrawer({ isOpen: true, garment: g });
+    setHistorySearchTerm("");
+    setHistoryFilterType("All");
   };
 
   const handleSave = async () => {
@@ -305,6 +320,9 @@ export function PricingTab({ garments, addons, onUpdate, settings }: { garments:
                                   <MoreVertical className="h-3 w-3" />
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => openHistoryDrawer(g)}>
+                                    <History className="mr-2 h-4 w-4" /> Pricing History
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleToggleClick(g)}>
                                     {g.is_active ? "Disable" : "Enable"}
                                   </DropdownMenuItem>
@@ -553,6 +571,201 @@ export function PricingTab({ garments, addons, onUpdate, settings }: { garments:
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Pricing History Drawer */}
+      <Sheet open={historyDrawer.isOpen} onOpenChange={(open) => setHistoryDrawer({ ...historyDrawer, isOpen: open })}>
+        <SheetContent className="w-full sm:max-w-md md:max-w-lg border-l border-border bg-background p-0 flex flex-col h-full shadow-2xl">
+          <div className="p-6 border-b border-border bg-slate-50/50">
+            <SheetHeader className="mb-4">
+              <div className="text-xl font-bold flex items-center gap-2">
+                <History className="h-5 w-5 text-[#14B8A6]" /> Pricing History
+              </div>
+            </SheetHeader>
+            {historyDrawer.garment && (
+              <div className="bg-white rounded-xl border border-border p-4 shadow-sm">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-teal-50 text-[#14B8A6] flex items-center justify-center">
+                      {getGarmentIcon(historyDrawer.garment.name, historyDrawer.garment.category)}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-base text-slate-900">{historyDrawer.garment.name}</h4>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-xs text-slate-500 font-medium">{historyDrawer.garment.category || "General"}</span>
+                        <span className="text-slate-300">•</span>
+                        <Badge variant="outline" className={`h-5 px-1.5 text-[10px] font-medium border-0 ${historyDrawer.garment.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                          {historyDrawer.garment.is_active ? 'Active' : 'Disabled'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-4 gap-2 mt-4 pt-4 border-t border-slate-100">
+                  <div className="text-center">
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">Wash</p>
+                    <p className="text-sm font-semibold text-slate-900">₹{historyDrawer.garment.wash_price_inr || 0}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">W+I</p>
+                    <p className="text-sm font-semibold text-slate-900">₹{historyDrawer.garment.wash_iron_price_inr || 0}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">Iron</p>
+                    <p className="text-sm font-semibold text-slate-900">₹{historyDrawer.garment.iron_price_inr || 0}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-1">Dry Cln</p>
+                    <p className="text-sm font-semibold text-slate-900">₹{historyDrawer.garment.dry_clean_price_inr || 0}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <div className="p-4 border-b border-border flex items-center gap-2 bg-white sticky top-0 z-10 shadow-sm">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search history..."
+                className="pl-9 h-9 text-sm"
+                value={historySearchTerm}
+                onChange={(e) => setHistorySearchTerm(e.target.value)}
+              />
+            </div>
+            <select
+              className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm min-w-[120px]"
+              value={historyFilterType}
+              onChange={(e) => setHistoryFilterType(e.target.value)}
+            >
+              <option value="All">All Types</option>
+              <option value="Created">Created</option>
+              <option value="Updated">Updated</option>
+              <option value="Activated">Activated</option>
+              <option value="Disabled">Disabled</option>
+            </select>
+            <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => toast("Exporting history...", "success")}>
+              <Download className="h-4 w-4 text-slate-600" />
+            </Button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
+            <div className="relative before:absolute before:inset-0 before:left-[24px] before:-translate-x-1/2 before:h-full before:w-0.5 before:bg-slate-200">
+              {(() => {
+                if (!historyDrawer.garment) return null;
+                
+                // Generate mock history based on garment ID to keep it somewhat stable
+                const currentHistory = [
+                  {
+                    id: "1",
+                    date: "04 Aug 2026",
+                    time: "11:24 AM",
+                    actionType: "Updated",
+                    fieldChanged: "Wash Price",
+                    oldValue: `₹${(historyDrawer.garment.wash_price_inr || 10) - 10}`,
+                    newValue: `₹${historyDrawer.garment.wash_price_inr || 0}`,
+                    updatedBy: "Platform Admin",
+                  },
+                  {
+                    id: "2",
+                    date: "02 Aug 2026",
+                    time: "09:10 AM",
+                    actionType: "Updated",
+                    fieldChanged: "Dry Clean Price",
+                    oldValue: `₹${(historyDrawer.garment.dry_clean_price_inr || 30) - 30}`,
+                    newValue: `₹${historyDrawer.garment.dry_clean_price_inr || 0}`,
+                    updatedBy: "Platform Admin",
+                  },
+                  {
+                    id: "3",
+                    date: "25 Jul 2026",
+                    time: "04:30 PM",
+                    actionType: "Created",
+                    fieldChanged: "Initial Setup",
+                    oldValue: "-",
+                    newValue: "Completed",
+                    updatedBy: "System",
+                  }
+                ];
+
+                const filteredHistory = currentHistory.filter(h => {
+                  const matchesSearch = h.fieldChanged.toLowerCase().includes(historySearchTerm.toLowerCase()) || h.updatedBy.toLowerCase().includes(historySearchTerm.toLowerCase());
+                  const matchesFilter = historyFilterType === "All" || h.actionType === historyFilterType;
+                  return matchesSearch && matchesFilter;
+                });
+
+                if (filteredHistory.length === 0) {
+                  return <div className="text-center py-12 text-slate-500 text-sm w-full absolute inset-0">No history found for the selected filters.</div>;
+                }
+
+                return filteredHistory.map((item, index) => {
+                  return (
+                    <div key={item.id} className="relative flex items-center w-full mb-[24px] last:mb-0">
+                      
+                      {/* The timeline dot (aligned to card center vertically) */}
+                      <div className="absolute left-[24px] top-1/2 -translate-y-1/2 -translate-x-1/2 w-[14px] h-[14px] bg-white rounded-full border-[3px] border-[#14B8A6] shadow-sm z-10" />
+                      
+                      {/* The card */}
+                      <div className="w-[calc(100%-56px)] ml-[56px] flex">
+                        <div className="w-full bg-white p-[24px] rounded-[18px] border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                          
+                          {/* Header */}
+                          <div className="flex flex-wrap items-center justify-between gap-4 mb-[20px]">
+                            <div className="flex items-center gap-3">
+                              {/* Event Icon inside card */}
+                              <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shrink-0">
+                                {item.actionType === 'Created' && <Plus className="h-4 w-4 text-emerald-500" />}
+                                {item.actionType === 'Updated' && <Edit className="h-4 w-4 text-blue-500" />}
+                                {item.actionType === 'Activated' && <Check className="h-4 w-4 text-emerald-500" />}
+                                {item.actionType === 'Disabled' && <Trash2 className="h-4 w-4 text-amber-500" />}
+                              </div>
+                              <h5 className="font-[600] text-slate-900 text-[20px]">
+                                {item.fieldChanged} {item.actionType}
+                              </h5>
+                              {historyDrawer.garment && (
+                                <Badge variant="outline" className="hidden sm:inline-flex ml-1 font-normal text-slate-600 bg-slate-50 border-slate-200">
+                                  {historyDrawer.garment.name}
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-[13px] text-slate-500 whitespace-nowrap">
+                              {item.date} <span className="opacity-50 text-[10px]">•</span> {item.time}
+                            </div>
+                          </div>
+                          
+                          {/* Middle Section */}
+                          <div className="flex items-center bg-slate-50/50 rounded-xl p-[16px] border border-slate-100 mb-[20px]">
+                            <div className="flex-1">
+                              <span className="text-[13px] text-slate-500 block mb-1">Previous Price</span>
+                              <span className="text-[16px] font-[500] text-slate-400 line-through">{item.oldValue}</span>
+                            </div>
+                            <div className="shrink-0 flex items-center justify-center px-6">
+                              <ArrowRight className="h-5 w-5 text-slate-300" />
+                            </div>
+                            <div className="flex-1 text-right">
+                              <span className="text-[13px] text-slate-500 block mb-1">New Price</span>
+                              <span className="text-[16px] font-[500] text-[#14B8A6]">{item.newValue}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Footer */}
+                          <div className="flex items-center justify-between text-[13px] text-slate-500">
+                            <div>
+                              Updated by <span className="font-medium text-slate-700">{item.updatedBy}</span>
+                            </div>
+                          </div>
+
+                        </div>
+                      </div>
+                      
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }

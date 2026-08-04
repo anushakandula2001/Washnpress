@@ -88,17 +88,7 @@ export const adminNavGroups: AdminNavGroup[] = [
       { href: "/admin/payments", label: "Payments", icon: Banknote, keywords: ["payment", "invoice"] },
     ],
   },
-  {
-    id: "insights",
-    label: "Insights",
-    defaultExpanded: false,
-    items: [
-      { href: "/admin/reports", label: "Reports", icon: BarChart3, keywords: ["report", "export"] },
-      { href: "/admin/analytics", label: "Analytics", icon: PieChart, keywords: ["analytics", "chart"] },
-      { href: "/admin/performance", label: "Operator Performance", icon: Gauge, keywords: ["operator", "performance"] },
-      { href: "/admin/analytics?society=1", label: "Society Performance", icon: Building, keywords: ["society", "performance"] },
-    ],
-  },
+
   {
     id: "support",
     label: "Support",
@@ -125,8 +115,6 @@ export const adminNavGroups: AdminNavGroup[] = [
 export const adminQuickActions = [
   { href: "/admin/societies?create=1", label: "Create Society", icon: Plus },
   { href: "/admin/operators?create=1", label: "Create Operator", icon: Plus },
-  // { href: "/admin/residents", label: "Create Resident", icon: UserPlus },
-  // { href: "/admin/orders?create=1", label: "Create Order", icon: ShoppingBag },
 ] as const;
 
 export function flattenAdminNav(groups: AdminNavGroup[] = adminNavGroups): AdminNavItem[] {
