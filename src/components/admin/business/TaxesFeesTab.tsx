@@ -49,10 +49,10 @@ export function TaxesFeesTab({ settings, onUpdate }: { settings: any; onUpdate: 
           id: "platform_fee",
           tax: "Platform Fee",
           description: "Convenience fee for using the platform",
-          rate: 0,
+          rate: settings.other_charges_inr || 0,
           calcType: "Flat Amount (₹)",
           appliesTo: "Per Order",
-          isActive: false
+          isActive: true
         }
       ]);
     }
@@ -62,15 +62,9 @@ export function TaxesFeesTab({ settings, onUpdate }: { settings: any; onUpdate: 
     const newSettings = {
       gstPercent: id === "gst" ? Number(editForm.rate) : taxes.find(t => t.id === "gst")?.rate,
       serviceTaxPercent: id === "service_tax" ? Number(editForm.rate) : taxes.find(t => t.id === "service_tax")?.rate,
+      otherChargesInr: id === "platform_fee" ? Number(editForm.rate) : taxes.find(t => t.id === "platform_fee")?.rate,
+      otherChargesLabel: "Platform Fee"
     };
-
-    if (id === "platform_fee") {
-      // Mocking for UI - since it doesn't exist in settings DB schema yet
-      setTaxes(taxes.map(t => t.id === id ? { ...t, rate: Number(editForm.rate) } : t));
-      setEditingId(null);
-      toast("Platform Fee updated locally (mocked).", "success");
-      return;
-    }
 
     const success = await onUpdate({
       section: "settings",

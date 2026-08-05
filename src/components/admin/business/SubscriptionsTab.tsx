@@ -34,7 +34,7 @@ import {
   SheetHeader,
 } from "@/components/ui/sheet";
 
-export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpdate: (b: any) => Promise<boolean> }) {
+export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: any[]; onUpdate: (b: any) => Promise<boolean>; onRefresh?: () => void; }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -97,7 +97,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
       freeDelivery: plan.free_delivery || false,
       expressDelivery: (plan.express_discount_percent || 0) > 0,
       dedicatedSupport: plan.support_type === "Dedicated Manager" || plan.name?.toLowerCase().includes("premium") || false,
-      features: plan.features && plan.features.length ? plan.features : ["Unlimited Orders", `${plan.express_discount_percent || 20}% Discount`, "Priority Pickup & Delivery"],
+      features: Array.isArray(plan.features) ? plan.features : ["Unlimited Orders", `${plan.express_discount_percent || 20}% Discount`, "Priority Pickup & Delivery"],
       displayOrder: plan.display_order ?? 0,
       isPopular: plan.is_popular ?? false,
       supportType: plan.support_type || "Standard",
@@ -141,15 +141,21 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
   const executeDelete = async () => {
     if (!planToDelete) return;
     try {
-      const success = await onUpdate({ section: "plan", plan: { ...planToDelete, action: "delete" } });
-      if (success) {
-        toast("Subscription plan deleted successfully.", "success");
+      const res = await fetch(`/api/admin/subscriptions/${planToDelete.id}`, {
+        method: "DELETE",
+        credentials: "same-origin"
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to delete plan");
       }
+      toast("Subscription plan deleted successfully.", "success");
+      setDeleteConfirmOpen(false);
+      setPlanToDelete(null);
+      if (onRefresh) onRefresh();
     } catch (e: any) {
-      // business page already handles the toast
+      toast(e.message || "Failed to delete plan", "error");
     }
-    setDeleteConfirmOpen(false);
-    setPlanToDelete(null);
   };
 
   const openSubscribersDrawer = async (plan: any) => {
@@ -196,38 +202,65 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
   };
 
   const handleSave = async () => {
-    if (!formData.name) {
+    if (!formData.name?.trim()) {
       toast("Plan name is required", "error");
       return;
     }
-
-    const payload: any = {
-      section: "plan",
-      plan: {
-        tier: formData.name.toLowerCase().replace(/\s+/g, '_').substring(0, 20),
-        name: formData.name,
-        description: formData.description || " ",
-        monthlyInr: Number(formData.monthlyInr) || 0,
-        garmentCap: Number(formData.garmentCap) || 1,
-        expressDiscountPercent: Number(formData.discount) || 0,
-        features: formData.features,
-        displayOrder: Number(formData.displayOrder) || 0,
-        isPopular: formData.isPopular,
-        supportType: formData.dedicatedSupport ? "Dedicated Manager" : formData.supportType,
-        isActive: formData.isActive,
-        priorityPickup: formData.priorityPickup,
-        freeDelivery: formData.freeDelivery,
-        validityDays: parseInt(formData.duration) || 30,
-      },
-    };
-    if (formData.id) {
-      payload.plan.id = formData.id;
+    const monthlyPrice = Number(formData.monthlyInr);
+    if (isNaN(monthlyPrice) || monthlyPrice < 0) {
+      toast("Please enter a valid monthly price.", "error");
+      return;
+    }
+    const cap = Number(formData.garmentCap);
+    if (isNaN(cap) || cap <= 0) {
+      toast("Please enter a valid garment cap (>0).", "error");
+      return;
     }
 
-    const success = await onUpdate(payload);
+    const planPayload = {
+      tier: formData.name.toLowerCase().replace(/\s+/g, '_').substring(0, 20),
+      name: formData.name,
+      description: formData.description || " ",
+      monthlyInr: Number(formData.monthlyInr) || 0,
+      garmentCap: Number(formData.garmentCap) || 1,
+      expressDiscountPercent: Number(formData.discount) || 0,
+      features: formData.features,
+      displayOrder: Number(formData.displayOrder) || 0,
+      isPopular: formData.isPopular,
+      supportType: formData.dedicatedSupport ? "Dedicated Manager" : formData.supportType,
+      isActive: formData.isActive,
+      priorityPickup: formData.priorityPickup,
+      freeDelivery: formData.freeDelivery,
+      validityDays: parseInt(formData.duration) || 30,
+    };
 
-    if (success) {
-      setIsModalOpen(false);
+    if (formData.id) {
+      // Edit existing plan
+      try {
+        const res = await fetch(`/api/admin/subscriptions/${formData.id}`, {
+          method: "PUT",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(planPayload)
+        });
+        if (!res.ok) throw new Error("Failed to update plan");
+        toast("Subscription plan updated successfully.", "success");
+        setIsModalOpen(false);
+        if (onRefresh) onRefresh();
+      } catch (e: any) {
+        toast(e.message || "Failed to update plan", "error");
+      }
+    } else {
+      // Create new plan - fallback to legacy pricing endpoint for now or we could add POST to our new API.
+      // Since new API is at /[id] we'll use legacy for CREATE.
+      const payload: any = {
+        section: "plan",
+        plan: planPayload,
+      };
+      const success = await onUpdate(payload);
+      if (success) {
+        setIsModalOpen(false);
+      }
     }
   };
 
@@ -314,8 +347,8 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
       <div className="flex items-center bg-white rounded-2xl border border-slate-200 shadow-sm p-2 gap-4">
         <div className="relative flex-1 flex items-center">
           <Search className="absolute left-3.5 h-[18px] w-[18px] text-slate-400" />
-          <Input 
-            placeholder="Search plans by name, price or duration..." 
+          <Input
+            placeholder="Search plans by name, price or duration..."
             className="pl-11 h-10 w-full border-0 bg-transparent focus-visible:ring-0 text-[15px] shadow-none placeholder:text-slate-400"
           />
         </div>
@@ -359,7 +392,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
               `${Number(plan.express_discount_percent || 0).toFixed(2)}% Express Discount`,
               plan.support_type === "Dedicated Manager" || isPopular ? "Priority Support" : "Standard Support"
             ];
-            
+
             if (plan.free_delivery || isPopular) {
               planFeatures.push("Free Pickup & Delivery");
             }
@@ -372,13 +405,13 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
                       <PlanIcon className="h-6 w-6" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900 text-lg">{plan.name}</h3>
+                      <h3 className="font-medium text-slate-500 text-lg">{plan.name}</h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge className="bg-emerald-50 text-emerald-600 hover:bg-emerald-50 shadow-none rounded-md px-2 py-0.5 text-[11px] font-semibold border-0">
+                        <Badge className="bg-emerald-50 text-emerald-600 hover:bg-emerald-50 shadow-none rounded-md px-2 py-0.5 text-[11px] font-medium border-0">
                           Active
                         </Badge>
                         {isPopular && (
-                          <Badge className="bg-amber-50 text-amber-600 hover:bg-amber-50 shadow-none rounded-md px-2 py-0.5 text-[11px] font-semibold border-0 flex items-center gap-1">
+                          <Badge className="bg-amber-50 text-amber-600 hover:bg-amber-50 shadow-none rounded-md px-2 py-0.5 text-[11px] font-medium border-0 flex items-center gap-1">
                             <Star className="h-3 w-3 fill-amber-500" /> Popular
                           </Badge>
                         )}
@@ -388,7 +421,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
 
                   <div className="w-full lg:w-[40%] flex flex-wrap gap-2 mb-4 lg:mb-0">
                     {planFeatures.map((feat, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5 text-[13px] text-slate-600 font-medium bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">
+                      <div key={idx} className="flex items-center gap-1.5 text-[12px] text-slate-500 font-normal bg-slate-50 px-2 py-1 rounded-md border border-slate-100">
                         <Check className="h-3.5 w-3.5 text-[#00A8A8]" />
                         {feat}
                       </div>
@@ -396,29 +429,26 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
                   </div>
 
                   <div className="w-full lg:w-[20%] text-left lg:text-right pr-0 lg:pr-6 mb-4 lg:mb-0">
-                    <div className="text-2xl font-bold text-slate-900 tracking-tight">₹{monthlyPriceFormatted}</div>
-                    <div className="text-[13px] text-slate-500 font-medium">per month</div>
+                    <div className="text-xl font-medium text-slate-900 tracking-tight">₹{monthlyPriceFormatted}</div>
+                    <div className="text-[12px] text-slate-500 font-normal">per month</div>
                   </div>
 
                   <div className="w-full lg:w-[15%] flex gap-2 justify-start lg:justify-end">
-                    <Button onClick={() => openDetailsModal(plan)} className="flex-1 lg:flex-none rounded-xl h-10 px-5 font-semibold text-[13px] bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm">
+                    <Button onClick={() => openDetailsModal(plan)} className="flex-1 lg:flex-none rounded-xl h-9 px-4 font-medium text-[13px] bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm">
                       Details
                     </Button>
                     <DropdownMenu>
-                      <DropdownMenuTrigger className="inline-flex items-center justify-center w-10 h-10 p-0 rounded-xl border border-slate-200 text-slate-500 bg-white hover:bg-slate-50 shadow-sm focus-visible:outline-none transition-colors">
-                        <MoreVertical className="h-5 w-5" />
+                      <DropdownMenuTrigger className="inline-flex items-center justify-center w-9 h-9 p-0 rounded-xl border border-slate-200 text-slate-500 bg-white hover:bg-slate-50 shadow-sm focus-visible:outline-none transition-colors">
+                        <MoreVertical className="h-4 w-4" />
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-medium bg-white">
-                        <DropdownMenuItem onClick={() => openEditModal(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                      <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-normal bg-white">
+                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                           <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDuplicate(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
-                          <Copy className="mr-2.5 h-4 w-4 text-slate-400" /> Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openSubscribersDrawer(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                           <Users className="mr-2.5 h-4 w-4 text-slate-400" /> Subscribers
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => confirmDelete(plan)} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[14px] mt-1">
+                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
                           <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -429,21 +459,21 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
             }
 
             return (
-              <Card key={plan.id} className={`rounded-[24px] shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-white flex flex-col h-full border ${isPopular ? 'border-[#00A8A8]/50' : 'border-slate-200'}`}>
-                {isPopular && <div className="h-1 w-full bg-[#00A8A8]" />}
+              <Card key={plan.id} className={`rounded-2xl shadow-sm hover:shadow-md transition-shadow bg-white flex flex-col h-full border ${isPopular ? 'border-[#00A8A8]/50' : 'border-slate-200'}`}>
+                {isPopular && <div className="h-1 w-full bg-[#00A8A8] rounded-t-2xl" />}
                 
-                <div className="p-6 flex-1 flex flex-col">
+                <div className="p-5 flex-1 flex flex-col">
                   {/* Top: Icon & Badges */}
-                  <div className="flex justify-between items-start mb-6">
-                    <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${isPopular ? 'bg-teal-50' : 'bg-slate-50 border border-slate-100'}`}>
-                      <PlanIcon className={`h-6 w-6 ${isPopular ? 'text-[#00A8A8]' : 'text-slate-500'}`} />
+                  <div className="flex justify-between items-start mb-5">
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-lg ${isPopular ? 'bg-teal-50' : 'bg-slate-50 border border-slate-100'}`}>
+                      <PlanIcon className={`h-5 w-5 ${isPopular ? 'text-[#00A8A8]' : 'text-slate-500'}`} />
                     </div>
                     <div className="flex gap-2 flex-col items-end">
-                      <Badge className="bg-emerald-50 text-emerald-600 hover:bg-emerald-50 shadow-none rounded-[6px] px-2 py-0.5 text-[11px] font-semibold border-0">
+                      <Badge className="bg-emerald-50 text-emerald-600 hover:bg-emerald-50 shadow-none rounded-[6px] px-2 py-0.5 text-[10px] font-medium border-0">
                         Active
                       </Badge>
                       {isPopular && (
-                        <Badge className="bg-amber-50 text-amber-600 hover:bg-amber-50 shadow-none rounded-[6px] px-2 py-0.5 text-[11px] font-semibold border-0 flex items-center gap-1">
+                        <Badge className="bg-amber-50 text-amber-600 hover:bg-amber-50 shadow-none rounded-[6px] px-2 py-0.5 text-[10px] font-medium border-0 flex items-center gap-1">
                           <Star className="h-3 w-3 fill-amber-500" /> Popular
                         </Badge>
                       )}
@@ -451,40 +481,40 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
                   </div>
 
                   {/* Plan Name */}
-                  <h3 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">{plan.name}</h3>
+                  <h3 className="text-lg font-medium text-slate-900 mb-1.5 tracking-tight">{plan.name}</h3>
 
                   {/* Price */}
-                  <div className="mb-6">
+                  <div className="mb-5">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-3xl font-extrabold text-slate-900 tracking-tight">₹{monthlyPriceFormatted}</span>
-                      <span className="text-[14px] text-slate-500 font-medium">/ mo</span>
+                      <span className="text-2xl font-semibold text-slate-900 tracking-tight">₹{monthlyPriceFormatted}</span>
+                      <span className="text-[12px] text-slate-500 font-normal">/ mo</span>
                     </div>
                   </div>
 
                   {/* Features */}
-                  <div className="space-y-3.5 mb-8">
+                  <div className="space-y-2.5 mb-6">
                     {planFeatures.map((feat, idx) => (
-                      <div key={idx} className="flex items-start gap-3">
-                        <div className={`flex items-center justify-center w-[18px] h-[18px] rounded-full mt-0.5 shrink-0 ${isPopular ? 'bg-[#00A8A8] text-white' : 'bg-teal-50 text-[#00A8A8]'}`}>
-                          <Check className="h-[10px] w-[10px] stroke-[3]" />
+                      <div key={idx} className="flex items-start gap-2.5">
+                        <div className={`flex items-center justify-center w-4 h-4 rounded-full mt-0.5 shrink-0 ${isPopular ? 'bg-[#00A8A8] text-white' : 'bg-teal-50 text-[#00A8A8]'}`}>
+                          <Check className="h-[9px] w-[9px] stroke-[3]" />
                         </div>
-                        <span className="text-[14px] text-slate-700 font-medium leading-tight">{feat}</span>
+                        <span className="text-[13px] text-slate-700 font-normal leading-tight">{feat}</span>
                       </div>
                     ))}
                   </div>
 
                   {/* Duration and Updated */}
-                  <div className="mt-auto grid grid-cols-2 gap-3 border-t border-slate-100 pt-5">
+                  <div className="mt-auto grid grid-cols-2 gap-3 border-t border-slate-100 pt-4">
                     <div>
-                      <p className="text-[11px] text-slate-500 mb-1 font-semibold uppercase tracking-wider">Duration</p>
-                      <div className="flex items-center gap-1.5 text-[13px] font-bold text-slate-800">
+                      <p className="text-[10px] text-slate-500 mb-1 font-medium uppercase tracking-wider">Duration</p>
+                      <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-800">
                         <Calendar className="h-3.5 w-3.5 text-slate-400" />
                         {plan.validity_days || 30} Days
                       </div>
                     </div>
                     <div>
-                      <p className="text-[11px] text-slate-500 mb-1 font-semibold uppercase tracking-wider">Updated</p>
-                      <div className="flex items-center gap-1.5 text-[13px] font-bold text-slate-800">
+                      <p className="text-[10px] text-slate-500 mb-1 font-medium uppercase tracking-wider">Updated</p>
+                      <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-800">
                         <Clock className="h-3.5 w-3.5 text-slate-400" />
                         {updatedDate}
                       </div>
@@ -493,28 +523,25 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="p-6 pt-0 flex items-center gap-2">
+                <div className="p-5 pt-0 flex items-center gap-2">
                   <Button
                     onClick={() => openDetailsModal(plan)}
-                    className={`flex-1 rounded-xl h-[42px] font-semibold text-[14px] shadow-sm transition-colors ${isPopular ? 'bg-[#00A8A8] hover:bg-[#009090] text-white' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                    className={`flex-1 rounded-xl h-10 font-medium text-[13px] shadow-sm transition-colors ${isPopular ? 'bg-[#00A8A8] hover:bg-[#009090] text-white' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                   >
                     View Details
                   </Button>
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="inline-flex items-center justify-center w-[42px] h-[42px] p-0 rounded-xl border border-slate-200 text-slate-500 bg-white hover:bg-slate-50 shadow-sm focus-visible:outline-none transition-colors">
-                      <MoreVertical className="h-5 w-5" />
+                    <DropdownMenuTrigger className="inline-flex items-center justify-center w-10 h-10 p-0 rounded-xl border border-slate-200 text-slate-500 bg-white hover:bg-slate-50 shadow-sm focus-visible:outline-none transition-colors">
+                      <MoreVertical className="h-4 w-4" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-medium bg-white">
-                      <DropdownMenuItem onClick={() => openEditModal(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                    <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-normal bg-white">
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                         <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDuplicate(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
-                        <Copy className="mr-2.5 h-4 w-4 text-slate-400" /> Duplicate
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openSubscribersDrawer(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                         <Users className="mr-2.5 h-4 w-4 text-slate-400" /> View Subscribers
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => confirmDelete(plan)} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[14px] mt-1">
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
                         <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -528,7 +555,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
 
       {/* CREATE/EDIT MODAL */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
           <div className="px-8 py-6 border-b border-slate-100 bg-white">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               {formData.id ? "Edit Plan Details" : "Create New Plan"}
@@ -668,7 +695,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
 
       {/* DETAILS MODAL */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
           <div className="px-8 py-6 border-b border-slate-100 bg-white flex justify-between items-center">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               Plan Details
@@ -755,7 +782,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
 
       {/* SUBSCRIBERS DRAWER */}
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent className="w-full sm:max-w-md border-l-0 shadow-2xl p-0 flex flex-col bg-slate-50/50">
+        <SheetContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-full sm:max-w-md border-l-0 shadow-2xl p-0 flex flex-col bg-slate-50/50">
           <div className="p-6 border-b border-slate-100 bg-white shadow-sm z-10">
             <SheetHeader>
               <h2 className="text-xl font-bold text-slate-900 m-0">Subscribers</h2>
@@ -816,7 +843,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
 
       {/* DELETE CONFIRMATION */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-md rounded-[24px] border-0 shadow-2xl p-8">
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-md rounded-[24px] border-0 shadow-2xl p-8">
           <div className="flex flex-col items-center text-center space-y-4">
             <div className="bg-red-50 p-5 rounded-full text-red-500 mb-2 border border-red-100">
               <Trash2 className="h-8 w-8" />

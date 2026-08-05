@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Menu, X, Bell, Moon, Sun } from "lucide-react";
+import { Menu, X, Bell, Moon, Sun, Search } from "lucide-react";
 import { useTheme } from "next-themes";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { ProfileDropdown } from "@/components/admin/ProfileDropdown";
@@ -77,13 +77,27 @@ export function AdminShell({
                 </div>
               )}
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-4">
+              <div className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground mr-4">
+                {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+              
+              <div className="relative hidden sm:block w-64 mr-2">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search globally..."
+                  className="h-9 w-full rounded-full border border-border bg-muted/30 pl-9 pr-4 text-sm outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/50"
+                />
+              </div>
+
               <button
                 type="button"
                 className="relative flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-muted"
                 aria-label="Notifications"
               >
                 <Bell className="h-4 w-4" />
+                <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-destructive border border-card" />
               </button>
               {mounted && (
                 <button
@@ -95,12 +109,14 @@ export function AdminShell({
                   {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </button>
               )}
-              <ProfileDropdown
-                userName={userName || "Platform Admin"}
-                roleTitle="Administrator"
-                email="admin@washnpress.com"
-                onLogoutClick={() => setLogoutModalOpen(true)}
-              />
+              <div className="pl-2 border-l border-border/50">
+                <ProfileDropdown
+                  userName={userName || "Platform Admin"}
+                  roleTitle="Administrator"
+                  email="admin@washnpress.com"
+                  onLogoutClick={() => setLogoutModalOpen(true)}
+                />
+              </div>
             </div>
           </div>
         </header>

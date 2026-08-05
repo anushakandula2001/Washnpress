@@ -232,8 +232,9 @@ export default function AdminSocietiesPage() {
       <SocietyToolbar
         viewMode={viewMode}
         onViewModeChange={setViewMode}
-    
-         />
+        onAddSociety={() => setWizardOpen(true)}
+      />
+
       <SocietyFiltersPanel
         filters={filters}
         rows={rows}

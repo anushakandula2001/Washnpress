@@ -184,7 +184,7 @@ export async function createBuildingAndGenerateStructure(data: {
             
             try {
               await query(
-                `INSERT INTO society_flats (floor_id, flat_number, status, label) VALUES ($1, $2, 'Vacant', $3)`,
+                `INSERT INTO society_flats (floor_id, flat_number, status, label) VALUES ($1, $2, 'active', $3)`,
                 [floorId, flatNum, flatNum]
               );
             } catch (err) { console.error("DB Error society_flats:", err); }
@@ -429,11 +429,11 @@ export async function updateMasterDataHierarchy(societyId: string, payload: {
             for (const flt of fl.flats) {
               if (flt.id.startsWith("flt-")) {
                 try {
-                  await query(`INSERT INTO society_flats (floor_id, flat_number, status, label) VALUES ($1, $2, $3, $4)`, [floorId, flt.flat_number, flt.status || 'Vacant', flt.flat_number]);
+                  await query(`INSERT INTO society_flats (floor_id, flat_number, status, label) VALUES ($1, $2, $3, $4)`, [floorId, flt.flat_number, flt.status || 'active', flt.flat_number]);
                 } catch (err) { console.error("DB Insert society_flats failed:", err); }
               } else {
                 try {
-                  await query(`UPDATE society_flats SET flat_number = $2, status = $3 WHERE id = $1`, [flt.id, flt.flat_number, flt.status || 'Vacant']);
+                  await query(`UPDATE society_flats SET flat_number = $2, status = $3 WHERE id = $1`, [flt.id, flt.flat_number, flt.status || 'active']);
                 } catch (err) { console.error("DB Update society_flats failed:", err); }
               }
             }
