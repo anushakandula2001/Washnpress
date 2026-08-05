@@ -442,13 +442,13 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
                         <MoreVertical className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-normal bg-white">
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                        <DropdownMenuItem onClick={() => { openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                           <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                        <DropdownMenuItem onClick={() => { openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                           <Users className="mr-2.5 h-4 w-4 text-slate-400" /> Subscribers
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
+                        <DropdownMenuItem onClick={() => { confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
                           <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -535,13 +535,13 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
                       <MoreVertical className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-normal bg-white">
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                      <DropdownMenuItem onClick={() => { openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                         <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                      <DropdownMenuItem onClick={() => { openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                         <Users className="mr-2.5 h-4 w-4 text-slate-400" /> View Subscribers
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
+                      <DropdownMenuItem onClick={() => { confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
                         <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -555,7 +555,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
 
       {/* CREATE/EDIT MODAL */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
+        <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
           <div className="px-8 py-6 border-b border-slate-100 bg-white">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               {formData.id ? "Edit Plan Details" : "Create New Plan"}
@@ -695,7 +695,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
 
       {/* DETAILS MODAL */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
+        <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
           <div className="px-8 py-6 border-b border-slate-100 bg-white flex justify-between items-center">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               Plan Details
@@ -782,7 +782,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
 
       {/* SUBSCRIBERS DRAWER */}
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-full sm:max-w-md border-l-0 shadow-2xl p-0 flex flex-col bg-slate-50/50">
+        <SheetContent className="w-full sm:max-w-md border-l-0 shadow-2xl p-0 flex flex-col bg-slate-50/50">
           <div className="p-6 border-b border-slate-100 bg-white shadow-sm z-10">
             <SheetHeader>
               <h2 className="text-xl font-bold text-slate-900 m-0">Subscribers</h2>
@@ -843,7 +843,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
 
       {/* DELETE CONFIRMATION */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-md rounded-[24px] border-0 shadow-2xl p-8">
+        <DialogContent className="sm:max-w-md rounded-[24px] border-0 shadow-2xl p-8">
           <div className="flex flex-col items-center text-center space-y-4">
             <div className="bg-red-50 p-5 rounded-full text-red-500 mb-2 border border-red-100">
               <Trash2 className="h-8 w-8" />

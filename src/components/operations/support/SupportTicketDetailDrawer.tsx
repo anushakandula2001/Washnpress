@@ -24,10 +24,10 @@ import type { SupportTicketRecord } from "@/backend/repositories/support";
 import { Card, CardContent } from "@/components/ui/card";
 
 type FullTicketData = SupportTicketRecord & {
-  messages: any[];
-  attachments: any[];
-  notes: any[];
-  history: any[];
+  messages: Record<string, unknown>[];
+  attachments: Record<string, unknown>[];
+  notes: Record<string, unknown>[];
+  history: Record<string, unknown>[];
 };
 
 export function SupportTicketDetailDrawer({
@@ -46,23 +46,22 @@ export function SupportTicketDetailDrawer({
   const [noteInput, setNoteInput] = useState("");
 
   useEffect(() => {
-    fetchData();
-  }, [ticketId]);
-
-  async function fetchData() {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/support/tickets/${ticketId}?channel=all`);
-      if (res.ok) {
-        const json = await readApiJson(res);
-        setData(json);
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/support/tickets/${ticketId}?channel=all`);
+        if (res.ok) {
+          const json = await readApiJson(res);
+          setData(json as FullTicketData);
+        }
+      } catch (e) {
+        console.error("Failed to fetch ticket data", e);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
     }
-  }
+    void fetchData();
+  }, [ticketId]);
 
   async function handleSendMessage() {
     if (!messageInput.trim() || !data) return;
@@ -174,7 +173,7 @@ export function SupportTicketDetailDrawer({
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as "conversation" | "timeline" | "attachments" | "notes" | "order" | "history")}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? "border-primary text-primary"

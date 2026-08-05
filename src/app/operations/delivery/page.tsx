@@ -2,16 +2,15 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PortalShell } from "@/components/portal/portal-shell";
+import { OperationsShell } from "@/components/operations/OperationsShell";
 import { useToast } from "@/components/ui/toast";
-import { operationsNav } from "@/lib/portal-nav";
 import { usePagination } from "@/lib/admin/use-pagination";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
 import { OrdersToolbar } from "@/components/admin/orders/OrdersToolbar";
 import { OrdersFilters } from "@/components/admin/orders/OrdersFilters";
-import { OrdersTable } from "@/components/admin/orders/OrdersTable";
 import { OrderDrawer } from "@/components/admin/orders/OrderDrawer";
 import { Pagination } from "@/components/admin/orders/Pagination";
+import { DeliveryCard } from "@/components/operations/delivery/DeliveryCard";
 import {
   defaultOrderFilters,
   normalizeOrderRow,
@@ -126,12 +125,7 @@ function DeliveryContent() {
   }
 
   return (
-    <PortalShell
-      navItems={operationsNav}
-      portalLabel="Operations Portal"
-      greeting="Delivery Management"
-      subtitle="Orders ready for delivery"
-    >
+    <OperationsShell>
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
       <OrdersToolbar
@@ -156,25 +150,17 @@ function DeliveryContent() {
           description="All orders are delivered or still in processing."
         />
       ) : (
-        <OrdersTable
-          rows={paginated}
-          loading={loading}
-          selected={new Set()}
-          onSelect={() => {}}
-          onSelectAll={() => {}}
-          onRowClick={(row) => openDrawer(row)}
-          onAction={(action, row) => {
-            const tabs = ["overview", "timeline", "resident", "operator", "items", "notes", "activity"];
-            if (tabs.includes(action)) {
-              openDrawer(row, action);
-            }
-          }}
-          primaryAction={{
-            label: "Complete Delivery",
-            onClick: handleCompleteDelivery,
-            isBusy: (r) => busyIds.has(r.id)
-          }}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
+          {paginated.map((row) => (
+            <DeliveryCard 
+              key={row.id}
+              row={row}
+              isBusy={busyIds.has(row.id)}
+              onClick={(r) => openDrawer(r)}
+              onComplete={(r) => handleCompleteDelivery(r)}
+            />
+          ))}
+        </div>
       )}
 
       {total > 0 && (
@@ -199,6 +185,6 @@ function DeliveryContent() {
         initialTab={drawerTab}
         onRefreshList={() => void load()}
       />
-    </PortalShell>
+    </OperationsShell>
   );
 }

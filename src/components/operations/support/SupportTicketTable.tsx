@@ -3,13 +3,11 @@
 import { useState } from "react";
 import {
   Search,
-  Filter,
   Download,
   Eye,
   Clock,
   AlertTriangle,
   CheckCircle2,
-  UserCheck,
   ChevronDown,
   ArrowUpDown,
 } from "lucide-react";
@@ -58,7 +56,6 @@ export function SupportTicketTable({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [priorityFilter, setPriorityFilter] = useState("all");
-  const [teamFilter, setTeamFilter] = useState("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sortField, setSortField] = useState<keyof SupportTicketRecord>("created_at");
   const [sortAsc, setSortAsc] = useState(false);

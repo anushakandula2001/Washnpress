@@ -1,6 +1,7 @@
 type FetchOptions = RequestInit & { params?: Record<string, string> };
 
 /** Unwrap standard `{ success, data }` API envelopes used by backend response helpers. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function unwrapApiPayload<T = any>(json: unknown): T {
   if (
     json &&
@@ -14,6 +15,7 @@ export function unwrapApiPayload<T = any>(json: unknown): T {
   return json as T;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function readApiJson<T = any>(res: Response): Promise<T> {
   const text = await res.text();
   if (!text) {
