@@ -100,10 +100,10 @@ function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             href={item.href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+              "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
               isActive
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-muted/60 hover:text-foreground",
+                ? "bg-primary text-primary-foreground shadow-sm shadow-primary/20"
+                : "text-slate-600 hover:bg-slate-100 hover:text-foreground",
             )}
           >
             <Icon className="h-4.5 w-4.5 shrink-0" />
@@ -136,7 +136,7 @@ export function NotificationsBell() {
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition hover:bg-muted"
+        className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border bg-slate-50 text-slate-600 transition hover:bg-slate-100 hover:text-foreground"
         aria-label="Notifications"
       >
         <Bell className="h-5 w-5" />
@@ -147,7 +147,7 @@ export function NotificationsBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card p-3 shadow-xl">
+          <div className="absolute right-0 z-50 mt-2 w-80 rounded-2xl border border-border bg-white p-3 shadow-xl">
             <p className="mb-2 text-sm font-semibold">Notifications</p>
             <div className="max-h-64 space-y-2 overflow-auto">
               {notifications.length === 0 ? (
@@ -188,7 +188,7 @@ export function ResidentShell({
   return (
     <div className="flex min-h-screen bg-background">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card lg:flex">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-white/90 lg:flex">
         <div className="p-5">
           <Logo />
         </div>
@@ -219,7 +219,7 @@ export function ResidentShell({
 
       {/* Main content */}
       <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur-xl">
+        <header className="sticky top-0 z-30 border-b border-border bg-white/80 backdrop-blur-xl">
           <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3">
               <button
