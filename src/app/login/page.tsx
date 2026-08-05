@@ -52,106 +52,95 @@ export default function LoginPage() {
   const home = existing ? homePathForUser(existing) : "/";
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-4 py-8 sm:px-6 lg:px-8">
-      <section className="grid w-full gap-6 lg:grid-cols-2">
-        <div className="col-span-full flex justify-center mb-2">
-          <img src="/logo.png" alt="Wash N Press" className="h-16 w-auto object-contain" />
+    <main className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-background to-primary/5">
+      <div className="w-full max-w-md space-y-8 relative z-10">
+        <div className="flex flex-col items-center justify-center text-center">
+          <Link href="/" className="mb-6 inline-block">
+            <img src="/logo.png" alt="Wash N Press" className="h-16 w-auto object-contain" />
+          </Link>
         </div>
-        <div className="order-2 space-y-4 lg:order-1">
+
+        <div className="space-y-4">
           {checking ? (
-            <Card>
-              <CardContent className="p-8 text-sm text-muted-foreground">
+            <Card className="border-none shadow-xl glass">
+              <CardContent className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center justify-center min-h-[200px]">
+                <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-4" />
                 Checking existing session…
               </CardContent>
             </Card>
           ) : existing && !showForm ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>You&apos;re already signed in</CardTitle>
+            <Card className="border-none shadow-xl glass overflow-hidden">
+              <CardHeader className="bg-primary/5 pb-6 border-b border-border/50">
+                <CardTitle className="text-xl">Welcome back</CardTitle>
                 <CardDescription>
-                  Continue to your portal, or sign out to switch accounts.
+                  You are already signed in to your account.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="rounded-xl border border-border bg-muted/40 p-4 text-sm">
-                  <p>
-                    <span className="text-muted-foreground">Phone:</span>{" "}
-                    <span className="font-medium">+91 {existing.phone}</span>
-                  </p>
-                  <p className="mt-1">
-                    <span className="text-muted-foreground">Role:</span>{" "}
-                    <span className="font-medium">
+              <CardContent className="space-y-6 pt-6">
+                <div className="rounded-xl border border-border bg-white/50 backdrop-blur-sm p-4 text-sm shadow-inner">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-muted-foreground">Mobile</span>
+                    <span className="font-semibold text-foreground">+91 {existing.phone}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">Role</span>
+                    <span className="font-semibold text-primary">
                       {role ? ROLE_LABEL[role] : "Unknown"}
                     </span>
-                  </p>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Link href={home} className="flex-1 no-underline">
-                    <Button className="w-full">Continue to portal</Button>
-                  </Link>
+                <div className="flex flex-col gap-3">
+                  <Button asChild className="w-full shadow-md shadow-primary/20">
+                    <Link href={home}>Continue to portal</Link>
+                  </Button>
                   <Button
                     variant="outline"
-                    className="flex-1"
+                    className="w-full border-border hover:bg-muted"
                     disabled={loggingOut}
                     onClick={() => void logout()}
                   >
-                    {loggingOut ? "Signing out…" : "Logout and switch account"}
+                    {loggingOut ? "Signing out…" : "Sign out"}
                   </Button>
                 </div>
-                <button
-                  type="button"
-                  className="text-sm text-primary hover:underline"
-                  onClick={() => setShowForm(true)}
-                >
-                  Sign in with a different number without leaving
-                </button>
+                <div className="text-center">
+                  <button
+                    type="button"
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                    onClick={() => setShowForm(true)}
+                  >
+                    Sign in with a different account
+                  </button>
+                </div>
               </CardContent>
             </Card>
           ) : (
-            <>
+            <div className="space-y-4">
               {existing && showForm && (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
-                  A session is still active (+91 {existing.phone}). Prefer{" "}
+                <div className="rounded-xl border border-amber-500/30 bg-amber-50/80 backdrop-blur-sm px-4 py-3 text-sm text-amber-800 shadow-sm">
+                  Active session (+91 {existing.phone}). You may want to{" "}
                   <button
                     type="button"
-                    className="font-semibold underline"
+                    className="font-bold underline text-amber-900"
                     disabled={loggingOut}
                     onClick={() => void logout()}
                   >
-                    logout first
-                  </button>{" "}
-                  so roles don’t get mixed up.
+                    log out first
+                  </button>.
                 </div>
               )}
-              <PhoneOtpForm mode="login" />
-            </>
+              <div className="shadow-xl rounded-xl overflow-hidden glass border-none">
+                <PhoneOtpForm mode="login" />
+              </div>
+            </div>
           )}
         </div>
-
-        <Card className="order-1 lg:order-2">
-          <CardHeader>
-            <CardTitle>WashNPress Admin Login</CardTitle>
-            <CardDescription>
-              Default entry for the platform. Sign in with OTP — you are routed by role.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>
-              <strong>Admin</strong> → Admin Dashboard · <strong>Operator</strong> → Operations ·{" "}
-              <strong>Resident</strong> → Resident Dashboard.
-            </p>
-            <p>No role picker. Wrong portal access is blocked.</p>
-            <p>
-              Demo phones: Admin <strong>9876500001</strong>, Ops <strong>9876500002</strong>,
-              Resident <strong>9876543210</strong>.
-            </p>
-            <p>In development, OTP is printed in the server terminal.</p>
-            <p>
-              New residents: <Link href="/register">create an account</Link>.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
+      </div>
+      
+      {/* Background decorations */}
+      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-secondary/10 blur-[100px]" />
+      </div>
     </main>
   );
 }

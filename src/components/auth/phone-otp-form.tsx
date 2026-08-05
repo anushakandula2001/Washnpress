@@ -21,7 +21,7 @@ const OTP_DIGITS = /^\d{6}$/;
 const RESEND_COOLDOWN_SEC = 30;
 const MAX_RESENDS = 5;
 
-type Step = "phone" | "otp";
+type Step = "phone" | "otp" | "unregistered";
 
 type PhoneOtpFormProps = {
   mode: "login" | "register";
@@ -83,7 +83,12 @@ export function PhoneOtpForm({ mode }: PhoneOtpFormProps) {
       setResendCount(0);
       setSuccess("OTP sent successfully. Check your phone (or the server terminal in development).");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to send OTP. Please try again.");
+      const msg = err instanceof Error ? err.message : "Failed to send OTP. Please try again.";
+      if (mode === "login" && msg.includes("No account found")) {
+        setStep("unregistered");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -162,7 +167,29 @@ export function PhoneOtpForm({ mode }: PhoneOtpFormProps) {
           </Alert>
         ) : null}
 
-        {step === "phone" ? (
+        {step === "unregistered" ? (
+          <div className="space-y-4 text-center py-4">
+            <div className="p-4 bg-muted/50 rounded-xl mb-4 border border-border/50">
+              <p className="text-foreground font-medium mb-1 text-lg">This mobile number is not registered.</p>
+              <p className="text-sm text-muted-foreground font-medium">+91 {phone}</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Button asChild className="w-full h-11">
+                <Link href="/register">Register as Resident</Link>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="w-full h-11"
+                onClick={() => {
+                  setStep("phone");
+                  setError(null);
+                }}
+              >
+                Go Back
+              </Button>
+            </div>
+          </div>
+        ) : step === "phone" ? (
           <>
             <label className="block space-y-1 text-sm">
               <span className="text-muted-foreground">Mobile Number</span>
@@ -248,11 +275,13 @@ export function PhoneOtpForm({ mode }: PhoneOtpFormProps) {
           </>
         )}
 
-        <p className="text-center text-sm text-muted-foreground">
-          <Link href={alternateHref} className="font-medium text-primary hover:underline">
-            {alternateLabel}
-          </Link>
-        </p>
+        {step !== "unregistered" && (
+          <p className="text-center text-sm text-muted-foreground">
+            <Link href={alternateHref} className="font-medium text-primary hover:underline">
+              {alternateLabel}
+            </Link>
+          </p>
+        )}
       </CardContent>
     </Card>
   );

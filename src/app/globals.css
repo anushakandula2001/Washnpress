@@ -7,14 +7,16 @@
   --card-foreground: #111827;
   --muted: #eaf8f8;
   --muted-foreground: #475569;
-  --primary: #00a8a8;
-  --primary-foreground: #f8fafc;
-  --secondary: #00c9c9;
-  --secondary-foreground: #004d4d;
+  --primary: #0ea5a4;
+  --primary-foreground: #ffffff;
+  --secondary: #0f2b5b;
+  --secondary-foreground: #ffffff;
+  --accent: #22c55e;
+  --accent-foreground: #ffffff;
   --destructive: #dc2626;
   --border: #e5e7eb;
   --input: #d1d5db;
-  --ring: #00e5cc;
+  --ring: #0ea5a4;
 }
 
 @theme inline {
@@ -28,12 +30,14 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-manrope);
-  --font-display: var(--font-merriweather);
+  --font-sans: var(--font-poppins);
+  --font-display: var(--font-poppins);
 }
 
 html.dark {
@@ -43,23 +47,25 @@ html.dark {
   --card-foreground: #f1f5f9;
   --muted: #16343b;
   --muted-foreground: #a6b3c7;
-  --primary: #00c9c9;
-  --primary-foreground: #062322;
-  --secondary: #006d6d;
-  --secondary-foreground: #d9ffff;
+  --primary: #0ea5a4;
+  --primary-foreground: #ffffff;
+  --secondary: #1a3a70;
+  --secondary-foreground: #ffffff;
+  --accent: #22c55e;
+  --accent-foreground: #ffffff;
   --destructive: #f87171;
   --border: #22304a;
   --input: #22304a;
-  --ring: #00e5cc;
+  --ring: #0ea5a4;
 }
 
 body {
   background:
-    radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--primary) 10%, transparent), transparent 34%),
-    radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--secondary) 12%, transparent), transparent 38%),
+    radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--primary) 5%, transparent), transparent 34%),
+    radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--secondary) 6%, transparent), transparent 38%),
     linear-gradient(135deg, var(--background) 0%, color-mix(in oklab, var(--background) 82%, #ffffff) 100%);
   color: var(--foreground);
-  font-family: var(--font-manrope), "Segoe UI", sans-serif;
+  font-family: var(--font-sans), "Segoe UI", sans-serif;
   min-height: 100%;
 }
 
@@ -67,7 +73,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display), Georgia, serif;
+  font-family: var(--font-display), sans-serif;
 }
 
 a {
