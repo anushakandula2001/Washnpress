@@ -715,7 +715,7 @@ export function PricingTab({ garments, addons, onUpdate, settings }: { garments:
                               {/* Event Icon inside card */}
                               <div className="h-8 w-8 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 shrink-0">
                                 {item.actionType === 'Created' && <Plus className="h-4 w-4 text-emerald-500" />}
-                                {item.actionType === 'Updated' && <Edit className="h-4 w-4 text-blue-500" />}
+                                {item.actionType === 'Updated' && <Edit className="h-4 w-4 text-primary" />}
                                 {item.actionType === 'Activated' && <Check className="h-4 w-4 text-emerald-500" />}
                                 {item.actionType === 'Disabled' && <Trash2 className="h-4 w-4 text-amber-500" />}
                               </div>

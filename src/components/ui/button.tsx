@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils/cn";
 
 type ButtonVariant = "default" | "secondary" | "outline" | "ghost" | "destructive";
@@ -22,8 +23,7 @@ const sizeStyles: Record<ButtonSize, string> = {
   icon: "h-10 w-10 shrink-0 flex items-center justify-center",
 };
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   asChild?: boolean;
@@ -31,29 +31,23 @@ export interface ButtonProps
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "default", size = "default", asChild = false, children, ...props }, ref) => {
-    const classes = cn(
-      "inline-flex items-center justify-center rounded-md font-medium transition-colors",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      variantStyles[variant],
-      sizeStyles[size],
-      className,
-    );
-
-    if (asChild && React.isValidElement<{ className?: string }>(children)) {
-      return React.cloneElement(children, {
-        className: cn(classes, children.props.className),
-      } as { className?: string });
-    }
+    const Comp = asChild ? Slot : "button";
 
     return (
-      <button
-        className={classes}
+      <Comp
         ref={ref}
-        type={props.type ?? "button"}
+        className={cn(
+          "inline-flex items-center justify-center rounded-md font-medium transition-colors",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+          variantStyles[variant],
+          sizeStyles[size],
+          className,
+        )}
+        type={asChild ? undefined : (props.type ?? "button")}
         {...props}
       >
         {children}
-      </button>
+      </Comp>
     );
   },
 );

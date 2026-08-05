@@ -1,5 +1,12 @@
-import ProcessingCenterPage from "@/components/portal/processing-center-page";
+"use client";
+
+import { OperationsShell } from "@/components/operations/OperationsShell";
+import ProcessingCenterContent from "@/components/portal/processing-center-page";
 
 export default function Page() {
-  return <ProcessingCenterPage />;
+  return (
+    <OperationsShell>
+      <ProcessingCenterContent />
+    </OperationsShell>
+  );
 }

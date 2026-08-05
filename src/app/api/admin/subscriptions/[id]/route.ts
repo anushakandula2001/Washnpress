@@ -2,7 +2,7 @@ import { withErrorHandling } from "@/backend/api/response";
 import { requireSession } from "@/backend/api/guards";
 import { ok, notFound, badRequest, forbidden } from "@/backend/api/response";
 import { queryOne } from "@/backend/db/pool";
-import { upsertPlan, deletePlan } from "@/backend/repositories/admin-commerce";
+import { upsertPlan, deletePlan, logPricingHistory } from "@/backend/repositories/admin-commerce";
 
 async function _GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const auth = await requireSession(request, "admin");
@@ -38,7 +38,11 @@ async function _PUT(request: Request, context: { params: Promise<{ id: string }>
   body.id = id;
 
   try {
+    const existingPlan = await queryOne(`SELECT * FROM plans WHERE id = $1`, [id]);
     const result = await upsertPlan(body);
+    if (existingPlan && result) {
+      await logPricingHistory("plan", result.name || existingPlan.name, existingPlan, result, "Plan Updated", auth.session.userId);
+    }
     return ok({ plan: result });
   } catch (err: any) {
     return badRequest(err.message || "Failed to update subscription plan");
@@ -56,7 +60,10 @@ async function _DELETE(request: Request, context: { params: Promise<{ id: string
   const { id } = await context.params;
 
   try {
+    const existingPlan = await queryOne(`SELECT * FROM plans WHERE id = $1`, [id]);
+    if (!existingPlan) return notFound("Subscription plan not found");
     const result = await deletePlan(id);
+    await logPricingHistory("plan", existingPlan.name, existingPlan, null, "Plan Deleted", auth.session.userId);
     return ok({ success: true, result });
   } catch (err: any) {
     return badRequest(err.message || "Failed to delete subscription plan");

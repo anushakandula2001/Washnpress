@@ -91,19 +91,18 @@ export async function sendOtp(phone: string, purpose: OtpPurpose = "login") {
     }
   }
 
-  // Development: OTP is printed in the Next.js server terminal (never in the browser)
-  const banner = [
-    "========================================",
-    "🔐 WASHNPRESS DEV OTP",
-    "========================================",
-    `Phone   : +91 ${phone}`,
-    `Purpose : ${purpose.toUpperCase()}`,
-    `OTP     : ${otp}`,
-    `Expires : ${OTP_TTL_SECONDS / 60} minutes`,
-    "========================================",
-  ].join("\n");
-  console.log("[auth] OTP generated");
-  console.log(banner);
+  if ((process.env.NODE_ENV as string) !== "production" && (process.env.NODE_ENV === "development" || process.env.ENABLE_CONSOLE_OTP === "true")) {
+    console.log(`
+====================================================
+🔐 OTP GENERATED
+====================================================
+Mobile Number : +91${phone}
+OTP           : ${otp}
+Expires In    : ${Math.round(OTP_TTL_SECONDS / 60)} minutes
+Generated At  : ${new Date().toLocaleString()}
+====================================================
+`);
+  }
 
   return {
     sent: true,

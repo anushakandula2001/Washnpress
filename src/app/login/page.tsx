@@ -1,145 +1,218 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { PhoneOtpForm } from "@/components/auth/phone-otp-form";
-import { useLogout } from "@/components/auth/use-logout";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { api, type AuthUser } from "@/frontend/api-client";
-import { homePathForUser, primaryRole, type PortalRole } from "@/lib/auth-redirect";
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { api, needsOnboarding, type AuthUser } from "@/frontend/api-client";
+import { homePathForUser, primaryRole } from "@/lib/auth-redirect";
 
-const ROLE_LABEL: Record<PortalRole, string> = {
-  admin: "Admin",
-  operator: "Operations",
-  resident: "Resident",
-};
+const INDIAN_MOBILE = /^[6-9]\d{9}$/;
+const OTP_DIGITS = /^\d{6}$/;
+
+type Step = "phone" | "otp" | "unregistered";
 
 export default function LoginPage() {
-  const { logout, loggingOut } = useLogout();
-  const [existing, setExisting] = useState<AuthUser | null>(null);
-  const [checking, setChecking] = useState(true);
-  const [showForm, setShowForm] = useState(false);
+  const router = useRouter();
+  const [step, setStep] = useState<Step>("phone");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    let cancelled = false;
+  function normalizePhone(value: string) {
+    return value.replace(/\D/g, "").slice(0, 10);
+  }
 
-    async function load() {
-      try {
-        const { user } = await api.me();
-        if (cancelled) return;
-        setExisting(user as unknown as AuthUser);
-      } catch {
-        if (!cancelled) setExisting(null);
-      } finally {
-        if (!cancelled) setChecking(false);
-      }
+  async function handleSendOtp() {
+    setError(null);
+    if (!INDIAN_MOBILE.test(phone)) {
+      setError("Please enter a valid 10-digit mobile number.");
+      return;
     }
 
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    setLoading(true);
+    try {
+      await api.auth.sendOtp(phone, "login");
+      setStep("otp");
+      setOtp("");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to send OTP.";
+      if (msg.toLowerCase().includes("no account found") || msg.toLowerCase().includes("not registered")) {
+        setStep("unregistered");
+      } else {
+        setError(msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const role = existing ? primaryRole(existing.roles ?? []) : null;
-  const home = existing ? homePathForUser(existing) : "/";
+  async function handleVerifyOtp() {
+    setError(null);
+    if (!OTP_DIGITS.test(otp)) {
+      setError("Please enter a valid 6-digit OTP.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { user } = await api.auth.verifyOtp(phone, otp);
+      
+      const role = primaryRole(user.roles ?? []);
+      if (role === "resident" && needsOnboarding(user as unknown as AuthUser)) {
+        router.push("/onboarding");
+        return;
+      }
+      router.push(homePathForUser(user as unknown as AuthUser));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid OTP.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-background to-primary/5">
-      <div className="w-full max-w-md space-y-8 relative z-10">
-        <div className="flex flex-col items-center justify-center text-center">
-          <Link href="/" className="mb-6 inline-block">
-            <img src="/logo.png" alt="Wash N Press" className="h-16 w-auto object-contain" />
-          </Link>
-        </div>
+    <main className="relative min-h-screen w-full flex flex-col items-center justify-center p-4 bg-white overflow-hidden">
+      {/* Background Soft Aqua Gradient & Wave Pattern */}
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-white via-[#F5FFFE] to-[#DDFBF9] opacity-70" />
+      
+      {/* Large Subtle Logo Watermark */}
+      <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.05] blur-[1px]">
+        <img src="/logo.png" alt="Watermark" className="w-[80vw] max-w-[800px] object-contain grayscale" />
+      </div>
 
-        <div className="space-y-4">
-          {checking ? (
-            <Card className="border-none shadow-xl glass">
-              <CardContent className="p-8 text-center text-sm text-muted-foreground flex flex-col items-center justify-center min-h-[200px]">
-                <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mb-4" />
-                Checking existing session…
-              </CardContent>
-            </Card>
-          ) : existing && !showForm ? (
-            <Card className="border-none shadow-xl glass overflow-hidden">
-              <CardHeader className="bg-primary/5 pb-6 border-b border-border/50">
-                <CardTitle className="text-xl">Welcome back</CardTitle>
-                <CardDescription>
-                  You are already signed in to your account.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6 pt-6">
-                <div className="rounded-xl border border-border bg-white/50 backdrop-blur-sm p-4 text-sm shadow-inner">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-muted-foreground">Mobile</span>
-                    <span className="font-semibold text-foreground">+91 {existing.phone}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Role</span>
-                    <span className="font-semibold text-primary">
-                      {role ? ROLE_LABEL[role] : "Unknown"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3">
-                  <Button asChild className="w-full shadow-md shadow-primary/20">
-                    <Link href={home}>Continue to portal</Link>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="w-full border-border hover:bg-muted"
-                    disabled={loggingOut}
-                    onClick={() => void logout()}
-                  >
-                    {loggingOut ? "Signing out…" : "Sign out"}
-                  </Button>
-                </div>
-                <div className="text-center">
-                  <button
-                    type="button"
-                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
-                    onClick={() => setShowForm(true)}
-                  >
-                    Sign in with a different account
-                  </button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {existing && showForm && (
-                <div className="rounded-xl border border-amber-500/30 bg-amber-50/80 backdrop-blur-sm px-4 py-3 text-sm text-amber-800 shadow-sm">
-                  Active session (+91 {existing.phone}). You may want to{" "}
-                  <button
-                    type="button"
-                    className="font-bold underline text-amber-900"
-                    disabled={loggingOut}
-                    onClick={() => void logout()}
-                  >
-                    log out first
-                  </button>.
-                </div>
-              )}
-              <div className="shadow-xl rounded-xl overflow-hidden glass border-none">
-                <PhoneOtpForm mode="login" />
+      <div className="w-full max-w-[460px] relative z-10">
+        
+        {/* Back Button */}
+        <Link 
+          href="/" 
+          className="group inline-flex items-center text-[#14C8C4] font-medium mb-6 bg-transparent border-none transition-all"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2 transition-transform duration-300 group-hover:-translate-x-1" />
+          Back
+        </Link>
+
+        {/* Login Card */}
+        <div 
+          className="p-8 sm:p-10"
+          style={{
+            background: "rgba(255, 255, 255, 0.85)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+            borderRadius: "20px",
+            boxShadow: "0 20px 60px rgba(20, 200, 196, 0.12)"
+          }}
+        >
+          <div className="flex flex-col items-center mb-8 text-center">
+            <img src="/logo.png" alt="Wash N Press" className="h-10 w-auto mb-6" />
+            <h1 className="text-3xl font-bold text-[#163A4A] mb-2">Login</h1>
+            <p className="text-[#6A7B88] text-sm">Sign in to continue to Wash N Press</p>
+          </div>
+
+          <div className="space-y-6">
+            {error && (
+              <div className="p-3 rounded-xl bg-red-50 text-red-600 text-sm font-medium border border-red-100 text-center">
+                {error}
               </div>
+            )}
+
+            {step === "phone" && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#163A4A]">Mobile Number</label>
+                  <input
+                    type="tel"
+                    placeholder="Enter your mobile number"
+                    className="w-full h-12 px-4 rounded-xl border border-[#D7F5F4] bg-white focus:outline-none focus:border-[#14C8C4] focus:ring-4 focus:ring-[#14C8C4]/20 transition-all text-[#163A4A] placeholder-[#6A7B88]"
+                    value={phone}
+                    onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !loading) handleSendOtp();
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={handleSendOtp}
+                  disabled={loading || phone.length !== 10}
+                  className="w-full h-12 rounded-xl text-white font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_12px_25px_rgba(20,200,196,0.25)] hover:-translate-y-0.5"
+                  style={{ background: "linear-gradient(90deg, #14C8C4, #0FA8A4)" }}
+                >
+                  {loading ? "Sending..." : "Login"}
+                </button>
+              </>
+            )}
+
+            {step === "otp" && (
+              <>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[#163A4A]">OTP Verification</label>
+                  <p className="text-xs text-[#6A7B88] mb-2">Sent to +91 {phone}</p>
+                  <input
+                    type="text"
+                    placeholder="Enter 6-digit OTP"
+                    maxLength={6}
+                    className="w-full h-12 px-4 rounded-xl border border-[#D7F5F4] bg-white focus:outline-none focus:border-[#14C8C4] focus:ring-4 focus:ring-[#14C8C4]/20 transition-all text-[#163A4A] tracking-widest text-center text-lg font-bold"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !loading) handleVerifyOtp();
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={handleVerifyOtp}
+                  disabled={loading || otp.length !== 6}
+                  className="w-full h-12 rounded-xl text-white font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-[0_12px_25px_rgba(20,200,196,0.25)] hover:-translate-y-0.5"
+                  style={{ background: "linear-gradient(90deg, #14C8C4, #0FA8A4)" }}
+                >
+                  {loading ? "Verifying..." : "Verify & Login"}
+                </button>
+                <button 
+                  onClick={() => { setStep("phone"); setOtp(""); setError(null); }}
+                  className="w-full text-sm mt-4 text-[#14C8C4] hover:text-[#0FA8A4] hover:underline"
+                >
+                  Change mobile number
+                </button>
+              </>
+            )}
+
+            {step === "unregistered" && (
+              <div className="text-center py-4 space-y-6">
+                <div className="p-4 bg-red-50 rounded-xl border border-red-100">
+                  <p className="text-red-700 font-semibold mb-1">Account not found.</p>
+                  <p className="text-sm text-red-600">Please register to continue.</p>
+                </div>
+                <button
+                  onClick={() => router.push('/resident/register')}
+                  className="w-full h-12 rounded-xl text-white font-bold transition-all duration-300 hover:shadow-[0_12px_25px_rgba(20,200,196,0.25)] hover:-translate-y-0.5"
+                  style={{ background: "linear-gradient(90deg, #14C8C4, #0FA8A4)" }}
+                >
+                  Create Account
+                </button>
+                <button 
+                  onClick={() => { setStep("phone"); setError(null); }}
+                  className="w-full text-sm text-[#14C8C4] hover:text-[#0FA8A4] hover:underline mt-4"
+                >
+                  Try a different number
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Link */}
+          {step !== "unregistered" && (
+            <div className="mt-8 pt-6 border-t border-[#D7F5F4] text-center">
+              <span className="text-[#6A7B88] text-sm">New Resident? </span>
+              <Link 
+                href="/resident/register" 
+                className="text-sm font-semibold text-[#14C8C4] hover:text-[#0FA8A4] hover:underline transition-colors"
+              >
+                Create an Account
+              </Link>
             </div>
           )}
         </div>
-      </div>
-      
-      {/* Background decorations */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-primary/10 blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-secondary/10 blur-[100px]" />
       </div>
     </main>
   );

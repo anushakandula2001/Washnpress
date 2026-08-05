@@ -23,11 +23,43 @@ import { getSlaStatusBadge } from "./SupportTicketTable";
 import type { SupportTicketRecord } from "@/backend/repositories/support";
 import { Card, CardContent } from "@/components/ui/card";
 
+type TicketMessageItem = {
+  id: string;
+  ticket_id?: string;
+  sender_name: string | null;
+  sender_type: "resident" | "support" | "operations" | "manager" | "system" | string;
+  channel: "customer" | "internal" | string;
+  message: string;
+  created_at: string;
+};
+
+type TicketAttachmentItem = {
+  id: string;
+  file_url: string;
+  file_name: string;
+  file_type?: string;
+};
+
+type TicketNoteItem = {
+  id: string;
+  author_name: string;
+  note: string;
+  created_at: string;
+};
+
+type TicketHistoryItem = {
+  id: string;
+  actor_name: string;
+  action: string;
+  changes?: Record<string, unknown>;
+  created_at: string;
+};
+
 type FullTicketData = SupportTicketRecord & {
-  messages: any[];
-  attachments: any[];
-  notes: any[];
-  history: any[];
+  messages: TicketMessageItem[];
+  attachments: TicketAttachmentItem[];
+  notes: TicketNoteItem[];
+  history: TicketHistoryItem[];
 };
 
 export function SupportTicketDetailDrawer({
@@ -46,23 +78,23 @@ export function SupportTicketDetailDrawer({
   const [noteInput, setNoteInput] = useState("");
 
   useEffect(() => {
-    fetchData();
-  }, [ticketId]);
-
-  async function fetchData() {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/support/tickets/${ticketId}?channel=all`);
-      if (res.ok) {
-        const json = await readApiJson(res);
-        setData(json);
+    async function loadTicket() {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/support/tickets/${ticketId}?channel=all`);
+        if (res.ok) {
+          const json = await readApiJson(res);
+          setData(json as FullTicketData);
+        }
+      } catch (e) {
+        console.error("Failed to fetch ticket data", e);
+      } finally {
+        setLoading(false);
       }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
     }
-  }
+
+    void loadTicket();
+  }, [ticketId]);
 
   async function handleSendMessage() {
     if (!messageInput.trim() || !data) return;
@@ -79,7 +111,7 @@ export function SupportTicketDetailDrawer({
         }),
       });
       setMessageInput("");
-      fetchData();
+      void loadTicket();
     } catch (e) {
       console.error(e);
     }
@@ -100,9 +132,24 @@ export function SupportTicketDetailDrawer({
         }),
       });
       setNoteInput("");
-      fetchData();
+      void loadTicket();
     } catch (e) {
       console.error(e);
+    }
+  }
+
+  async function loadTicket() {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/support/tickets/${ticketId}?channel=all`);
+      if (res.ok) {
+        const json = await readApiJson(res);
+        setData(json as FullTicketData);
+      }
+    } catch (e) {
+      console.error("Failed to fetch ticket data", e);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -174,7 +221,7 @@ export function SupportTicketDetailDrawer({
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id as "conversation" | "timeline" | "attachments" | "notes" | "order" | "history")}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 activeTab === tab.id
                   ? "border-primary text-primary"
@@ -201,7 +248,7 @@ export function SupportTicketDetailDrawer({
                   <div className="flex-1 space-y-4 mb-4">
                     {/* Original Description */}
                     <div className="flex gap-3 mb-6">
-                      <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold shrink-0 mt-1">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0 mt-1">
                         R
                       </div>
                       <div className="bg-muted/50 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] border border-border/50 relative group">
@@ -219,7 +266,7 @@ export function SupportTicketDetailDrawer({
                       .map((msg) => (
                         <div key={msg.id} className={`flex gap-3 mb-6 ${msg.sender_type === "support" ? "justify-end" : ""}`}>
                           {msg.sender_type !== "support" && (
-                            <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold shrink-0 mt-1">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0 mt-1">
                               {msg.sender_name?.[0] || "U"}
                             </div>
                           )}
@@ -361,7 +408,7 @@ export function SupportTicketDetailDrawer({
                       {data.attachments.map((att) => (
                         <a key={att.id} href={att.file_url} target="_blank" rel="noreferrer" className="block group">
                           <div className="aspect-square bg-muted rounded-xl border border-border overflow-hidden relative flex items-center justify-center">
-                            {att.file_type.startsWith("image/") ? (
+                            {(att.file_type ?? "").startsWith("image/") ? (
                               <img src={att.file_url} alt={att.file_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                             ) : (
                               <FileText className="h-12 w-12 text-muted-foreground" />

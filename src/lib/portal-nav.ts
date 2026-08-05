@@ -2,18 +2,13 @@ import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard,
   CalendarClock,
-  UserPlus,
-  ListOrdered,
-  PackageCheck,
   Truck,
   CircleCheck,
   Users,
-  Bike,
   BarChart3,
   Bell,
   Settings,
   Building2,
-  MapPin,
   Factory,
   Headphones,
 } from "lucide-react";

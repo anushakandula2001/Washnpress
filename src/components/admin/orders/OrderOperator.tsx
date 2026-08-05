@@ -58,8 +58,8 @@ export function OrderOperator({
           {assigned && (
             <>
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10">
-                  <Truck className="h-5 w-5 text-blue-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                  <Truck className="h-5 w-5 text-primary" />
                 </div>
                 <div>
                   <p className="font-semibold">{String(assigned.full_name ?? "—")}</p>

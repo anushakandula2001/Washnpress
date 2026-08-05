@@ -8,9 +8,7 @@ import {
   CalendarClock,
   Package,
   Wallet,
-  Puzzle,
   Headphones,
-  Leaf,
   User,
   LogOut,
   Menu,
@@ -18,6 +16,8 @@ import {
   Bell,
   Gift,
   MapPin,
+  Settings,
+  Search,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
@@ -26,12 +26,16 @@ import { useResident } from "@/components/resident/resident-provider";
 
 const navItems = [
   { href: "/resident/dashboard", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { href: "/resident/pickup", label: "Schedule Pickup", icon: CalendarClock },
+  { href: "/resident/pickup", label: "Book Pickup", icon: CalendarClock },
   { href: "/resident/orders", label: "My Orders", icon: Package },
-  { href: "/resident/subscription", label: "Subscription", icon: CreditCard },
+  { href: "/resident/tracking", label: "Order Tracking", icon: MapPin },
+  { href: "/resident/subscription", label: "Subscriptions", icon: CreditCard },
   { href: "/resident/wallet", label: "Wallet", icon: Wallet },
+  { href: "/resident/offers", label: "Offers & Coupons", icon: Gift },
+  { href: "/resident/notifications", label: "Notifications", icon: Bell },
   { href: "/resident/support", label: "Support", icon: Headphones },
   { href: "/resident/profile", label: "Profile", icon: User },
+  { href: "/resident/settings", label: "Settings", icon: Settings },
 ];
 
 function Logo() {
@@ -226,17 +230,33 @@ export function ResidentShell({
                 <Menu className="h-5 w-5" />
               </button>
               {greeting && (
-                <div>
+                <div className="hidden sm:block">
                   <h1 className="text-xl font-bold text-foreground">{greeting}</h1>
                   {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-3">
-              <NotificationsBell />
-              <div className="hidden items-center gap-3 rounded-full border border-border bg-card px-3 py-2 lg:flex">
-                <ProfileAvatar name={useResident().profile?.name} />
-                <span className="text-sm font-medium text-foreground">{useResident().profile?.name ?? "Resident"}</span>
+            
+            <div className="flex flex-1 items-center justify-end gap-4">
+              <div className="hidden md:flex items-center gap-2 text-sm font-medium text-muted-foreground mr-2">
+                {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+              </div>
+              
+              <div className="relative hidden sm:block w-48 lg:w-64">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Search orders..."
+                  className="h-9 w-full rounded-full border border-border bg-muted/30 pl-9 pr-4 text-sm outline-none transition focus:border-primary/50 focus:ring-1 focus:ring-primary/50"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <NotificationsBell />
+                <div className="hidden items-center gap-3 rounded-full border border-border bg-card px-3 py-1.5 lg:flex cursor-pointer hover:bg-muted/50 transition-colors">
+                  <ProfileAvatar name={useResident().profile?.name} />
+                  <span className="text-sm font-medium text-foreground pr-1">{useResident().profile?.name ?? "Resident"}</span>
+                </div>
               </div>
             </div>
           </div>

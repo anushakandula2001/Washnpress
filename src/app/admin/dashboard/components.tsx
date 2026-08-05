@@ -162,7 +162,7 @@ const deliveriesData = [
 function getStatusColor(status: string) {
   switch (status) {
     case "Pending": return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-200 dark:border-gray-700";
-    case "Assigned": return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800/50";
+    case "Assigned": return "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary border-primary/40 dark:border-primary/30";
     case "Picked":
     case "Out for Delivery": return "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/50";
     case "Completed":
@@ -468,7 +468,7 @@ export function RightSidebar() {
               <p className="text-2xl font-bold">24</p>
               <p className="text-xs text-muted-foreground font-medium">Pending Pickups</p>
             </div>
-            <div className="h-8 w-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-600 font-bold text-xs">
+            <div className="h-8 w-16 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs">
               -12%
             </div>
           </div>

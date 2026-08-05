@@ -34,7 +34,7 @@ export default function ImpactPage() {
       label: "Water Saved",
       value: `${impact.waterSavedLiters.toLocaleString()} L`,
       icon: Droplets,
-      color: "text-blue-600 bg-blue-500/10",
+      color: "text-primary bg-primary/10",
     },
     {
       label: "CO₂ Reduced",

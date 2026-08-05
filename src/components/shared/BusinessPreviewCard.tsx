@@ -71,7 +71,7 @@ export function BusinessPreviewCard({
     //       </p>
     //       <div className="flex items-center justify-between bg-muted/30 border border-border/50 rounded-lg p-3">
     //         <div className="flex items-center gap-3">
-    //           <div className="h-8 w-8 bg-blue-100 rounded-md flex items-center justify-center text-blue-600">
+    //           <div className="h-8 w-8 bg-primary/10 rounded-md flex items-center justify-center text-primary">
     //             {data.garmentIcon || <Shirt className="h-4 w-4" />}
     //           </div>
     //           <div>

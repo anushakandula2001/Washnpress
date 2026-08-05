@@ -39,6 +39,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<any>(null);
+  const [planToDeleteSubscribers, setPlanToDeleteSubscribers] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // New States for Audit Logs and Settings
@@ -133,9 +134,21 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
     await onUpdate(payload);
   };
 
-  const confirmDelete = (plan: any) => {
+  const confirmDelete = async (plan: any) => {
     setPlanToDelete(plan);
+    setPlanToDeleteSubscribers(null);
     setDeleteConfirmOpen(true);
+    try {
+      const res = await fetch(`/api/admin/subscriptions/${plan.id}/subscribers`, { credentials: "same-origin" });
+      if (res.ok) {
+        const data = await res.json();
+        setPlanToDeleteSubscribers(data.data?.subscribers?.length || 0);
+      } else {
+        setPlanToDeleteSubscribers(0);
+      }
+    } catch (e) {
+      setPlanToDeleteSubscribers(0);
+    }
   };
 
   const executeDelete = async () => {
@@ -296,7 +309,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
         <Card className="rounded-2xl border border-slate-200 shadow-sm bg-white overflow-hidden flex flex-col justify-center h-[100px] p-5">
           <div className="flex items-center gap-4">
-            <div className="bg-blue-50 text-blue-600 rounded-xl h-12 w-12 flex items-center justify-center shrink-0">
+            <div className="bg-primary/10 text-primary rounded-xl h-12 w-12 flex items-center justify-center shrink-0">
               <PackageSearch className="h-6 w-6" />
             </div>
             <div>
@@ -442,13 +455,13 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
                         <MoreVertical className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-normal bg-white">
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                        <DropdownMenuItem onClick={() => openEditModal(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                           <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                        <DropdownMenuItem onClick={() => openSubscribersDrawer(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                           <Users className="mr-2.5 h-4 w-4 text-slate-400" /> Subscribers
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
+                        <DropdownMenuItem onClick={() => confirmDelete(plan)} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
                           <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -535,13 +548,13 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
                       <MoreVertical className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-normal bg-white">
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                      <DropdownMenuItem onClick={() => openEditModal(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                         <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                      <DropdownMenuItem onClick={() => openSubscribersDrawer(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                         <Users className="mr-2.5 h-4 w-4 text-slate-400" /> View Subscribers
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
+                      <DropdownMenuItem onClick={() => confirmDelete(plan)} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
                         <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -555,7 +568,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
 
       {/* CREATE/EDIT MODAL */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
+        <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
           <div className="px-8 py-6 border-b border-slate-100 bg-white">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               {formData.id ? "Edit Plan Details" : "Create New Plan"}
@@ -695,7 +708,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
 
       {/* DETAILS MODAL */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
+        <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
           <div className="px-8 py-6 border-b border-slate-100 bg-white flex justify-between items-center">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               Plan Details
@@ -782,7 +795,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
 
       {/* SUBSCRIBERS DRAWER */}
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-full sm:max-w-md border-l-0 shadow-2xl p-0 flex flex-col bg-slate-50/50">
+        <SheetContent className="w-full sm:max-w-md p-0 bg-slate-50/50 backdrop-blur-xl border-l-0 shadow-2xl flex flex-col h-full">
           <div className="p-6 border-b border-slate-100 bg-white shadow-sm z-10">
             <SheetHeader>
               <h2 className="text-xl font-bold text-slate-900 m-0">Subscribers</h2>
@@ -843,18 +856,28 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
 
       {/* DELETE CONFIRMATION */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-md rounded-[24px] border-0 shadow-2xl p-8">
+        <DialogContent className="sm:max-w-md rounded-[24px] border-0 shadow-2xl p-8">
           <div className="flex flex-col items-center text-center space-y-4">
             <div className="bg-red-50 p-5 rounded-full text-red-500 mb-2 border border-red-100">
               <Trash2 className="h-8 w-8" />
             </div>
             <DialogTitle className="text-2xl font-bold text-slate-900">Delete Subscription Plan?</DialogTitle>
             <p className="text-slate-500 leading-relaxed">Are you sure you want to delete this subscription plan?</p>
-            <p className="text-slate-500 leading-relaxed mt-2">This action cannot be undone.</p>
+            {planToDeleteSubscribers !== null ? (
+              planToDeleteSubscribers > 0 ? (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-sm mt-2 text-left w-full">
+                  <strong>Warning:</strong> This plan has <strong>{planToDeleteSubscribers} active subscribers</strong>. You cannot delete it until they are reassigned or their subscriptions expire.
+                </div>
+              ) : (
+                <p className="text-slate-500 leading-relaxed mt-2">This action cannot be undone.</p>
+              )
+            ) : (
+              <p className="text-slate-500 leading-relaxed mt-2 animate-pulse">Checking subscribers...</p>
+            )}
           </div>
           <DialogFooter className="mt-8 flex gap-3 sm:justify-center w-full">
             <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)} className="rounded-xl border-slate-200 h-12 flex-1 font-semibold">Cancel</Button>
-            <Button onClick={executeDelete} className="rounded-xl bg-red-500 hover:bg-red-600 text-white h-12 flex-1 font-semibold shadow-md shadow-red-500/20">Delete</Button>
+            <Button onClick={executeDelete} disabled={planToDeleteSubscribers === null || planToDeleteSubscribers > 0} className="rounded-xl bg-red-500 hover:bg-red-600 text-white h-12 flex-1 font-semibold shadow-md shadow-red-500/20 disabled:opacity-50">Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1028,7 +1051,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
                 <div key={i} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex items-center gap-2.5">
-                      <div className={`p-2 rounded-lg ${log.action.includes('Created') || log.action.includes('Added') ? 'bg-emerald-100 text-emerald-600' : log.action.includes('Deleted') || log.action.includes('Removed') ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                      <div className={`p-2 rounded-lg ${log.action.includes('Created') || log.action.includes('Added') ? 'bg-emerald-100 text-emerald-600' : log.action.includes('Deleted') || log.action.includes('Removed') ? 'bg-red-100 text-red-600' : 'bg-primary/10 text-primary'}`}>
                         <Clock className="h-4 w-4" />
                       </div>
                       <div>

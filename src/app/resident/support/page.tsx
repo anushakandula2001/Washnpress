@@ -205,7 +205,7 @@ export default function SupportPage() {
     <ResidentShell greeting="Help & Support" subtitle="We're here to help you 24/7">
       
       {/* Search & Hero */}
-      <div className="relative mb-8 rounded-3xl bg-gradient-to-br from-primary to-blue-600 p-8 text-white shadow-xl overflow-hidden">
+      <div className="relative mb-8 rounded-3xl bg-gradient-to-br from-primary to-secondary p-8 text-white shadow-xl overflow-hidden">
         <div className="absolute right-0 top-0 opacity-20 pointer-events-none">
            <Headphones className="h-48 w-48 -mt-8 -mr-8" />
         </div>

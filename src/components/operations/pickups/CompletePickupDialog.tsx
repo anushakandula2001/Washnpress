@@ -36,7 +36,7 @@ export function CompletePickupDialog({
           <DialogDescription>
             Are you sure you want to complete the pickup for order{" "}
             <span className="font-semibold text-foreground">{order.order_code}</span>?
-            This order will move to the Processing Center and will no longer appear in Today's Pickups.
+            This order will move to the Processing Center and will no longer appear in Today&apos;s Pickups.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

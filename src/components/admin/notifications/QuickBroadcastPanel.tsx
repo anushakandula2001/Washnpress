@@ -29,7 +29,7 @@ export function QuickBroadcastPanel({ onSelectQuickAudience }: Props) {
       title: "To Specific Society",
       description: "Send to one or more selected societies",
       icon: Building2,
-      accentBg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      accentBg: "bg-primary/10 text-primary dark:text-primary",
     },
     {
       id: "operator" as NotificationAudience,

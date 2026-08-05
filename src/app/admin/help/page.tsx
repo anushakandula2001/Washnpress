@@ -92,9 +92,9 @@ const quickContacts = [
     description: "Get detailed help via email within 24 hours",
     action: "support@washnpress.com",
     href: "mailto:support@washnpress.com",
-    color: "text-blue-600 dark:text-blue-400",
-    bg: "bg-blue-500/10",
-    border: "border-blue-500/20",
+    color: "text-primary dark:text-primary",
+    bg: "bg-primary/10",
+    border: "border-primary/40/20",
   },
   {
     icon: MessageSquare,
