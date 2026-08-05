@@ -100,30 +100,23 @@ export default function ResidentDashboard() {
       <div className="space-y-6">
         <section className="grid gap-5 xl:grid-cols-[1.4fr_0.7fr]">
           <article className="rounded-3xl border border-border bg-white p-6 shadow-sm">
-            <div className="flex flex-col gap-2">
-              <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">Your active plan</p>
-              <h2 className="text-2xl font-semibold text-foreground">
-                {subscription ? subscription.planName : "No active plan"}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {subscription
-                  ? "Your plan keeps laundry simple with priority pickup and monthly garments."
-                  : "Subscribe to unlock monthly garment caps and priority pickup."}
-              </p>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">Next Pickup</p>
+                <p className="mt-2 text-xl font-semibold text-foreground">{pickupLabel}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRescheduleOpen(true)}
+                className="rounded-2xl bg-slate-50 px-4 py-2 text-sm font-semibold text-foreground transition hover:bg-slate-100"
+              >
+                Reschedule
+              </button>
             </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link
-                href="/resident/subscription"
-                className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-slate-100"
-              >
-                View Details
-              </Link>
-              <Link
-                href="/resident/pickup"
-                className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
-              >
-                Schedule Pickup
-              </Link>
+            <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Order status</p>
+              <p className="mt-2 text-lg font-semibold text-foreground">{orderLabel}</p>
+              <p className="text-sm text-muted-foreground">{orderStatus}</p>
             </div>
           </article>
 
@@ -253,6 +246,34 @@ export default function ResidentDashboard() {
               <p className="mt-2 text-sm text-muted-foreground">Refer a friend and get wallet credits on their first order.</p>
             </div>
           </article>
+        </section>
+
+        <section className="rounded-3xl border border-border bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">My subscription plan</p>
+            <h2 className="text-2xl font-semibold text-foreground">
+              {subscription ? subscription.planName : "No active plan"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {subscription
+                ? "Your plan keeps laundry simple with priority pickup and monthly garments."
+                : "Subscribe to unlock monthly garment caps and priority pickup."}
+            </p>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              href="/resident/subscription"
+              className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-foreground transition hover:bg-slate-100"
+            >
+              View Details
+            </Link>
+            <Link
+              href="/resident/pickup"
+              className="inline-flex items-center justify-center rounded-2xl bg-sky-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-sky-400"
+            >
+              Schedule Pickup
+            </Link>
+          </div>
         </section>
       </div>
 
