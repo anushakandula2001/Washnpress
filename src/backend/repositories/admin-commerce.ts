@@ -436,7 +436,7 @@ export async function deletePlan(id: string) {
     [id],
   );
   if (parseInt(used?.c ?? "0", 10) > 0) {
-    throw new Error("This plan cannot be deleted because it has active subscribers.");
+    throw new Error("This plan has active subscribers and cannot be deleted. Please migrate subscribers or deactivate the plan first.");
   }
   await query(`DELETE FROM plans WHERE id = $1`, [id]);
   publishEvent("sync:resident", "plan_deleted", { id });

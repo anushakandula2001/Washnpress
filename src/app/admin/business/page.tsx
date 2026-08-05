@@ -289,8 +289,8 @@ export default function BusinessManagementPage() {
             <DeliveryChargesTab settings={data.settings} onUpdate={post} />
           </TabsContent>
 
-          <TabsContent value="subscriptions" className="m-0 border-none p-0 outline-none">
-            <SubscriptionsTab plans={data.plans} onUpdate={post} />
+          <TabsContent value="subscriptions" className="m-0 mt-6 animate-in fade-in-50 slide-in-from-bottom-2 duration-300">
+            <SubscriptionsTab plans={data.plans || []} onUpdate={post} onRefresh={load} />
           </TabsContent>
 
           <TabsContent value="history" className="m-0 border-none p-0 outline-none">

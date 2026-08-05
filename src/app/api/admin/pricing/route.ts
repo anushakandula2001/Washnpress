@@ -252,6 +252,14 @@ async function _POST(request: Request) {
       if (p.action === "delete" && p.id) {
         const result = await deletePlan(p.id);
         await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, { deleted: true }, "Plan soft-deleted", auth.session.userId);
+        await logAudit({
+          actorUserId: auth.session.userId,
+          actorRole: "admin",
+          action: "delete_plan",
+          entityName: "plans",
+          entityId: p.id,
+          beforeState: prevPlan,
+        });
         return ok({ result });
       }
       if (p.action === "toggle" && p.id) {
@@ -277,6 +285,15 @@ async function _POST(request: Request) {
       const plan = await upsertPlan(p);
       if (!plan) return badRequest("Plan not found");
       await logPricingHistory("plan", plan.tier, prevPlan, plan, p.id ? "Plan updated" : "Plan created", auth.session.userId);
+      await logAudit({
+        actorUserId: auth.session.userId,
+        actorRole: "admin",
+        action: p.id ? "update_plan" : "create_plan",
+        entityName: "plans",
+        entityId: (plan as { id: string }).id,
+        beforeState: prevPlan,
+        afterState: plan,
+      });
       return created({ plan });
     }
 

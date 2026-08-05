@@ -205,8 +205,8 @@ export function SocietySetupWizard({
           id: `flr-${bId}-${nextFloorNum}-${Date.now()}`,
           floor_number: nextFloorNum,
           flats: [
-            { id: `flt-new-1-${Date.now()}`, flat_number: `${nextFloorNum}01`, status: "Vacant" },
-            { id: `flt-new-2-${Date.now()}`, flat_number: `${nextFloorNum}02`, status: "Vacant" },
+            { id: `flt-new-1-${Date.now()}`, flat_number: `${nextFloorNum}01`, status: "active" },
+            { id: `flt-new-2-${Date.now()}`, flat_number: `${nextFloorNum}02`, status: "active" },
           ],
         };
         return { ...b, floors: [...b.floors, newFloor] };
@@ -236,7 +236,7 @@ export function SocietySetupWizard({
             const newFlat: FlatItem = {
               id: `flt-${floorId}-${Date.now()}-${nextFlatIndex}`,
               flat_number: flatNum,
-              status: "Vacant",
+              status: "active",
             };
             return { ...fl, flats: [...fl.flats, newFlat] };
           }),
@@ -729,14 +729,13 @@ export function SocietySetupWizard({
                                     className="w-14 bg-transparent text-center font-mono font-semibold text-foreground outline-none focus:bg-muted focus:ring-1 focus:ring-primary rounded"
                                   />
                                   <select
-                                    value={flat.status || "Vacant"}
+                                    value={flat.status || "active"}
                                     onChange={(e) => handleEditFlatStatus(b.id, fl.id, flat.id, e.target.value)}
                                     className="bg-transparent text-[10px] uppercase font-bold tracking-wider outline-none cursor-pointer appearance-none text-muted-foreground hover:text-foreground"
                                   >
-                                    <option value="Vacant">VACANT</option>
-                                    <option value="Occupied">OCCUPIED</option>
-                                    <option value="Reserved">RESERVED</option>
-                                    <option value="Blocked">BLOCKED</option>
+                                    <option value="active">VACANT</option>
+                                    <option value="occupied">OCCUPIED</option>
+                                    <option value="inactive">BLOCKED</option>
                                   </select>
                                 </div>
                                 <button
