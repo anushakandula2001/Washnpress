@@ -12,7 +12,8 @@ import {
   Plus, Check, Star, Users, Trash2, Edit, Copy, MoreVertical,
   Download, Upload, Search, Filter, RefreshCcw, PackageSearch,
   Calendar, Clock, User, X, PlusCircle, ArrowRight, ShieldCheck,
-  Zap, ChevronDown, CheckCircle2, Eye, Archive, Shield, Building
+  Zap, ChevronDown, CheckCircle2, Eye, Archive, Shield, Building,
+  Crown, Diamond, LayoutGrid, List
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,6 +39,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<any>(null);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // New States for Audit Logs and Settings
   const [isAuditLogsOpen, setIsAuditLogsOpen] = useState(false);
@@ -236,256 +238,284 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
   const totalSubscribers = 623;
 
   return (
-    <div className="w-full space-y-8 bg-[#F8FAFC] pb-12 font-sans text-slate-900 min-h-screen p-4 md:p-6 lg:p-8">
+    <div className="w-full space-y-6 bg-[#F4F4F5] font-sans text-slate-900 min-h-screen p-4 md:p-6 lg:p-8">
 
       {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-[20px] shadow-sm border border-slate-100/50">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
-          <h1 className="text-[34px] font-bold tracking-tight text-[#0F172A]">Subscription Plans</h1>
-          <p className="text-[15px] text-slate-500 mt-1">Create and manage subscription plans across all societies and residents.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Subscription Plans</h1>
+          <p className="text-[15px] text-slate-500 mt-1">Create, manage and monitor subscription plans across all societies.</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative hidden md:flex items-center w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input placeholder="Search plans..." className="pl-9 h-11 rounded-[12px] border-slate-200 bg-slate-50 focus-visible:ring-[#00A8A8] text-[15px]" />
-          </div>
-          <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 hover:scale-[1.02] transition-all rounded-[12px] h-11 w-11 p-0 shadow-sm">
-            <Filter className="h-4 w-4" />
+        <div className="flex items-center gap-3">
+          <Button variant="outline" className="border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl h-10 w-10 p-0 shadow-sm transition-colors">
+            <Filter className="h-[18px] w-[18px]" />
           </Button>
-          <Button variant="outline" className="border-slate-200 text-slate-700 hover:bg-slate-50 hover:scale-[1.02] transition-all rounded-[12px] h-11 px-4 shadow-sm flex items-center gap-2 font-medium text-[14px]">
-            Sort <ChevronDown className="h-4 w-4" />
+          <Button variant="outline" className="border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-xl h-10 w-10 p-0 shadow-sm transition-colors">
+            <MoreVertical className="h-[18px] w-[18px]" />
           </Button>
-          <div className="flex border border-slate-200 rounded-[12px] p-1 bg-slate-50 hidden sm:flex">
-            <Button variant="ghost" className="h-9 w-9 p-0 rounded-[8px] bg-white shadow-sm text-[#00A8A8]">
-              <PackageSearch className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" className="h-9 w-9 p-0 rounded-[8px] text-slate-400 hover:text-slate-600">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </div>
-          <Button onClick={openAddModal} className="bg-[#00A8A8] hover:bg-[#009090] hover:scale-[1.02] text-white shadow-md shadow-[#00A8A8]/20 rounded-[12px] transition-all h-11 px-6 font-medium text-[15px]">
-            <Plus className="mr-2 h-4 w-4" /> Create New Plan
+          <Button onClick={openAddModal} className="bg-[#00A8A8] hover:bg-[#009090] text-white rounded-xl transition-colors h-10 px-5 font-semibold text-[14px] shadow-sm">
+            <Plus className="mr-1.5 h-[18px] w-[18px]" /> Create New Plan
           </Button>
         </div>
       </div>
 
       {/* SUMMARY CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <Card className="rounded-[20px] border-slate-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 bg-white overflow-hidden h-[110px] relative group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <PackageSearch className="h-16 w-16 text-blue-500 -rotate-12 group-hover:rotate-0 transition-transform duration-300" />
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <Card className="rounded-2xl border border-slate-200 shadow-sm bg-white overflow-hidden flex flex-col justify-center h-[100px] p-5">
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-50 text-blue-600 rounded-xl h-12 w-12 flex items-center justify-center shrink-0">
+              <PackageSearch className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-slate-500 mb-0.5">Total Plans</p>
+              <h3 className="text-2xl font-bold text-slate-900 leading-none">{totalPlans}</h3>
+            </div>
           </div>
-          <CardContent className="p-5 flex items-center h-full relative z-10">
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-100 p-3.5 rounded-full mr-4">
-              <PackageSearch className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <p className="text-[14px] font-medium text-slate-500 mb-0.5">Total Plans</p>
-              <div className="flex items-end gap-2">
-                <h3 className="text-[24px] font-semibold text-[#0F172A] leading-none">{totalPlans}</h3>
-                <span className="text-[12px] text-blue-500 font-medium mb-0.5">Plans</span>
-              </div>
-            </div>
-          </CardContent>
-          <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-blue-400 to-blue-600 w-full opacity-0 group-hover:opacity-100 transition-opacity" />
         </Card>
 
-        <Card className="rounded-[20px] border-slate-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 bg-white overflow-hidden h-[110px] relative group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <CheckCircle2 className="h-16 w-16 text-[#22C55E] -rotate-12 group-hover:rotate-0 transition-transform duration-300" />
+        <Card className="rounded-2xl border border-slate-200 shadow-sm bg-white overflow-hidden flex flex-col justify-center h-[100px] p-5">
+          <div className="flex items-center gap-4">
+            <div className="bg-emerald-50 text-emerald-600 rounded-xl h-12 w-12 flex items-center justify-center shrink-0">
+              <Users className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-slate-500 mb-0.5">Total Subscribers</p>
+              <h3 className="text-2xl font-bold text-slate-900 leading-none">{totalSubscribers}</h3>
+            </div>
           </div>
-          <CardContent className="p-5 flex items-center h-full relative z-10">
-            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-100 p-3.5 rounded-full mr-4">
-              <CheckCircle2 className="h-6 w-6 text-[#22C55E]" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <p className="text-[14px] font-medium text-slate-500 mb-0.5">Active Plans</p>
-              <div className="flex items-end gap-2">
-                <h3 className="text-[24px] font-semibold text-[#0F172A] leading-none">{activePlans}</h3>
-                <span className="text-[12px] text-[#22C55E] font-medium mb-0.5">Active</span>
-              </div>
-            </div>
-          </CardContent>
-          <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-[#22C55E] to-emerald-500 w-full opacity-0 group-hover:opacity-100 transition-opacity" />
         </Card>
 
-        <Card className="rounded-[20px] border-slate-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 bg-white overflow-hidden h-[110px] relative group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Users className="h-16 w-16 text-purple-500 -rotate-12 group-hover:rotate-0 transition-transform duration-300" />
+        <Card className="rounded-2xl border border-slate-200 shadow-sm bg-white overflow-hidden flex flex-col justify-center h-[100px] p-5">
+          <div className="flex items-center gap-4">
+            <div className="bg-amber-50 text-amber-600 rounded-xl h-12 w-12 flex items-center justify-center shrink-0">
+              <ShieldCheck className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-slate-500 mb-0.5">Active Plans</p>
+              <h3 className="text-2xl font-bold text-slate-900 leading-none">{activePlans}</h3>
+            </div>
           </div>
-          <CardContent className="p-5 flex items-center h-full relative z-10">
-            <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-100 p-3.5 rounded-full mr-4">
-              <Users className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <p className="text-[14px] font-medium text-slate-500 mb-0.5">Total Subscribers</p>
-              <div className="flex items-end gap-2">
-                <h3 className="text-[24px] font-semibold text-[#0F172A] leading-none">{totalSubscribers}</h3>
-                <span className="text-[12px] text-purple-500 font-medium mb-0.5">Users</span>
-              </div>
-            </div>
-          </CardContent>
-          <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-purple-400 to-purple-600 w-full opacity-0 group-hover:opacity-100 transition-opacity" />
         </Card>
 
-        <Card className="rounded-[20px] border-slate-100 shadow-sm hover:shadow-lg hover:scale-[1.02] transition-all duration-200 bg-white overflow-hidden h-[110px] relative group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <Clock className="h-16 w-16 text-[#F59E0B] -rotate-12 group-hover:rotate-0 transition-transform duration-300" />
+        <Card className="rounded-2xl border border-slate-200 shadow-sm bg-white overflow-hidden flex flex-col justify-center h-[100px] p-5">
+          <div className="flex items-center gap-4">
+            <div className="bg-purple-50 text-purple-600 rounded-xl h-12 w-12 flex items-center justify-center shrink-0">
+              <Clock className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold text-slate-500 mb-0.5">Expiring Soon</p>
+              <h3 className="text-2xl font-bold text-slate-900 leading-none">{expiringSoon}</h3>
+            </div>
           </div>
-          <CardContent className="p-5 flex items-center h-full relative z-10">
-            <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-100 p-3.5 rounded-full mr-4">
-              <Clock className="h-6 w-6 text-[#F59E0B]" />
-            </div>
-            <div className="flex flex-col justify-center">
-              <p className="text-[14px] font-medium text-slate-500 mb-0.5">Expiring Soon</p>
-              <div className="flex items-end gap-2">
-                <h3 className="text-[24px] font-semibold text-[#0F172A] leading-none">{expiringSoon}</h3>
-                <span className="text-[12px] text-[#F59E0B] font-medium mb-0.5">Accounts</span>
-              </div>
-            </div>
-          </CardContent>
-          <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-[#F59E0B] to-amber-500 w-full opacity-0 group-hover:opacity-100 transition-opacity" />
         </Card>
+      </div>
+
+      {/* SEARCH AND TOGGLE */}
+      <div className="flex items-center bg-white rounded-2xl border border-slate-200 shadow-sm p-2 gap-4">
+        <div className="relative flex-1 flex items-center">
+          <Search className="absolute left-3.5 h-[18px] w-[18px] text-slate-400" />
+          <Input 
+            placeholder="Search plans by name, price or duration..." 
+            className="pl-11 h-10 w-full border-0 bg-transparent focus-visible:ring-0 text-[15px] shadow-none placeholder:text-slate-400"
+          />
+        </div>
+        <div className="flex items-center gap-1 pr-2 border-l border-slate-100 pl-3">
+          <Button onClick={() => setViewMode("grid")} className={`h-[38px] w-[38px] p-0 rounded-xl transition-colors shadow-none ${viewMode === 'grid' ? 'bg-[#00A8A8] text-white hover:bg-[#009090]' : 'bg-transparent text-slate-500 hover:bg-slate-100'}`}>
+            <LayoutGrid className="h-[18px] w-[18px]" />
+          </Button>
+          <Button onClick={() => setViewMode("list")} className={`h-[38px] w-[38px] p-0 rounded-xl transition-colors shadow-none ${viewMode === 'list' ? 'bg-[#00A8A8] text-white hover:bg-[#009090]' : 'bg-transparent text-slate-500 hover:bg-slate-100'}`}>
+            <List className="h-[18px] w-[18px]" />
+          </Button>
+        </div>
       </div>
 
       {/* PLAN CARDS */}
       {plans.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-28 text-center border-2 border-dashed border-slate-200 rounded-[20px] bg-white">
-          <div className="bg-slate-50 p-6 rounded-full mb-5 border border-slate-100">
-            <PackageSearch className="h-12 w-12 text-slate-400" />
+        <div className="flex flex-col items-center justify-center py-28 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-white">
+          <div className="bg-slate-50 p-6 rounded-2xl mb-5 border border-slate-100">
+            <PackageSearch className="h-10 w-10 text-slate-400" />
           </div>
-          <h3 className="text-[20px] font-semibold text-[#0F172A] mb-2">No subscription plans found</h3>
-          <p className="text-[15px] text-slate-500 mb-8 max-w-sm">Create your first subscription plan to start offering recurring services.</p>
-          <Button onClick={openAddModal} className="bg-[#00A8A8] hover:bg-[#009090] text-white rounded-[12px] h-11 px-6 shadow-md shadow-[#00A8A8]/20 font-medium">
-            <Plus className="mr-2 h-4 w-4" /> Create New Plan
+          <h3 className="text-xl font-bold text-slate-900 mb-2">No subscription plans found</h3>
+          <p className="text-[15px] text-slate-500 mb-6 max-w-sm">Create your first subscription plan to start offering recurring services to residents.</p>
+          <Button onClick={openAddModal} className="bg-[#00A8A8] hover:bg-[#009090] text-white rounded-xl h-11 px-6 shadow-sm font-semibold transition-colors">
+            <Plus className="mr-2 h-[18px] w-[18px]" /> Create New Plan
           </Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+        <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6" : "flex flex-col gap-4"}>
           {plans.map((plan) => {
             const planNameLower = plan.name.toLowerCase();
             const isPopular = planNameLower.includes("premium");
-            const subscribersCount = Math.floor(Math.random() * 100) + 10;
-            const renewalRate = 85 + Math.floor(Math.random() * 10);
             const updatedDate = "02 Aug 2026";
+            const monthlyPriceFormatted = (plan.monthly_inr || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-            let PlanIcon = Shield;
-            if (planNameLower.includes("premium") || planNameLower.includes("spark") || planNameLower.includes("standard")) PlanIcon = Zap;
-            if (planNameLower.includes("family")) PlanIcon = Users;
-            if (planNameLower.includes("business")) PlanIcon = Building;
+            let PlanIcon = Star;
+            if (planNameLower.includes("anusha")) PlanIcon = Crown;
+            if (planNameLower.includes("premium")) PlanIcon = Diamond;
+            if (planNameLower.includes("basic")) PlanIcon = ShieldCheck;
+
+            const planFeatures = [
+              "Unlimited Orders",
+              `${Number(plan.express_discount_percent || 0).toFixed(2)}% Express Discount`,
+              plan.support_type === "Dedicated Manager" || isPopular ? "Priority Support" : "Standard Support"
+            ];
+            
+            if (plan.free_delivery || isPopular) {
+              planFeatures.push("Free Pickup & Delivery");
+            }
+
+            if (viewMode === "list") {
+              return (
+                <Card key={plan.id} className="flex flex-col lg:flex-row items-center justify-between p-5 rounded-2xl border border-slate-200 shadow-sm bg-white hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-5 w-full lg:w-[25%] mb-4 lg:mb-0">
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-xl shrink-0 ${isPopular ? 'bg-teal-50 text-[#00A8A8]' : 'bg-slate-50 text-slate-500'}`}>
+                      <PlanIcon className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-lg">{plan.name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge className="bg-emerald-50 text-emerald-600 hover:bg-emerald-50 shadow-none rounded-md px-2 py-0.5 text-[11px] font-semibold border-0">
+                          Active
+                        </Badge>
+                        {isPopular && (
+                          <Badge className="bg-amber-50 text-amber-600 hover:bg-amber-50 shadow-none rounded-md px-2 py-0.5 text-[11px] font-semibold border-0 flex items-center gap-1">
+                            <Star className="h-3 w-3 fill-amber-500" /> Popular
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="w-full lg:w-[40%] flex flex-wrap gap-2 mb-4 lg:mb-0">
+                    {planFeatures.map((feat, idx) => (
+                      <div key={idx} className="flex items-center gap-1.5 text-[13px] text-slate-600 font-medium bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">
+                        <Check className="h-3.5 w-3.5 text-[#00A8A8]" />
+                        {feat}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="w-full lg:w-[20%] text-left lg:text-right pr-0 lg:pr-6 mb-4 lg:mb-0">
+                    <div className="text-2xl font-bold text-slate-900 tracking-tight">₹{monthlyPriceFormatted}</div>
+                    <div className="text-[13px] text-slate-500 font-medium">per month</div>
+                  </div>
+
+                  <div className="w-full lg:w-[15%] flex gap-2 justify-start lg:justify-end">
+                    <Button onClick={() => openDetailsModal(plan)} className="flex-1 lg:flex-none rounded-xl h-10 px-5 font-semibold text-[13px] bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm">
+                      Details
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="inline-flex items-center justify-center w-10 h-10 p-0 rounded-xl border border-slate-200 text-slate-500 bg-white hover:bg-slate-50 shadow-sm focus-visible:outline-none transition-colors">
+                        <MoreVertical className="h-5 w-5" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-medium bg-white">
+                        <DropdownMenuItem onClick={() => openEditModal(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                          <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDuplicate(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                          <Copy className="mr-2.5 h-4 w-4 text-slate-400" /> Duplicate
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openSubscribersDrawer(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                          <Users className="mr-2.5 h-4 w-4 text-slate-400" /> Subscribers
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => confirmDelete(plan)} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[14px] mt-1">
+                          <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </Card>
+              );
+            }
 
             return (
-              <Card key={plan.id} className="rounded-[24px] border border-[#E8EDF3] shadow-sm hover:shadow-lg hover:-translate-y-1 hover:border-[#14B8A6] transition-all duration-220 overflow-hidden bg-white group flex flex-col h-full">
-                <div className="p-5 flex-1 flex flex-col">
-
+              <Card key={plan.id} className={`rounded-[24px] shadow-sm hover:shadow-md transition-shadow overflow-hidden bg-white flex flex-col h-full border ${isPopular ? 'border-[#00A8A8]/50' : 'border-slate-200'}`}>
+                {isPopular && <div className="h-1 w-full bg-[#00A8A8]" />}
+                
+                <div className="p-6 flex-1 flex flex-col">
                   {/* Top: Icon & Badges */}
-                  <div className="flex justify-between items-start mb-5">
-                    <div className="flex items-center justify-center w-[64px] h-[64px] bg-[#14B8A6]/10 group-hover:bg-[#14B8A6]/15 rounded-2xl group-hover:rotate-3 transition-all duration-220">
-                      <PlanIcon className="h-7 w-7 text-[#14B8A6] stroke-[1.5]" />
+                  <div className="flex justify-between items-start mb-6">
+                    <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${isPopular ? 'bg-teal-50' : 'bg-slate-50 border border-slate-100'}`}>
+                      <PlanIcon className={`h-6 w-6 ${isPopular ? 'text-[#00A8A8]' : 'text-slate-500'}`} />
                     </div>
-                    <div className="flex flex-col gap-1.5 items-end">
-                      <Badge variant={plan.is_deleted ? "secondary" : (plan.is_active !== false ? "default" : "secondary")} className={`h-[30px] px-[14px] text-[14px] font-medium shadow-none rounded-full ${plan.is_deleted ? "bg-slate-100 text-[#64748B]" : (plan.is_active !== false ? "bg-[#22C55E]/10 text-[#22C55E]" : "bg-slate-100 text-[#64748B]")} border-0`}>
-                        {plan.is_deleted ? "Archived" : (plan.is_active !== false ? "Active" : "Disabled")}
+                    <div className="flex gap-2 flex-col items-end">
+                      <Badge className="bg-emerald-50 text-emerald-600 hover:bg-emerald-50 shadow-none rounded-[6px] px-2 py-0.5 text-[11px] font-semibold border-0">
+                        Active
                       </Badge>
                       {isPopular && (
-                        <Badge className="bg-transparent text-[#F59E0B] shadow-none rounded-full px-0 h-[26px] text-[13px] font-medium flex items-center gap-1 border-0">
-                          <Star className="h-3 w-3 fill-[#F59E0B]" /> Most Popular
+                        <Badge className="bg-amber-50 text-amber-600 hover:bg-amber-50 shadow-none rounded-[6px] px-2 py-0.5 text-[11px] font-semibold border-0 flex items-center gap-1">
+                          <Star className="h-3 w-3 fill-amber-500" /> Popular
                         </Badge>
                       )}
                     </div>
                   </div>
 
                   {/* Plan Name */}
-                  <h3 className="text-[24px] font-semibold text-[#1F2937] truncate mb-2 leading-[30px]">{plan.name}</h3>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">{plan.name}</h3>
 
                   {/* Price */}
-                  <div className="mb-5 pb-5 border-b border-[#F1F5F9]">
+                  <div className="mb-6">
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-[32px] font-semibold tracking-tight text-[#1F2937] leading-[38px]">₹{(plan.monthly_inr || 0).toLocaleString()}</span>
-                      <span className="text-[18px] font-normal text-[#64748B] ml-1">/ month</span>
+                      <span className="text-3xl font-extrabold text-slate-900 tracking-tight">₹{monthlyPriceFormatted}</span>
+                      <span className="text-[14px] text-slate-500 font-medium">/ mo</span>
                     </div>
                   </div>
 
                   {/* Features */}
-                  <div className="space-y-[12px] mb-5">
-                    <div className="flex items-center gap-[12px]">
-                      <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#14B8A6]/10 shrink-0">
-                        <Check className="h-3 w-3 text-[#14B8A6] stroke-[3]" />
-                      </div>
-                      <span className="text-[17px] text-[#475569] font-normal leading-[24px]">Unlimited Orders</span>
-                    </div>
-                    {plan.priority_pickup && (
-                      <div className="flex items-center gap-[12px]">
-                        <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#14B8A6]/10 shrink-0">
-                          <Check className="h-3 w-3 text-[#14B8A6] stroke-[3]" />
+                  <div className="space-y-3.5 mb-8">
+                    {planFeatures.map((feat, idx) => (
+                      <div key={idx} className="flex items-start gap-3">
+                        <div className={`flex items-center justify-center w-[18px] h-[18px] rounded-full mt-0.5 shrink-0 ${isPopular ? 'bg-[#00A8A8] text-white' : 'bg-teal-50 text-[#00A8A8]'}`}>
+                          <Check className="h-[10px] w-[10px] stroke-[3]" />
                         </div>
-                        <span className="text-[17px] text-[#475569] font-normal leading-[24px]">Priority Support</span>
+                        <span className="text-[14px] text-slate-700 font-medium leading-tight">{feat}</span>
                       </div>
-                    )}
-                    {plan.free_delivery && (
-                      <div className="flex items-center gap-[12px]">
-                        <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#14B8A6]/10 shrink-0">
-                          <Check className="h-3 w-3 text-[#14B8A6] stroke-[3]" />
-                        </div>
-                        <span className="text-[17px] text-[#475569] font-normal leading-[24px]">Free Pickup & Delivery</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-[12px]">
-                      <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-[#14B8A6]/10 shrink-0">
-                        <Check className="h-3 w-3 text-[#14B8A6] stroke-[3]" />
-                      </div>
-                      <span className="text-[17px] text-[#475569] font-normal leading-[24px]">{plan.express_discount_percent || 20}% Express Discount</span>
-                    </div>
+                    ))}
                   </div>
 
-                  {/* Stats Bottom */}
-                  <div className="mt-auto grid grid-cols-2 gap-y-4 gap-x-4 bg-[#F8FAFC] p-5 rounded-[16px]">
+                  {/* Duration and Updated */}
+                  <div className="mt-auto grid grid-cols-2 gap-3 border-t border-slate-100 pt-5">
                     <div>
-                      <span className="text-[13px] font-medium text-[#64748B] block mb-0.5">Duration</span>
-                      <span className="text-[18px] font-medium text-[#111827] leading-tight">{plan.validity_days || 30} Days</span>
+                      <p className="text-[11px] text-slate-500 mb-1 font-semibold uppercase tracking-wider">Duration</p>
+                      <div className="flex items-center gap-1.5 text-[13px] font-bold text-slate-800">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        {plan.validity_days || 30} Days
+                      </div>
                     </div>
                     <div>
-                      <span className="text-[13px] font-medium text-[#64748B] block mb-0.5">Subscribers</span>
-                      <span className="text-[18px] font-medium text-[#111827] leading-tight">{subscribersCount} Users</span>
-                    </div>
-                    <div>
-                      <span className="text-[13px] font-medium text-[#64748B] block mb-0.5">Monthly Rev</span>
-                      <span className="text-[18px] font-medium text-[#14B8A6] leading-tight">₹{(subscribersCount * (plan.monthly_inr || 0)).toLocaleString()}</span>
-                    </div>
-                    <div>
-                      <span className="text-[13px] font-medium text-[#64748B] block mb-0.5">Renewal Rate</span>
-                      <span className="text-[18px] font-medium text-[#14B8A6] leading-tight">{renewalRate}%</span>
+                      <p className="text-[11px] text-slate-500 mb-1 font-semibold uppercase tracking-wider">Updated</p>
+                      <div className="flex items-center gap-1.5 text-[13px] font-bold text-slate-800">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        {updatedDate}
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Footer Buttons */}
-                <div className="p-5 pt-0 flex items-center gap-3 bg-white">
+                <div className="p-6 pt-0 flex items-center gap-2">
                   <Button
                     onClick={() => openDetailsModal(plan)}
-                    className="flex-1 bg-white border border-[#14B8A6] text-[#14B8A6] hover:bg-[#14B8A6]/5 rounded-[12px] h-[46px] font-medium text-[16px] transition-all duration-220 shadow-none"
+                    className={`flex-1 rounded-xl h-[42px] font-semibold text-[14px] shadow-sm transition-colors ${isPopular ? 'bg-[#00A8A8] hover:bg-[#009090] text-white' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                   >
                     View Details
                   </Button>
                   <DropdownMenu>
-                    <DropdownMenuTrigger className="inline-flex items-center justify-center w-[46px] h-[46px] p-0 rounded-[12px] border border-[#E5E7EB] text-[#64748B] bg-white hover:bg-slate-50 transition-all shrink-0 focus-visible:outline-none shadow-none">
+                    <DropdownMenuTrigger className="inline-flex items-center justify-center w-[42px] h-[42px] p-0 rounded-xl border border-slate-200 text-slate-500 bg-white hover:bg-slate-50 shadow-sm focus-visible:outline-none transition-colors">
                       <MoreVertical className="h-5 w-5" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-[16px] shadow-lg border-slate-100 p-1.5 font-medium">
-                      <DropdownMenuItem onClick={() => openEditModal(plan)} className="rounded-[10px] cursor-pointer py-2 hover:bg-slate-50 focus:bg-slate-50 text-[14px]">
-                        <Edit className="mr-2 h-4 w-4 text-slate-500" /> Edit Plan
+                    <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-medium bg-white">
+                      <DropdownMenuItem onClick={() => openEditModal(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                        <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDuplicate(plan)} className="rounded-[10px] cursor-pointer py-2 hover:bg-slate-50 focus:bg-slate-50 text-[14px]">
-                        <Copy className="mr-2 h-4 w-4 text-slate-500" /> Duplicate
+                      <DropdownMenuItem onClick={() => handleDuplicate(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                        <Copy className="mr-2.5 h-4 w-4 text-slate-400" /> Duplicate
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openSubscribersDrawer(plan)} className="rounded-[10px] cursor-pointer py-2 hover:bg-slate-50 focus:bg-slate-50 text-[14px]">
-                        <Users className="mr-2 h-4 w-4 text-slate-500" /> View Subscribers
+                      <DropdownMenuItem onClick={() => openSubscribersDrawer(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[14px] text-slate-700">
+                        <Users className="mr-2.5 h-4 w-4 text-slate-400" /> View Subscribers
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="rounded-[10px] cursor-pointer py-2 hover:bg-slate-50 focus:bg-slate-50 text-[14px]">
-                        <Archive className="mr-2 h-4 w-4 text-slate-500" /> Analytics
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => confirmDelete(plan)} className="rounded-[10px] cursor-pointer py-2 text-[#EF4444] hover:bg-[#EF4444]/10 focus:bg-[#EF4444]/10 focus:text-[#EF4444] text-[14px]">
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete Plan
+                      <DropdownMenuItem onClick={() => confirmDelete(plan)} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[14px] mt-1">
+                        <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
