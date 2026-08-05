@@ -142,7 +142,7 @@ export default function ResidentDashboard() {
           </article>
         </section>
 
-        <section className="rounded-3xl border border-border bg-white p-5 shadow-sm">
+        <section className="rounded-3xl border border-border bg-white p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm uppercase tracking-[0.24em] text-muted-foreground">Quick Actions</p>
@@ -156,9 +156,9 @@ export default function ResidentDashboard() {
                 <Link
                   key={action.href}
                   href={action.href}
-                  className="group flex flex-col items-center justify-center gap-2 rounded-3xl border border-slate-200 bg-slate-50 p-4 text-center text-sm font-medium text-foreground transition hover:border-slate-300 hover:bg-white"
+                  className="group flex flex-col items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-center text-sm font-medium text-foreground transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-primary/5 hover:shadow-sm"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-3xl bg-slate-100 text-slate-700">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" />
                   </div>
                   <span>{action.label}</span>
@@ -190,14 +190,14 @@ export default function ResidentDashboard() {
                   <Link
                     key={order.id}
                     href={`/resident/orders?id=${order.id}`}
-                    className="group block rounded-3xl border border-slate-200 bg-slate-50 p-4 transition hover:-translate-y-0.5 hover:shadow-sm"
+                    className="group block rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:bg-primary/5 hover:shadow-sm"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-foreground">#{order.id}</p>
                         <p className="text-xs text-muted-foreground">Placed {formatDate(order.placedDate)}</p>
                       </div>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                      <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                         {order.displayStatus}
                       </span>
                     </div>

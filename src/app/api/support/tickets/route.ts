@@ -1,15 +1,18 @@
 import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
+import { requireResident } from "@/backend/api/guards";
 import { createSupportTicket, listSupportTickets } from "@/backend/repositories/support";
 
 async function _GET(request: Request) {
+  const auth = await requireResident(request);
+  if ("error" in auth) return auth.error;
+
   try {
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || undefined;
     const priority = searchParams.get("priority") || undefined;
     const assignedTeam = searchParams.get("assignedTeam") || undefined;
     const assignedUserId = searchParams.get("assignedUserId") || undefined;
-    const residentId = searchParams.get("residentId") || undefined;
     const search = searchParams.get("search") || undefined;
     const slaBreached = searchParams.get("slaBreached") === "true";
 
@@ -18,7 +21,7 @@ async function _GET(request: Request) {
       priority,
       assignedTeam,
       assignedUserId,
-      residentId,
+      residentId: auth.session.residentId ?? undefined,
       search,
       slaBreached,
     });
@@ -33,9 +36,12 @@ async function _GET(request: Request) {
 }
 
 async function _POST(request: Request) {
+  const auth = await requireResident(request);
+  if ("error" in auth) return auth.error;
+
   try {
     const body = await request.json();
-    const { residentId, description, category, orderId, societyId, priority } = body;
+    const { description, category, orderId, societyId, priority } = body;
 
     if (!description || typeof description !== "string" || description.trim().length < 5) {
       return NextResponse.json(
@@ -45,11 +51,11 @@ async function _POST(request: Request) {
     }
 
     const ticket = await createSupportTicket({
-      residentId: residentId || "res-1",
+      residentId: auth.session.residentId!,
       description: description.trim(),
       category,
       orderId,
-      societyId,
+      societyId: societyId ?? auth.session.societyId ?? undefined,
       priority,
     });
 

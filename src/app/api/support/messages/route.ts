@@ -1,22 +1,29 @@
 import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
+import { requireSession } from "@/backend/api/guards";
 import { addTicketMessage } from "@/backend/repositories/support";
 
 async function _POST(request: Request) {
+  const auth = await requireSession(request);
+  if ("error" in auth) return auth.error;
+
   try {
     const body = await request.json();
-    const { ticketId, senderUserId, senderName, senderType, channel, message } = body;
+    const { ticketId, message } = body;
 
     if (!ticketId || !message || typeof message !== "string" || !message.trim()) {
       return NextResponse.json({ message: "Ticket ID and message body are required" }, { status: 400 });
     }
 
+    const isResident = (auth.session.roles ?? []).includes("resident");
+    const senderType = isResident ? "resident" : "support";
+
     const msg = await addTicketMessage({
       ticketId,
-      senderUserId,
-      senderName: senderName || "Staff User",
-      senderType: senderType || "support",
-      channel: channel || "customer",
+      senderUserId: auth.session.userId,
+      senderName: auth.session.fullName || "Support User",
+      senderType,
+      channel: "customer",
       message: message.trim(),
     });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { readApiJson } from "@/frontend/api-client";
+import { api, readApiJson, type AuthUser } from "@/frontend/api-client";
 
 import { useEffect, useState } from "react";
 import { ResidentShell } from "@/components/resident/resident-shell";
@@ -11,10 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Headphones, Search, PlusCircle, CheckCircle2, Clock, AlertTriangle, ArrowRight, MessageSquare, ChevronRight, Sparkles, Star } from "lucide-react";
 
-// Mock Resident Data
-const RESIDENT_ID = "res-101";
-const RESIDENT_NAME = "Anusha Kandula";
-const SOCIETY_ID = "soc-202";
+type ResidentSessionState = {
+  residentId: string | null;
+  residentName: string;
+  societyId: string | null;
+};
 
 type SupportTicketRecord = {
   id: string;
@@ -32,6 +33,11 @@ type SupportTicketRecord = {
 export default function SupportPage() {
   const [tickets, setTickets] = useState<SupportTicketRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [residentSession, setResidentSession] = useState<ResidentSessionState>({
+    residentId: null,
+    residentName: "Resident",
+    societyId: null,
+  });
 
   // Wizard state
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -47,13 +53,51 @@ export default function SupportPage() {
   const [feedback, setFeedback] = useState("");
 
   useEffect(() => {
-    fetchTickets();
+    let cancelled = false;
+
+    async function loadSession() {
+      try {
+        const { user } = await api.me();
+        const authUser = user as unknown as AuthUser;
+        if (cancelled) return;
+
+        setResidentSession({
+          residentId: authUser.residentId ?? null,
+          residentName: authUser.fullName || "Resident",
+          societyId: authUser.societyId ?? null,
+        });
+      } catch (error) {
+        console.error("Failed to load resident session:", error);
+      }
+    }
+
+    void loadSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  useEffect(() => {
+    if (!residentSession.residentId) {
+      setTickets([]);
+      setLoading(false);
+      return;
+    }
+
+    void fetchTickets();
+  }, [residentSession.residentId]);
+
   async function fetchTickets() {
+    if (!residentSession.residentId) {
+      setTickets([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
-      const res = await fetch(`/api/support/tickets?residentId=${RESIDENT_ID}`);
+      const res = await fetch(`/api/support/tickets?residentId=${encodeURIComponent(residentSession.residentId)}`);
       const data = await readApiJson(res);
       setTickets(data.tickets || []);
     } catch (e) {
@@ -70,7 +114,7 @@ export default function SupportPage() {
       const res = await fetch("/api/support/ai/suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description: issueDesc, residentName: RESIDENT_NAME }),
+        body: JSON.stringify({ description: issueDesc, residentName: residentSession.residentName }),
       });
       const data = await readApiJson(res);
       setAiSuggestion(data.analysis);
@@ -83,35 +127,39 @@ export default function SupportPage() {
   }
 
   async function handleSubmitTicket() {
+    if (!residentSession.residentId) {
+      console.error("Resident session is missing");
+      return;
+    }
+
     try {
       await fetch("/api/support/tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          residentId: RESIDENT_ID,
           description: issueDesc,
           category: aiSuggestion?.category || "Other",
-          societyId: SOCIETY_ID,
+          societyId: residentSession.societyId,
           priority: aiSuggestion?.suggestedPriority || "Medium",
         }),
       });
       setWizardStep(3);
-      fetchTickets();
+      await fetchTickets();
     } catch (e) {
       console.error(e);
     }
   }
 
   async function handleSendReply() {
-    if (!chatInput.trim() || !selectedTicket) return;
+    if (!chatInput.trim() || !selectedTicket || !residentSession.residentId) return;
     try {
       await fetch("/api/support/messages", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ticketId: selectedTicket.id,
-          senderUserId: RESIDENT_ID,
-          senderName: RESIDENT_NAME,
+          senderUserId: residentSession.residentId,
+          senderName: residentSession.residentName,
           senderType: "resident",
           channel: "customer",
           message: chatInput,
