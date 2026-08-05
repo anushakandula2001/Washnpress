@@ -65,7 +65,7 @@ export default function LandingPage() {
       {/* HEADER */}
       <header 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled ? "bg-[rgba(255,255,255,0.35)] backdrop-blur-[18px] border-b border-[rgba(255,255,255,0.2)] shadow-[0_8px_30px_rgba(0,0,0,0.04)] py-3" : "bg-transparent py-5"
+          isScrolled ? "bg-[rgba(255,255,255,0.18)] backdrop-blur-[18px] border-b border-[rgba(255,255,255,0.2)] shadow-[0_8px_30px_rgba(0,0,0,0.04)] py-3" : "bg-transparent py-5"
         }`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -74,24 +74,33 @@ export default function LandingPage() {
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-2">
-            {navLinks.map((link) => (
-              <Link 
-                key={link.name} 
-                href={link.href} 
-                className={`text-[15px] font-[600] px-[18px] py-[10px] rounded-[10px] transition-all duration-300 ease-in-out hover:-translate-y-[2px] hover:shadow-sm ${
-                  pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))
-                    ? "bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white shadow-sm"
-                    : "text-[#0E8BA8] hover:bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] hover:text-white"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
+          <nav className="hidden md:flex items-center gap-[40px]">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
+              return (
+                <Link 
+                  key={link.name} 
+                  href={link.href} 
+                  className={`relative text-[15px] py-2 transition-colors duration-300 ease-in-out hover:text-[#0A7F7B] ${
+                    isActive ? "text-[#0FA8A4] font-[700]" : "text-[#0FA8A4] font-[600]"
+                  }`}
+                >
+                  {link.name}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeNavIndicator"
+                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-[3px] w-[28px] bg-[#14C8C4] rounded-full"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button asChild className="rounded-[10px] px-6 py-[10px] h-auto bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white font-[600] hover:scale-[1.03] hover:shadow-[0_0_15px_rgba(17,184,184,0.4)] transition-all duration-300 border-0">
+            <Button asChild className="rounded-[10px] px-6 py-[10px] h-auto bg-[linear-gradient(90deg,#14C8C4,#0FA8A4)] text-white font-[600] hover:scale-[1.03] hover:shadow-[0_0_15px_rgba(17,184,184,0.4)] transition-all duration-300 border-0">
               <Link href="/login">Login</Link>
             </Button>
           </div>
@@ -115,19 +124,30 @@ export default function LandingPage() {
             exit={{ opacity: 0, y: -20 }}
             className="fixed inset-0 z-40 bg-[rgba(255,255,255,0.95)] backdrop-blur-xl pt-24 px-6 md:hidden flex flex-col gap-4"
           >
-            {navLinks.map((link) => (
-              <Link 
-                key={link.name} 
-                href={link.href} 
-                onClick={() => setMobileMenuOpen(false)} 
-                className={`text-lg font-semibold py-3 px-4 rounded-[10px] transition-all ${
-                  pathname === link.href ? "bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white" : "text-[#0E8BA8]"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
-            <Button asChild className="mt-4 rounded-[10px] w-full py-6 text-lg font-semibold bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white border-0">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href));
+              return (
+                <Link 
+                  key={link.name} 
+                  href={link.href} 
+                  onClick={() => setMobileMenuOpen(false)} 
+                  className={`relative text-lg py-3 w-fit transition-colors duration-300 ease-in-out hover:text-[#0A7F7B] ${
+                    isActive ? "text-[#0FA8A4] font-[700]" : "text-[#0FA8A4] font-[600]"
+                  }`}
+                >
+                  {link.name}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeNavIndicatorMobile"
+                      className="absolute bottom-1 left-0 h-[3px] w-[28px] bg-[#14C8C4] rounded-full"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </Link>
+              );
+            })}
+            <Button asChild className="mt-4 rounded-[10px] w-full py-6 text-lg font-semibold bg-[linear-gradient(90deg,#14C8C4,#0FA8A4)] text-white border-0">
               <Link href="/login" onClick={() => setMobileMenuOpen(false)}>Login</Link>
             </Button>
           </motion.div>
@@ -183,7 +203,7 @@ export default function LandingPage() {
                 </motion.p>
                 
                 <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-4 mb-8 w-full sm:w-auto">
-                  <Button asChild size="lg" className="rounded-full px-8 h-14 text-base font-bold bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white hover:text-white border-0 hover:-translate-y-[2px] shadow-[0_4px_14px_0_rgba(17,184,184,0.39)] hover:shadow-[0_6px_20px_rgba(17,184,184,0.6)] transition-all duration-300 w-full sm:w-auto flex items-center gap-2 group">
+                  <Button asChild size="lg" className="rounded-full px-8 h-14 text-base font-bold bg-[linear-gradient(90deg,#14C8C4,#0FA8A4)] text-white hover:text-white border-0 hover:-translate-y-[2px] shadow-[0_4px_14px_0_rgba(17,184,184,0.39)] hover:shadow-[0_6px_20px_rgba(17,184,184,0.6)] transition-all duration-300 w-full sm:w-auto flex items-center gap-2 group">
                     <Link href="/login?redirect=/resident/order">
                       Book Pickup
                       <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
@@ -216,7 +236,7 @@ export default function LandingPage() {
                 {/* Floating Particles */}
                 <motion.div animate={{ y: [-10, 20, -10], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 4, repeat: Infinity }} className="absolute top-1/4 left-1/4 w-3 h-3 rounded-full bg-white blur-[2px]" />
                 <motion.div animate={{ y: [15, -15, 15], opacity: [0.2, 0.5, 0.2] }} transition={{ duration: 5, repeat: Infinity }} className="absolute bottom-1/3 right-1/4 w-4 h-4 rounded-full bg-primary/40 blur-[3px]" />
-                <motion.div animate={{ y: [-20, 10, -20], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 6, repeat: Infinity }} className="absolute top-1/2 right-1/3 w-2 h-2 rounded-full bg-blue-300 blur-[1px]" />
+                <motion.div animate={{ y: [-20, 10, -20], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 6, repeat: Infinity }} className="absolute top-1/2 right-1/3 w-2 h-2 rounded-full bg-primary/50 blur-[1px]" />
 
                 {/* Floating Image Container */}
                 <motion.div 

@@ -200,7 +200,7 @@ export function SupportTicketDetailDrawer({
                   <div className="flex-1 space-y-4 mb-4">
                     {/* Original Description */}
                     <div className="flex gap-3 mb-6">
-                      <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold shrink-0 mt-1">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0 mt-1">
                         R
                       </div>
                       <div className="bg-muted/50 p-4 rounded-2xl rounded-tl-none shadow-sm max-w-[85%] border border-border/50 relative group">
@@ -218,7 +218,7 @@ export function SupportTicketDetailDrawer({
                       .map((msg) => (
                         <div key={msg.id} className={`flex gap-3 mb-6 ${msg.sender_type === "support" ? "justify-end" : ""}`}>
                           {msg.sender_type !== "support" && (
-                            <div className="h-8 w-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 font-bold shrink-0 mt-1">
+                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold shrink-0 mt-1">
                               {msg.sender_name?.[0] || "U"}
                             </div>
                           )}

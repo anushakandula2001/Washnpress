@@ -140,11 +140,11 @@ export function AddonServicesTab({ addons, onUpdate }: { addons: any[]; onUpdate
 
   const getIcon = (category: string) => {
     switch (category?.toLowerCase()) {
-      case "dry cleaning": return <Shirt className="h-6 w-6 text-blue-500" />;
+      case "dry cleaning": return <Shirt className="h-6 w-6 text-primary" />;
       case "delivery": return <Truck className="h-6 w-6 text-orange-500" />;
       case "garment care": return <Droplets className="h-6 w-6 text-cyan-500" />;
       case "footwear": return <Activity className="h-6 w-6 text-emerald-500" />;
-      case "cleaning": return <Droplets className="h-6 w-6 text-blue-400" />;
+      case "cleaning": return <Droplets className="h-6 w-6 text-primary" />;
       case "premium care": return <Sparkles className="h-6 w-6 text-amber-500" />;
       case "packaging": return <Package className="h-6 w-6 text-amber-600" />;
       case "home care": return <Layers className="h-6 w-6 text-purple-500" />;

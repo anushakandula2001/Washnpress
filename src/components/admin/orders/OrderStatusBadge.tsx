@@ -16,7 +16,7 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
   packed: { label: "Packed", className: "bg-amber-500/10 text-amber-700 dark:text-amber-300" },
   "out for delivery": {
     label: "Out for Delivery",
-    className: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
+    className: "bg-primary/10 text-primary dark:text-primary",
   },
   delivered: { label: "Delivered", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
   cancelled: { label: "Cancelled", className: "bg-red-500/10 text-red-700 dark:text-red-300" },

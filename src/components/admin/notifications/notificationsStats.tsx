@@ -45,8 +45,8 @@ export function NotificationStats({
       value: drafts,
       helperText: "Not sent yet",
       icon: FileText,
-      iconBg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-      accentBorder: "hover:border-blue-500/40",
+      iconBg: "bg-primary/10 text-primary dark:text-primary",
+      accentBorder: "hover:border-primary/40",
     },
   ];
 

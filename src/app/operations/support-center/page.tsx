@@ -65,7 +65,7 @@ function SupportCenterContent() {
 
   const renderStatusBadge = (status: string) => {
     const s = (status || "").toLowerCase();
-    if (s === "open") return <Badge className="bg-blue-500/10 text-blue-600 hover:bg-blue-500/20">OPEN</Badge>;
+    if (s === "open") return <Badge className="bg-primary/10 text-primary hover:bg-primary/20">OPEN</Badge>;
     if (s === "in_progress") return <Badge className="bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20">IN PROGRESS</Badge>;
     if (s === "escalated") return <Badge variant="destructive" className="flex items-center gap-1"><ShieldAlert className="h-3 w-3"/> ESCALATED</Badge>;
     if (s === "resolved") return <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20">RESOLVED</Badge>;

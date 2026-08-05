@@ -232,8 +232,8 @@ export default function BusinessManagementPage() {
                   <h3 className="text-2xl font-bold">142</h3>
                   <p className="text-xs text-muted-foreground">Across all societies</p>
                 </div>
-                <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <ShoppingBag className="h-5 w-5 text-blue-500" />
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <ShoppingBag className="h-5 w-5 text-primary" />
                 </div>
               </div>
               <div className="mt-4 flex items-center text-xs font-medium text-emerald-600">

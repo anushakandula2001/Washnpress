@@ -234,7 +234,7 @@ export function DeliveryChargesTab({ settings, onUpdate }: { settings: any; onUp
               </tr>
             </tbody>
           </table>
-          <div className="px-6 py-4 bg-blue-50/50 flex items-start gap-3 border-t border-border">
+          <div className="px-6 py-4 bg-primary/10/50 flex items-start gap-3 border-t border-border">
             <div className="h-5 w-5 rounded-full border border-[#14B8A6] text-[#14B8A6] flex items-center justify-center text-xs mt-0.5">i</div>
             <p className="text-sm text-muted-foreground">Delivery charges are applied automatically based on order value, time and conditions.</p>
           </div>
@@ -342,7 +342,7 @@ export function DeliveryChargesTab({ settings, onUpdate }: { settings: any; onUp
               </tr>
             </tbody>
           </table>
-          <div className="px-6 py-4 bg-blue-50/50 flex items-start gap-3 border-t border-border">
+          <div className="px-6 py-4 bg-primary/10/50 flex items-start gap-3 border-t border-border">
             <div className="h-5 w-5 rounded-full border border-[#14B8A6] text-[#14B8A6] flex items-center justify-center text-xs mt-0.5">i</div>
             <p className="text-sm text-muted-foreground">Taxes are calculated on the order subtotal after discounts and before final amount.</p>
           </div>

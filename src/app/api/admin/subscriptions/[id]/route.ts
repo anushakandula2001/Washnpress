@@ -40,8 +40,8 @@ async function _PUT(request: Request, context: { params: Promise<{ id: string }>
   try {
     const existingPlan = await queryOne(`SELECT * FROM plans WHERE id = $1`, [id]);
     const result = await upsertPlan(body);
-    if (existingPlan) {
-      await logPricingHistory("plan", result.name || existingPlan.name, existingPlan, result, "Plan Updated", auth.session.user.id);
+    if (existingPlan && result) {
+      await logPricingHistory("plan", result.name || existingPlan.name, existingPlan, result, "Plan Updated", auth.session.userId);
     }
     return ok({ plan: result });
   } catch (err: any) {
@@ -63,7 +63,7 @@ async function _DELETE(request: Request, context: { params: Promise<{ id: string
     const existingPlan = await queryOne(`SELECT * FROM plans WHERE id = $1`, [id]);
     if (!existingPlan) return notFound("Subscription plan not found");
     const result = await deletePlan(id);
-    await logPricingHistory("plan", existingPlan.name, existingPlan, null, "Plan Deleted", auth.session.user.id);
+    await logPricingHistory("plan", existingPlan.name, existingPlan, null, "Plan Deleted", auth.session.userId);
     return ok({ success: true, result });
   } catch (err: any) {
     return badRequest(err.message || "Failed to delete subscription plan");

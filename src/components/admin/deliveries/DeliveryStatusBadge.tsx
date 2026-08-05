@@ -10,7 +10,7 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
   },
   "out for delivery": {
     label: "Out for Delivery",
-    className: "bg-blue-500/10 text-blue-700 dark:text-blue-300",
+    className: "bg-primary/10 text-primary dark:text-primary",
   },
   delivered: { label: "Delivered", className: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
   "failed delivery": { label: "Failed Delivery", className: "bg-red-500/10 text-red-700 dark:text-red-300" },

@@ -104,6 +104,7 @@ export const api = {
 
   me: () => apiFetch<{ user: Record<string, unknown> }>("/api/auth/me"),
 
+
   profile: {
     get: () => apiFetch<Record<string, unknown>>("/api/resident/profile"),
     update: (data: Record<string, unknown>) =>

@@ -1,20 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f9ff;
-  --foreground: #111827;
+  --background: #F2FFFE;
+  --foreground: #163A4A;
   --card: #ffffff;
-  --card-foreground: #111827;
-  --muted: #edf7ff;
-  --muted-foreground: #475569;
-  --primary: #7ec9f5;
-  --primary-foreground: #0f172a;
-  --secondary: #cfeeff;
-  --secondary-foreground: #0b3b5b;
-  --destructive: #dc2626;
-  --border: #dfeefb;
-  --input: #dbeafe;
-  --ring: #7cc8f7;
+  --card-foreground: #163A4A;
+  --muted: #DDFBF9;
+  --muted-foreground: #6A7B88;
+  --primary: #14C8C4;
+  --primary-foreground: #ffffff;
+  --secondary: #1BCFC8;
+  --secondary-foreground: #ffffff;
+  --accent: #0FA8A4;
+  --accent-foreground: #ffffff;
+  --destructive: #F25F5C;
+  --border: #D7F5F4;
+  --input: #D7F5F4;
+  --ring: #14C8C4;
 }
 
 @theme inline {
@@ -39,31 +41,34 @@
 }
 
 html.dark {
-  --background: #091827;
-  --foreground: #eaf4ff;
-  --card: #112338;
-  --card-foreground: #eaf4ff;
-  --muted: #16324d;
-  --muted-foreground: #bfd8f0;
-  --primary: #8acdf8;
-  --primary-foreground: #061d34;
-  --secondary: #6bbaf1;
-  --secondary-foreground: #ebf8ff;
-  --destructive: #f87171;
-  --border: #234560;
-  --input: #1a3052;
-  --ring: #7cc8f7;
+  --background: #091a1e;
+  --foreground: #F2FFFE;
+  --card: #11262d;
+  --card-foreground: #F2FFFE;
+  --muted: #163A4A;
+  --muted-foreground: #6A7B88;
+  --primary: #14C8C4;
+  --primary-foreground: #091a1e;
+  --secondary: #0FA8A4;
+  --secondary-foreground: #F2FFFE;
+  --accent: #1BCFC8;
+  --accent-foreground: #F2FFFE;
+  --destructive: #F25F5C;
+  --border: #163A4A;
+  --input: #163A4A;
+  --ring: #14C8C4;
 }
 
-body {
-  background:
-    radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--primary) 5%, transparent), transparent 34%),
-    radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--secondary) 6%, transparent), transparent 38%),
-    linear-gradient(135deg, var(--background) 0%, color-mix(in oklab, var(--background) 82%, #ffffff) 100%);
-  color: var(--foreground);
-  font-family: var(--font-sans), "Segoe UI", sans-serif;
-  min-height: 100%;
-}
+@layer base {
+  body {
+    background:
+      radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--primary) 5%, transparent), transparent 34%),
+      radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--secondary) 6%, transparent), transparent 38%),
+      linear-gradient(135deg, var(--background) 0%, color-mix(in oklab, var(--background) 82%, #ffffff) 100%);
+    color: var(--foreground);
+    font-family: var(--font-sans), "Segoe UI", sans-serif;
+    min-height: 100%;
+  }
 
   h1,
   h2,
@@ -142,4 +147,19 @@ body {
 
 html {
   scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #F5FFFF;
+}
+::-webkit-scrollbar-thumb {
+  background: #14C8C4;
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #0FA8A4;
 }
