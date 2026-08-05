@@ -2,12 +2,12 @@ BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
   id SMALLINT PRIMARY KEY,
   name VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   phone VARCHAR(10) NOT NULL UNIQUE,
   full_name VARCHAR(120),
@@ -19,14 +19,14 @@ CREATE TABLE users (
   CHECK (phone ~ '^[6-9][0-9]{9}$')
 );
 
-CREATE TABLE user_roles (
+CREATE TABLE IF NOT EXISTS user_roles (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   role_id SMALLINT NOT NULL REFERENCES roles(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   PRIMARY KEY (user_id, role_id)
 );
 
-CREATE TABLE societies (
+CREATE TABLE IF NOT EXISTS societies (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(150) NOT NULL,
   address_line_1 VARCHAR(200),
@@ -39,7 +39,7 @@ CREATE TABLE societies (
   CHECK (status IN ('active', 'coming_soon', 'inactive'))
 );
 
-CREATE TABLE units (
+CREATE TABLE IF NOT EXISTS units (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   society_id UUID NOT NULL REFERENCES societies(id) ON DELETE CASCADE,
   unit_code VARCHAR(50) NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE units (
   CHECK (status IN ('active', 'inactive'))
 );
 
-CREATE TABLE residents (
+CREATE TABLE IF NOT EXISTS residents (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
   society_id UUID NOT NULL REFERENCES societies(id),
@@ -67,7 +67,7 @@ CREATE TABLE residents (
   CHECK (alternate_contact IS NULL OR alternate_contact ~ '^[6-9][0-9]{9}$')
 );
 
-CREATE TABLE plans (
+CREATE TABLE IF NOT EXISTS plans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tier VARCHAR(30) NOT NULL UNIQUE,
   garment_cap INTEGER NOT NULL,
@@ -80,7 +80,7 @@ CREATE TABLE plans (
   CHECK (turnaround_hours > 0)
 );
 
-CREATE TABLE subscriptions (
+CREATE TABLE IF NOT EXISTS subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   resident_id UUID NOT NULL REFERENCES residents(id),
   plan_id UUID NOT NULL REFERENCES plans(id),
@@ -96,7 +96,7 @@ CREATE TABLE subscriptions (
   CHECK (garments_used >= 0)
 );
 
-CREATE TABLE pickup_slots (
+CREATE TABLE IF NOT EXISTS pickup_slots (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   society_id UUID NOT NULL REFERENCES societies(id),
   slot_date DATE NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE pickup_slots (
   CHECK (capacity_remaining <= capacity_total)
 );
 
-CREATE TABLE pickups (
+CREATE TABLE IF NOT EXISTS pickups (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   resident_id UUID NOT NULL REFERENCES residents(id),
   society_id UUID NOT NULL REFERENCES societies(id),
@@ -126,7 +126,7 @@ CREATE TABLE pickups (
   CHECK (status IN ('scheduled', 'rescheduled', 'cancelled', 'completed'))
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   pickup_id UUID NOT NULL UNIQUE REFERENCES pickups(id),
   order_code VARCHAR(30) NOT NULL UNIQUE,
@@ -142,7 +142,7 @@ CREATE TABLE orders (
   CHECK (pickup_garment_count >= 0)
 );
 
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   category VARCHAR(60) NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE order_items (
   CHECK (quantity >= 0)
 );
 
-CREATE TABLE order_events (
+CREATE TABLE IF NOT EXISTS order_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   event_type VARCHAR(50) NOT NULL,
@@ -160,7 +160,7 @@ CREATE TABLE order_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE water_logs (
+CREATE TABLE IF NOT EXISTS water_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id UUID NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
   garment_count INTEGER NOT NULL,
@@ -172,7 +172,7 @@ CREATE TABLE water_logs (
   CHECK (baseline_liters_per_garment > 0)
 );
 
-CREATE TABLE support_tickets (
+CREATE TABLE IF NOT EXISTS support_tickets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   ticket_code VARCHAR(30) NOT NULL UNIQUE,
   order_id UUID REFERENCES orders(id),

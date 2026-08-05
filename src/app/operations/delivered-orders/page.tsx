@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -58,7 +60,7 @@ function DeliveredOrdersContent() {
       params.set("status", "DELIVERED");
       if (filters.q) params.set("q", filters.q);
       const res = await fetch(`/api/operations/orders?${params}`, { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load");
       setRows(((data.orders as Array<Record<string, unknown>>) ?? []).map(normalizeOrderRow));
     } catch (err) {

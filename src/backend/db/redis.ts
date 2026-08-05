@@ -4,10 +4,22 @@ const globalForRedis = globalThis as unknown as { redis?: Redis };
 
 function createRedis() {
   const url = process.env.REDIS_URL ?? "redis://localhost:6379";
-  return new Redis(url, {
+  const client = new Redis(url, {
     maxRetriesPerRequest: 3,
     lazyConnect: true,
+    enableOfflineQueue: false,
+    retryStrategy(times) {
+      if (times > 10) return null;
+      return Math.min(times * 200, 2000);
+    },
   });
+  client.on("error", (err) => {
+    console.error("[redis]", err.message);
+  });
+  client.on("ready", () => {
+    console.log("[redis] Redis connected");
+  });
+  return client;
 }
 
 export const redis = globalForRedis.redis ?? createRedis();

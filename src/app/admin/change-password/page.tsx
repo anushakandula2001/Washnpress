@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import React, { useState } from "react";
 import {
   KeyRound,
@@ -107,7 +109,7 @@ export default function ChangePasswordPage() {
         }),
       });
 
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to change password");
 
       setSuccess(true);

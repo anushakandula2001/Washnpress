@@ -14,10 +14,10 @@ export function SubscriptionPlans() {
     garmentsPerMonth: p.garmentCap,
     turnaround: `${p.turnaroundHours}h`,
     pickup: "Free",
-    support: p.features.includes("Priority Support") ? "Priority" : "Standard",
+    support: p.supportType,
     rollover: "—",
     current: p.isCurrent,
-    badge: p.isCurrent ? "Current Plan" : undefined,
+    isPopular: p.isPopular,
     features: p.features,
   }));
 
@@ -30,15 +30,25 @@ export function SubscriptionPlans() {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {mapped.map((plan) => (
-          <SubscriptionPlanCard
-            key={plan.id}
-            plan={plan}
-            onUpgrade={plan.current ? undefined : () => upgradePlan(plan.id)}
-          />
-        ))}
-      </div>
+      {mapped.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center shadow-sm">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
+            <span className="text-2xl">📦</span>
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 mb-1">No plans available</h3>
+          <p className="text-slate-500">There are currently no subscription plans available. Please check back later.</p>
+        </div>
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-3">
+          {mapped.map((plan) => (
+            <SubscriptionPlanCard
+              key={plan.id}
+              plan={plan}
+              onUpgrade={plan.current ? undefined : () => upgradePlan(plan.id)}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

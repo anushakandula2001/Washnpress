@@ -3,32 +3,65 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    # Host 3002 so local `npm run dev` always owns http://localhost:3000
+      target: dev
+    volumes:
+      - ..:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://washnpress:washnpress@postgres:5432/washnpress
+      - REDIS_URL=redis://redis:6379
+
     ports:
-      - "3002:3000"
-    profiles:
-      - web
+      - "3000:3000"
+
+
     env_file:
       - .env.example
+
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+    restart: unless-stopped
 
   postgres:
     image: postgres:15-alpine
+
+    restart: unless-stopped
+
     environment:
       POSTGRES_DB: washnpress
       POSTGRES_USER: washnpress
       POSTGRES_PASSWORD: washnpress
     ports:
       - "5434:5432"
+
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U washnpress -d washnpress" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
   redis:
     image: redis:7-alpine
+
+    restart: unless-stopped
     ports:
       - "6379:6379"
+
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
 volumes:
   pgdata:

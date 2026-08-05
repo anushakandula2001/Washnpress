@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   User,
@@ -64,7 +66,7 @@ export default function AdminProfilePage() {
     try {
       const res = await fetch("/api/admin/profile", { credentials: "same-origin" });
       if (res.ok) {
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (data.profile) {
           const fetched: ProfileData = {
             fullName: data.profile.fullName || initialProfile.fullName,
@@ -162,7 +164,7 @@ export default function AdminProfilePage() {
       });
 
       if (!res.ok) {
-        const errData = await res.json().catch(() => ({ message: "Update failed" }));
+        const errData = await readApiJson(res).catch(() => ({ message: "Update failed" }));
         throw new Error(errData.message || "Failed to save profile");
       }
 

@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireResident } from "@/backend/api/guards";
 import { listWalletTransactionsPaginated } from "@/backend/repositories/referrals";
 import { formatWalletDate } from "@/backend/api/transformers";
 import { ok } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const url = new URL(request.url);
@@ -17,3 +18,5 @@ export async function GET(request: Request) {
     page: data.page, limit: data.limit,
   });
 }
+
+export const GET = withErrorHandling(_GET);

@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -109,7 +111,7 @@ function AdminOrdersContent() {
       if (filters.operatorId) params.set("operatorId", filters.operatorId);
       if (filters.q) params.set("q", filters.q);
       const res = await fetch(`/api/admin/orders?${params}`, { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load");
       setRows(((data.orders as Array<Record<string, unknown>>) ?? []).map(normalizeOrderRow));
     } catch (err) {
@@ -122,7 +124,7 @@ function AdminOrdersContent() {
   const loadStats = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/orders", { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (res.ok) {
         setStatsRows(((data.orders as Array<Record<string, unknown>>) ?? []).map(normalizeOrderRow));
       }
@@ -133,7 +135,7 @@ function AdminOrdersContent() {
 
   useEffect(() => {
     void fetch("/api/admin/societies", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) =>
         setSocieties(
           ((d.societies as Array<{ id: string; name: string }>) ?? []).map((s) => ({
@@ -145,7 +147,7 @@ function AdminOrdersContent() {
       .catch(() => null);
 
     void fetch("/api/admin/operators", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) =>
         setOperators(
           ((d.operators as Array<Record<string, unknown>>) ?? []).map((o) => ({
@@ -180,7 +182,7 @@ function AdminOrdersContent() {
     }
     if (loading) return;
     void fetch(`/api/admin/orders?id=${encodeURIComponent(orderParam)}`, { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((data) => {
         if (!data.order) return;
         const o = data.order as Record<string, unknown>;

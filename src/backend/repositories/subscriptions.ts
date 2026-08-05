@@ -5,8 +5,9 @@ export async function listActivePlans() {
   const result = await query<DbPlan>(
     `SELECT id, tier, name, description, garment_cap, turnaround_hours, monthly_inr,
             quarterly_inr, yearly_inr, annual_discount_percent, max_pickups,
-            priority_pickup, free_delivery, express_discount_percent, validity_days, is_active
-     FROM plans WHERE is_active = TRUE ORDER BY monthly_inr ASC`,
+            priority_pickup, free_delivery, express_discount_percent, validity_days, is_active,
+            features, display_order, is_popular, support_type
+     FROM plans WHERE is_active = TRUE ORDER BY display_order ASC, monthly_inr ASC`,
   );
   return result.rows;
 }
@@ -15,7 +16,8 @@ export async function findPlanById(planId: string) {
   return queryOne<DbPlan>(
     `SELECT id, tier, name, description, garment_cap, turnaround_hours, monthly_inr,
             quarterly_inr, yearly_inr, annual_discount_percent, max_pickups,
-            priority_pickup, free_delivery, express_discount_percent, validity_days, is_active
+            priority_pickup, free_delivery, express_discount_percent, validity_days, is_active,
+            features, display_order, is_popular, support_type
      FROM plans WHERE id = $1`,
     [planId],
   );
@@ -25,7 +27,8 @@ export async function findPlanByTier(tier: string) {
   return queryOne<DbPlan>(
     `SELECT id, tier, name, description, garment_cap, turnaround_hours, monthly_inr,
             quarterly_inr, yearly_inr, annual_discount_percent, max_pickups,
-            priority_pickup, free_delivery, express_discount_percent, validity_days, is_active
+            priority_pickup, free_delivery, express_discount_percent, validity_days, is_active,
+            features, display_order, is_popular, support_type
      FROM plans WHERE tier = $1`,
     [tier],
   );

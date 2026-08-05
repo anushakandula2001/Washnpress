@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { useToast } from "@/components/ui/toast";
@@ -120,7 +122,7 @@ export default function AdminPickupsPage() {
       if (filters.operatorId) params.set("operatorId", filters.operatorId);
 
       const res = await fetch(`/api/admin/pickups?${params}`, { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load");
       setRows(((data.pickups as Array<Record<string, unknown>>) ?? []).map(normalizeRow));
       if (data.stats) setStats(data.stats as PickupStatsType);
@@ -138,7 +140,7 @@ export default function AdminPickupsPage() {
 
   useEffect(() => {
     void fetch("/api/admin/societies", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) =>
         setSocieties(
           ((d.societies as Array<{ id: string; name: string; city?: string }>) ?? []).map((s) => ({
@@ -150,7 +152,7 @@ export default function AdminPickupsPage() {
       )
       .catch(() => null);
     void fetch("/api/admin/operators", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) =>
         setOperators(
           ((d.operators as OperatorOpt[]) ?? []).map((o) => ({

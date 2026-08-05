@@ -27,6 +27,10 @@ export type DbPlan = {
   express_discount_percent?: string | null;
   validity_days?: number | null;
   is_active: boolean;
+  features: string[];
+  display_order: number;
+  is_popular: boolean;
+  support_type: string;
 };
 
 export type DbSubscription = {

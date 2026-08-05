@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { isOtpUsable } from "@/lib/domain";
@@ -5,7 +6,7 @@ import { ok, badRequest } from "@/backend/api/response";
 
 const schema = z.object({ otp: z.string(), issuedAtIso: z.string(), attempts: z.number().default(0) });
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
   await params;
@@ -15,3 +16,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!check.ok) return badRequest(check.reason ?? "OTP invalid");
   return ok({ verified: true });
 }
+
+export const POST = withErrorHandling(_POST);

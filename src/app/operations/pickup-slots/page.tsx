@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +40,7 @@ async function slotsApi(method: string, body?: Record<string, unknown>, params?:
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,
   });
-  const data = await res.json().catch(() => ({}));
+  const data = await readApiJson(res).catch(() => ({} as any));
   if (!res.ok) throw new Error(data.message ?? `Request failed (${res.status})`);
   return data;
 }
@@ -89,11 +91,7 @@ export default function PickupSlotsPage() {
 
       setSlots(upcomingSlots);
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Failed to load slots",
-        description: err instanceof Error ? err.message : "An error occurred",
-      });
+      toast(err instanceof Error ? err.message : "An error occurred", "error");
     } finally {
       setLoading(false);
     }
@@ -132,20 +130,12 @@ export default function PickupSlotsPage() {
 
   async function createSlot() {
     if (!societyId) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Please select a society.",
-      });
+      toast("Please select a society.", "error");
       return;
     }
     
     if (availableWindows.length === 0 || !availableWindows.includes(slotWindow)) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Selected time window is no longer available.",
-      });
+      toast("Selected time window is no longer available.", "error");
       return;
     }
 
@@ -162,21 +152,14 @@ export default function PickupSlotsPage() {
         capacityTotal: Number(capacity) || 20,
       });
       
-      toast({
-        title: "Slot created",
-        description: "Residents can book it immediately.",
-      });
+      toast("Slot created. Residents can book it immediately.", "success");
       
       // Reset form to defaults
       setCapacity("20");
       
       await load(societyId);
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Create failed",
-        description: err instanceof Error ? err.message : "Failed to create slot.",
-      });
+      toast(err instanceof Error ? err.message : "Failed to create slot.", "error");
     } finally {
       setIsSaving(false);
     }
@@ -187,28 +170,17 @@ export default function PickupSlotsPage() {
       await slotsApi("PATCH", { slotId: slot.id, isActive: !(slot.is_active !== false) });
       await load(societyId);
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Update failed",
-        description: err instanceof Error ? err.message : "Failed to update slot.",
-      });
+      toast(err instanceof Error ? err.message : "Failed to update slot.", "error");
     }
   }
 
   async function removeSlot(slotId: string) {
     try {
       await slotsApi("DELETE", undefined, { slotId });
-      toast({
-        title: "Slot removed",
-        description: "The slot has been deleted or disabled.",
-      });
+      toast("Slot removed. The slot has been deleted or disabled.", "success");
       await load(societyId);
     } catch (err) {
-      toast({
-        variant: "destructive",
-        title: "Delete failed",
-        description: err instanceof Error ? err.message : "Failed to delete slot.",
-      });
+      toast(err instanceof Error ? err.message : "Failed to delete slot.", "error");
     }
   }
 

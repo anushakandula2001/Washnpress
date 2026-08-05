@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { ok } from "@/backend/api/response";
 import { query } from "@/backend/db/pool";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
 
@@ -92,3 +93,6 @@ export async function GET(request: Request) {
 
   return ok({ results });
 }
+
+
+export const GET = withErrorHandling(_GET);

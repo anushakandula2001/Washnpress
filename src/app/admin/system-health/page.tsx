@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +27,7 @@ export default function AdminSystemHealthPage() {
   useEffect(() => {
     void fetch("/api/health")
       .then(async (res) => {
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (!res.ok) throw new Error(data.message ?? "Health check failed");
         setHealth(data as HealthResponse);
       })

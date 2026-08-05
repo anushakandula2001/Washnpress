@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { ok, badRequest, created, notFound, forbidden } from "@/backend/api/response";
@@ -56,11 +57,11 @@ async function getOperatorSocieties(userId: string, isAdmin: boolean) {
   return [];
 }
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const allowedSocieties = await getOperatorSocieties(auth.session.userId, isAdmin);
   const allowed = allowedSocieties.map((s) => s.id);
   const societyId = new URL(request.url).searchParams.get("societyId");
@@ -80,14 +81,14 @@ export async function GET(request: Request) {
   return ok({ slots, societies: allowedSocieties });
 }
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
   const parsed = createSchema.safeParse(await request.json());
   if (!parsed.success) return badRequest("Invalid request", parsed.error.flatten());
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const allowed = (await getOperatorSocieties(auth.session.userId, isAdmin)).map(s => s.id);
   if (!allowed.includes(parsed.data.societyId) && !isAdmin) {
     return forbidden("Society not assigned to this operator");
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
   return created({ slot });
 }
 
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
@@ -133,7 +134,7 @@ export async function PATCH(request: Request) {
   const existing = await findSlotById(parsed.data.slotId);
   if (!existing) return notFound("Slot not found");
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const allowed = (await getOperatorSocieties(auth.session.userId, isAdmin)).map(s => s.id);
   if (!allowed.includes(existing.society_id) && !isAdmin) {
     return forbidden("Society not assigned to this operator");
@@ -144,7 +145,7 @@ export async function PATCH(request: Request) {
   return ok({ slot });
 }
 
-export async function DELETE(request: Request) {
+async function _DELETE(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
@@ -154,7 +155,7 @@ export async function DELETE(request: Request) {
   const existing = await findSlotById(slotId);
   if (!existing) return notFound("Slot not found");
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const allowed = (await getOperatorSocieties(auth.session.userId, isAdmin)).map(s => s.id);
   if (!allowed.includes(existing.society_id) && !isAdmin) {
     return forbidden("Society not assigned to this operator");
@@ -163,3 +164,9 @@ export async function DELETE(request: Request) {
   const result = await deleteManagedSlot(slotId);
   return ok({ result });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);
+export const PATCH = withErrorHandling(_PATCH);
+export const DELETE = withErrorHandling(_DELETE);

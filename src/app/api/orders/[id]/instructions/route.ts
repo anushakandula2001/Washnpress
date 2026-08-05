@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { setOrderInstructions } from "@/backend/repositories/orders-ext";
 import { ok, badRequest, notFound } from "@/backend/api/response";
 const schema = z.object({ instructions: z.string().min(1) });
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const { id } = await params;
@@ -13,3 +14,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!order) return notFound("Order not found");
   return ok({ order });
 }
+
+export const POST = withErrorHandling(_POST);

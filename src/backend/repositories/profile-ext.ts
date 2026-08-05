@@ -72,7 +72,8 @@ export async function getTicketDetail(ticketId: string, residentId?: string) {
 
 export async function replyToTicket(ticketId: string, userId: string, body: string) {
   await query(
-    `INSERT INTO ticket_messages (ticket_id, sender_user_id, body) VALUES ($1, $2, $3)`,
+    `INSERT INTO ticket_messages (ticket_id, sender_user_id, body, message, sender_type, channel)
+     VALUES ($1, $2, $3, $3, 'resident', 'customer')`,
     [ticketId, userId, body],
   );
   await query(`UPDATE support_tickets SET updated_at = now() WHERE id = $1`, [ticketId]);

@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { selectPickupSlot, bookPickup, listResidentSlots } from "@/backend/services/pickup-service";
@@ -17,7 +18,7 @@ const scheduleSchema = z.object({
     .optional(),
 });
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   if (!auth.session.societyId) return badRequest("Society not linked to profile");
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
   return ok({ slots });
 }
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const session = auth.session;
@@ -69,3 +70,7 @@ export async function POST(request: Request) {
 
   return ok({ slot: toPickupSlot(slot) });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

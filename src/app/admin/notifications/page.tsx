@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { readApiJson } from "@/frontend/api-client";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { adminNav } from "@/lib/portal-nav";
 import {
@@ -153,8 +154,12 @@ export default function AdminNotificationsPage() {
         fetch("/api/admin/societies", { credentials: "same-origin" }),
       ]);
 
-      const bData = await bRes.json().catch(() => ({}));
-      const sData = await sRes.json().catch(() => ({}));
+      const bData = (await readApiJson(bRes).catch(() => ({}))) as {
+        broadcasts?: Array<Record<string, unknown>>;
+      };
+      const sData = (await readApiJson(sRes).catch(() => ({}))) as {
+        societies?: Society[];
+      };
 
       let apiBroadcasts: NotificationItem[] = [];
       if (bRes.ok && Array.isArray(bData.broadcasts)) {

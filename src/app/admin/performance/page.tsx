@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -28,7 +30,7 @@ export default function AdminPerformancePage() {
   useEffect(() => {
     void fetch("/api/admin/performance", { credentials: "same-origin" })
       .then(async (res) => {
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (!res.ok) throw new Error(data.message ?? "Failed");
         setOperators((data.operators as OperatorMetric[]) ?? []);
       })

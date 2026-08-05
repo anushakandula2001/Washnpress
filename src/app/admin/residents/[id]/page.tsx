@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -19,7 +21,7 @@ export default function AdminResidentProfilePage() {
     async function load() {
       try {
         const res = await fetch(`/api/admin/residents?id=${params.id}`, { credentials: "same-origin" });
-        const json = await res.json();
+        const json = await readApiJson(res);
         if (!res.ok) throw new Error(json.message ?? "Failed to load");
         if (!cancelled) setData(json);
       } catch (err) {

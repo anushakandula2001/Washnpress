@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -43,7 +45,7 @@ export default function OperationsDashboardPage() {
     async function load() {
       try {
         const res = await fetch("/api/operations/dashboard", { credentials: "same-origin" });
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (!res.ok) throw new Error(data.message ?? "Failed to load dashboard");
         if (cancelled) return;
         setKpis(data.kpis as Kpis);

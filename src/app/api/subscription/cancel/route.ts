@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireResident } from "@/backend/api/guards";
 import { cancelSubscription } from "@/backend/repositories/subscriptions";
 import { ok, unauthorized, notFound } from "@/backend/api/response";
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const session = auth.session;
@@ -12,3 +13,6 @@ export async function POST(request: Request) {
 
   return ok({ cancelled: true, status: sub.status });
 }
+
+
+export const POST = withErrorHandling(_POST);

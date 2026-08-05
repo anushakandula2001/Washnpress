@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { listPendingSocieties } from "@/backend/repositories/society-setup";
 import { getSession } from "@/backend/api/session";
 
-export async function GET() {
+async function _GET() {
   try {
     const session = await getSession();
     if (!session || !session.userId) {
@@ -17,3 +18,6 @@ export async function GET() {
     );
   }
 }
+
+
+export const GET = withErrorHandling(_GET);

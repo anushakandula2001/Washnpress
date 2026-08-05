@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import * as React from "react";
 import { ResidentProfile } from "./ResidentProfile";
 import { ResidentOrders } from "./ResidentOrders";
@@ -38,7 +40,7 @@ export function ResidentDrawer({
     setError(null);
     void fetch(`/api/admin/residents?id=${residentId}`, { credentials: "same-origin" })
       .then(async (res) => {
-        const json = await res.json();
+        const json = await readApiJson(res);
         if (!res.ok) throw new Error(json.message ?? "Failed");
         setData(json);
       })

@@ -26,6 +26,7 @@ export interface SubscriptionPlan {
   rollover: string;
   badge?: string;
   current?: boolean;
+  isPopular?: boolean;
   features: string[];
 }
 

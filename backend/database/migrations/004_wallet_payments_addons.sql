@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE TABLE wallets (
+CREATE TABLE IF NOT EXISTS wallets (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   resident_id UUID NOT NULL UNIQUE REFERENCES residents(id) ON DELETE CASCADE,
   balance_inr NUMERIC(12,2) NOT NULL DEFAULT 0,
@@ -9,7 +9,7 @@ CREATE TABLE wallets (
   CHECK (balance_inr >= 0)
 );
 
-CREATE TABLE wallet_transactions (
+CREATE TABLE IF NOT EXISTS wallet_transactions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   wallet_id UUID NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
   type VARCHAR(10) NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE wallet_transactions (
   CHECK (amount_inr > 0)
 );
 
-CREATE TABLE payment_methods (
+CREATE TABLE IF NOT EXISTS payment_methods (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   resident_id UUID NOT NULL REFERENCES residents(id) ON DELETE CASCADE,
   brand VARCHAR(30) NOT NULL,
@@ -35,7 +35,7 @@ CREATE TABLE payment_methods (
   CHECK (expiry_year >= 2024)
 );
 
-CREATE TABLE billing_invoices (
+CREATE TABLE IF NOT EXISTS billing_invoices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   resident_id UUID NOT NULL REFERENCES residents(id) ON DELETE CASCADE,
   subscription_id UUID REFERENCES subscriptions(id),
@@ -49,7 +49,7 @@ CREATE TABLE billing_invoices (
   CHECK (amount_inr >= 0)
 );
 
-CREATE TABLE addon_services (
+CREATE TABLE IF NOT EXISTS addon_services (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   code VARCHAR(50) NOT NULL UNIQUE,
   name VARCHAR(100) NOT NULL,
@@ -61,7 +61,7 @@ CREATE TABLE addon_services (
   CHECK (price_inr >= 0)
 );
 
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   resident_id UUID NOT NULL REFERENCES residents(id) ON DELETE CASCADE,
   title VARCHAR(150) NOT NULL,
@@ -70,9 +70,9 @@ CREATE TABLE notifications (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_wallet_transactions_wallet_time ON wallet_transactions(wallet_id, created_at DESC);
-CREATE INDEX idx_payment_methods_resident ON payment_methods(resident_id);
-CREATE INDEX idx_billing_invoices_resident ON billing_invoices(resident_id, billed_on DESC);
-CREATE INDEX idx_notifications_resident_read ON notifications(resident_id, is_read, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_wallet_transactions_wallet_time ON wallet_transactions(wallet_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_payment_methods_resident ON payment_methods(resident_id);
+CREATE INDEX IF NOT EXISTS idx_billing_invoices_resident ON billing_invoices(resident_id, billed_on DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_resident_read ON notifications(resident_id, is_read, created_at DESC);
 
 COMMIT;

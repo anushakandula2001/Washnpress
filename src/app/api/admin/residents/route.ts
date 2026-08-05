@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { ok, badRequest, notFound } from "@/backend/api/response";
 import {
@@ -6,7 +7,7 @@ import {
   setResidentUserStatus,
 } from "@/backend/repositories/admin";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
 
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
   return ok({ residents, total: residents.length });
 }
 
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const body = await request.json();
@@ -38,3 +39,7 @@ export async function PATCH(request: Request) {
   if (!row) return notFound("Resident not found");
   return ok({ user: row });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

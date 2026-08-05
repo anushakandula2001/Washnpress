@@ -1,13 +1,14 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { ok, forbidden, notFound } from "@/backend/api/response";
 import { listOrdersAdmin } from "@/backend/repositories/admin";
 import { listOperatorSocietyIds } from "@/backend/repositories/operations";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const assignedSocieties = isAdmin ? [] : await listOperatorSocietyIds(auth.session.userId);
 
   if (!isAdmin && assignedSocieties.length === 0) {
@@ -56,3 +57,6 @@ export async function GET(request: Request) {
     }),
   });
 }
+
+
+export const GET = withErrorHandling(_GET);

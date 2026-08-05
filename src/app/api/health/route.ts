@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { checkDbConnection } from "@/backend/db/pool";
 import { checkRedisConnection } from "@/backend/db/redis";
 import { ok, serverError } from "@/backend/api/response";
 
-export async function GET() {
+async function _GET() {
   try {
     const [db, redis] = await Promise.all([checkDbConnection(), checkRedisConnection()]);
 
@@ -20,3 +21,6 @@ export async function GET() {
     return serverError("Health check failed");
   }
 }
+
+
+export const GET = withErrorHandling(_GET);

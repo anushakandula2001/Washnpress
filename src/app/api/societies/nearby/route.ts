@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { listSocietiesNearby } from "@/backend/repositories/societies-ext";
 import { ok, badRequest } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const url = new URL(request.url);
   const lat = parseFloat(url.searchParams.get("lat") ?? "");
   const lng = parseFloat(url.searchParams.get("lng") ?? "");
@@ -10,3 +11,5 @@ export async function GET(request: Request) {
   const societies = await listSocietiesNearby(lat, lng, radius);
   return ok({ societies });
 }
+
+export const GET = withErrorHandling(_GET);

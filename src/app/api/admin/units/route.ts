@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { z } from "zod";
 import { listUnits, createUnit } from "@/backend/repositories/admin";
@@ -9,14 +10,14 @@ const schema = z.object({
   baseDrawInr: z.number().optional(), revenueSharePercent: z.number().optional(),
 });
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const societyId = new URL(request.url).searchParams.get("societyId") ?? undefined;
   return ok({ units: await listUnits(societyId) });
 }
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -24,3 +25,6 @@ export async function POST(request: Request) {
   const unit = await createUnit(parsed.data);
   return created({ unit });
 }
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

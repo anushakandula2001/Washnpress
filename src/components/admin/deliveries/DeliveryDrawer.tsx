@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import * as React from "react";
 import Link from "next/link";
 import {
@@ -244,7 +246,7 @@ function NotesTab({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId, note: note.trim() }),
       });
-      const json = await res.json();
+      const json = await readApiJson(res);
       if (!res.ok) throw new Error(json.message ?? "Save failed");
       toast("Note saved", "success");
       setNote("");
@@ -363,7 +365,7 @@ export function DeliveryDrawer({
     setError(null);
     void fetch(`/api/admin/orders?orderCode=${delivery.order_code}`, { credentials: "same-origin" })
       .then(async (res) => {
-        const json = await res.json();
+        const json = await readApiJson(res);
         if (!res.ok) throw new Error(json.message ?? "Failed");
         setDetail(json);
       })

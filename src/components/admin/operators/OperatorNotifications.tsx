@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useState } from "react";
 import { Bell, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +33,7 @@ export function OperatorNotifications({ data }: { data: Record<string, unknown> 
           operatorUserId: op.user_id ?? op.id,
         }),
       });
-      const json = await res.json();
+      const json = await readApiJson(res);
       if (!res.ok) throw new Error(json.message ?? "Send failed");
       toast("Notification sent to operator", "success");
       setTitle("");

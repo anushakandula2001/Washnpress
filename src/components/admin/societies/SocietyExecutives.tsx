@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,7 +23,7 @@ export function SocietyExecutives({ societyId }: { societyId: string }) {
           `/api/operations/master?type=executives&societyId=${societyId}`,
           { credentials: "same-origin" },
         );
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (!res.ok) throw new Error(data.message ?? "Failed to load executives");
         if (!cancelled) setRows((data.executives as ExecutiveRow[]) ?? []);
       } catch (err) {

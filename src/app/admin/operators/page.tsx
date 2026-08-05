@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Button } from "@/components/ui/button";
@@ -132,7 +134,7 @@ export default function OperatorsAdminPage() {
     setError(null);
     try {
       const res = await fetch("/api/admin/operators", { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load");
       setRows(((data.operators as Array<Record<string, unknown>>) ?? []).map(normalizeRow));
     } catch (err) {
@@ -144,7 +146,7 @@ export default function OperatorsAdminPage() {
 
   useEffect(() => {
     void fetch("/api/admin/societies", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) =>
         setSocieties(
           ((d.societies as Array<{ id: string; name: string; city?: string }>) ?? []).map((s) => ({
@@ -194,7 +196,7 @@ export default function OperatorsAdminPage() {
       body: JSON.stringify({ operatorId: id, status }),
     });
     if (!res.ok) {
-      const data = await res.json();
+      const data = await readApiJson(res);
       toast(data.message ?? "Update failed", "error");
       return;
     }

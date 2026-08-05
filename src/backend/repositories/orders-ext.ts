@@ -1,4 +1,5 @@
 import { query, queryOne } from "@/backend/db/pool";
+import { publishEvent } from "@/backend/lib/realtime";
 import { findOrderByCode, listOrderEvents, listOrderItems } from "@/backend/repositories/orders";
 
 export async function getOrderTracking(orderCode: string, residentId?: string) {
@@ -104,7 +105,10 @@ export async function updateOrderStatus(orderCode: string, status: string, actor
        VALUES ($1, 'status_change', $2::jsonb, $3)`,
       [fallback.id, JSON.stringify({ status }), actorUserId ?? null],
     );
-    return findOrderByCode(orderCode);
+    const finalOrder = await findOrderByCode(orderCode);
+    publishEvent("sync:operations", "order_status_updated", { orderCode, status });
+    publishEvent("sync:admin", "order_status_updated", { orderCode, status });
+    return finalOrder;
   }
 
   await query(
@@ -122,7 +126,11 @@ export async function updateOrderStatus(orderCode: string, status: string, actor
       : `Your order ${orderCode} is now "${status}".`;
   await createResidentNotification(order.resident_id, title, body);
 
-  return findOrderByCode(orderCode);
+  const finalOrder = await findOrderByCode(orderCode);
+  publishEvent(`sync:resident:${order.resident_id}`, "order_status_updated", { orderCode, status });
+  publishEvent("sync:operations", "order_status_updated", { orderCode, status });
+  publishEvent("sync:admin", "order_status_updated", { orderCode, status });
+  return finalOrder;
 }
 
 export async function setOrderGarments(

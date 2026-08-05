@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import {
   Search,
   RefreshCw,
@@ -19,6 +19,7 @@ import {
   X,
   ArrowRight,
   Sparkles,
+  Scissors
 } from "lucide-react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { operationsNav } from "@/lib/portal-nav";
@@ -36,7 +37,7 @@ export const PIPELINE_STAGES = [
     bgLight: "rgba(245,158,11,0.12)",
     statuses: ["Picked Up"],
     nextStatus: "In Wash",
-    nextAction: "Start Washing",
+    nextAction: "Start Washing →",
   },
   {
     id: "washing",
@@ -46,7 +47,7 @@ export const PIPELINE_STAGES = [
     bgLight: "rgba(0,168,168,0.12)",
     statuses: ["In Wash"],
     nextStatus: "Dry",
-    nextAction: "Start Drying",
+    nextAction: "Start Drying →",
   },
   {
     id: "drying",
@@ -56,7 +57,7 @@ export const PIPELINE_STAGES = [
     bgLight: "rgba(14,165,233,0.12)",
     statuses: ["Dry"],
     nextStatus: "Iron",
-    nextAction: "Start Ironing",
+    nextAction: "Start Ironing →",
   },
   {
     id: "ironing",
@@ -65,8 +66,8 @@ export const PIPELINE_STAGES = [
     color: "#a855f7",
     bgLight: "rgba(168,85,247,0.12)",
     statuses: ["Iron"],
-    nextStatus: "Out for Delivery",
-    nextAction: "Pass QC & Pack",
+    nextStatus: "QC Hold",
+    nextAction: "Start QC →",
   },
   {
     id: "qc_hold",
@@ -76,24 +77,25 @@ export const PIPELINE_STAGES = [
     bgLight: "rgba(239,68,68,0.12)",
     statuses: ["QC Hold"],
     nextStatus: "In Wash",
-    nextAction: "Re-process (Wash)",
+    nextAction: "Complete QC →",
   },
 ] as const;
 
-type StageId = (typeof PIPELINE_STAGES)[number]["id"];
+type StageId = string;
 
-function getStageForStatus(status: string): typeof PIPELINE_STAGES[number] | null {
-  return (
-    PIPELINE_STAGES.find((s) => (s.statuses as readonly string[]).includes(status)) ?? null
-  );
-}
-
-function getStageIndex(status: string): number {
-  const idx = PIPELINE_STAGES.findIndex((s) =>
-    (s.statuses as readonly string[]).includes(status),
-  );
-  return idx === -1 ? 0 : idx;
-}
+export type StageData = {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  bgLight: string;
+  statuses: readonly string[];
+  nextStatus: string;
+  nextAction: string;
+  date?: string;
+  time?: string;
+  operator?: string;
+};
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -114,18 +116,152 @@ type ProcessingOrder = {
   estimatedCompletion: string;
   assignedOperator: string;
   updatedAt: string;
+  startedTime: string;
+  elapsedTime: string;
+  pipelineStages: StageData[];
 };
 
 function mapRawOrder(row: Record<string, unknown>): ProcessingOrder {
   const status = String(row.status ?? "");
-  const stage = getStageForStatus(status);
+  const code = String(row.order_code ?? "");
+  
+  // Deterministic mock generation based on order code
+  const isUrgent = code.includes("5") || code.includes("1");
+  const isExpress = code.includes("2") || code.includes("4");
+  const priority: Priority = isUrgent ? "urgent" : isExpress ? "express" : "normal";
+
+  const hasStain = code.includes("3") || code.includes("6");
+  const hasAlteration = code.includes("7");
+  const hasFolding = code.includes("8") || code.includes("9");
+
+  const pipeline: StageData[] = [...PIPELINE_STAGES];
+
+  if (hasStain) {
+    pipeline.push({
+      id: "stain_removal", label: "Stain Removal", icon: Sparkles, color: "#ec4899", bgLight: "rgba(236,72,153,0.12)", statuses: ["Stain Removal"], nextStatus: "In Wash", nextAction: "Complete Stain Removal →"
+    });
+  }
+  if (hasAlteration) {
+    pipeline.push({
+      id: "alteration", label: "Alteration", icon: Scissors, color: "#f43f5e", bgLight: "rgba(244,63,94,0.12)", statuses: ["Alteration"], nextStatus: "Packing", nextAction: "Complete Alteration →"
+    });
+  }
+  if (hasFolding) {
+    pipeline.push({
+      id: "folding", label: "Folding", icon: Package, color: "#3b82f6", bgLight: "rgba(59,130,246,0.12)", statuses: ["Folding"], nextStatus: "Packing", nextAction: "Pack Order →"
+    });
+  }
+  
+  if (hasAlteration || hasFolding) {
+      pipeline.push({
+        id: "packing", label: "Packing", icon: Package, color: "#10b981", bgLight: "rgba(16,185,129,0.12)", statuses: ["Packing"], nextStatus: "Ready for Dispatch", nextAction: "Ready for Dispatch →"
+      });
+  }
+
   const flatParts = [row.tower_block, row.unit_number].filter(Boolean);
 
-  const code = String(row.order_code ?? "");
-  const priority: Priority = "normal";
-  const operator = "Unassigned";
+  let stageIndex = pipeline.findIndex((s) => s.statuses.includes(status));
+  if (stageIndex === -1 && status === "Delivered") {
+      stageIndex = pipeline.length;
+  } else if (stageIndex === -1) {
+      stageIndex = 0;
+  }
+  const stage = pipeline[stageIndex];
+  
+  let statusHistory: Array<{status: string, time: string}> = [];
+  try {
+    if (Array.isArray(row.status_history)) {
+      statusHistory = row.status_history;
+    } else if (typeof row.status_history === "string") {
+      statusHistory = JSON.parse(row.status_history);
+    }
+  } catch (e) {
+    // Ignore
+  }
+
+  const enrichedPipeline = pipeline.map((s, idx) => {
+    let stageTimestamp = "";
+    for (const st of statusHistory) {
+      if (s.statuses.includes(st.status) && st.time) {
+        stageTimestamp = st.time;
+        break;
+      }
+    }
+    
+    if (idx === stageIndex && !stageTimestamp && row.updated_at) {
+      stageTimestamp = String(row.updated_at);
+    }
+
+    if (!stageTimestamp) {
+      return {
+        ...s,
+        date: "—",
+        time: "—",
+        operator: "—",
+      };
+    }
+
+    const dt = new Date(stageTimestamp);
+    if (isNaN(dt.getTime())) {
+      return {
+        ...s,
+        date: "—",
+        time: "—",
+        operator: "—",
+      };
+    }
+
+    return {
+      ...s,
+      date: dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
+      time: dt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }).toUpperCase(),
+      operator: "Operator",
+    };
+  });
+
   const servicesList: string[] = [];
-  const etaStr = "TBD";
+  if (hasStain) servicesList.push("Stain Removal");
+  if (hasAlteration) servicesList.push("Alteration");
+  if (hasFolding) servicesList.push("Folding");
+
+  let elapsedTime = "—";
+  let estimatedCompletion = "—";
+  let startedTime = "—";
+  let activeStageRawTime = "";
+
+  if (stage) {
+    for (const st of statusHistory) {
+      if (stage.statuses.includes(st.status) && st.time) {
+        activeStageRawTime = st.time;
+        break;
+      }
+    }
+  }
+  if (!activeStageRawTime && row.updated_at) {
+    activeStageRawTime = String(row.updated_at);
+  }
+
+  if (activeStageRawTime) {
+    const activeDt = new Date(activeStageRawTime);
+    if (!isNaN(activeDt.getTime())) {
+      startedTime = activeDt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }).toUpperCase();
+      
+      const now = new Date();
+      const diffMs = Math.max(0, now.getTime() - activeDt.getTime());
+      const diffMins = Math.floor(diffMs / 60000);
+      
+      if (diffMins < 60) {
+        elapsedTime = `${diffMins} Minutes`;
+      } else {
+        const hrs = Math.floor(diffMins / 60);
+        const mins = diffMins % 60;
+        elapsedTime = `${hrs} hr ${mins} min`;
+      }
+      
+      const etaDt = new Date(activeDt.getTime() + 4 * 60 * 60 * 1000);
+      estimatedCompletion = etaDt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }).toUpperCase();
+    }
+  }
 
   return {
     id: code,
@@ -135,13 +271,16 @@ function mapRawOrder(row: Record<string, unknown>): ProcessingOrder {
     priority,
     services: servicesList,
     currentStatus: status,
-    stageId: (stage?.id ?? null) as StageId | null,
-    stageIndex: getStageIndex(status),
+    stageId: stage?.id ?? null,
+    stageIndex,
     nextStatus: stage?.nextStatus ?? null,
     nextAction: stage?.nextAction ?? null,
-    estimatedCompletion: etaStr,
-    assignedOperator: operator,
+    estimatedCompletion,
+    assignedOperator: enrichedPipeline[stageIndex]?.operator || "Operator",
     updatedAt: String(row.updated_at ?? ""),
+    startedTime,
+    elapsedTime,
+    pipelineStages: enrichedPipeline,
   };
 }
 
@@ -170,20 +309,20 @@ function ServiceChip({ label }: { label: string }) {
   );
 }
 
-function PipelineTimeline({ stageIndex, stageId }: { stageIndex: number; stageId: StageId | null }) {
+function PipelineTimeline({ stages, stageIndex, stageId }: { stages: StageData[]; stageIndex: number; stageId: string | null }) {
   return (
-    <div className="relative flex items-center gap-0 overflow-x-auto py-1">
-      {PIPELINE_STAGES.map((stage, idx) => {
+    <div className="relative flex items-start gap-0 overflow-x-auto py-1 scrollbar-thin">
+      {stages.map((stage, idx) => {
         const isDone = idx < stageIndex;
         const isActive = idx === stageIndex && stage.id === stageId;
         const isPending = idx > stageIndex;
         const Icon = stage.icon;
-        const isLast = idx === PIPELINE_STAGES.length - 1;
+        const isLast = idx === stages.length - 1;
 
         return (
-          <div key={stage.id} className="flex min-w-0 flex-1 items-center">
+          <div key={stage.id} className="flex min-w-0 flex-1 items-start">
             {/* Node */}
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1 min-w-[72px] shrink-0">
               <div
                 className={cn(
                   "relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300",
@@ -218,9 +357,10 @@ function PipelineTimeline({ stageIndex, stageId }: { stageIndex: number; stageId
                   />
                 )}
               </div>
+              
               <span
                 className={cn(
-                  "hidden w-14 text-center text-[9px] font-medium leading-tight sm:block",
+                  "w-16 text-center text-[9px] font-medium leading-tight whitespace-normal",
                   isDone && "text-emerald-600 dark:text-emerald-400",
                   isActive && "font-bold",
                   isPending && "text-muted-foreground",
@@ -229,10 +369,26 @@ function PipelineTimeline({ stageIndex, stageId }: { stageIndex: number; stageId
               >
                 {stage.label}
               </span>
+
+              {/* Timestamp and Operator */}
+              <div className="flex flex-col items-center text-center mt-0.5 space-y-1">
+                {isDone || isActive ? (
+                  <>
+                    <div className="flex flex-col text-[10px] text-muted-foreground font-medium leading-tight">
+                      <span>{stage.date}</span>
+                      <span>{stage.time}</span>
+                    </div>
+                    
+                  </>
+                ) : (
+                  <span className="text-muted-foreground text-xs mt-1">--</span>
+                )}
+              </div>
             </div>
+            
             {/* Connector line */}
             {!isLast && (
-              <div className="mx-0.5 h-0.5 flex-1" style={{
+              <div className="mt-3.5 h-0.5 flex-1 min-w-[12px]" style={{
                 background: isDone
                   ? "linear-gradient(to right, #10b981, #10b981)"
                   : isActive
@@ -267,7 +423,7 @@ function SkeletonCard() {
   );
 }
 
-function OrderCard({
+const OrderCard = memo(function OrderCard({
   order,
   isBusy,
   onAdvance,
@@ -276,7 +432,7 @@ function OrderCard({
   isBusy: boolean;
   onAdvance: (id: string) => void;
 }) {
-  const stage = order.stageId ? PIPELINE_STAGES.find((s) => s.id === order.stageId) : null;
+  const stage = order.stageId ? order.pipelineStages.find((s) => s.id === order.stageId) : null;
 
   return (
     <div
@@ -314,30 +470,40 @@ function OrderCard({
         </div>
 
         {/* Pipeline timeline */}
-        <div className="mt-4">
-          <PipelineTimeline stageIndex={order.stageIndex} stageId={order.stageId} />
+        <div className="mt-5 mb-2">
+          <PipelineTimeline stages={order.pipelineStages} stageIndex={order.stageIndex} stageId={order.stageId} />
         </div>
 
         {/* Footer row */}
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-            {/* Current stage */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+          
+          <div className="flex flex-wrap items-center gap-6 text-xs">
             {stage && (
-              <span className="flex items-center gap-1.5 font-medium" style={{ color: stage.color }}>
-                <stage.icon className="h-3.5 w-3.5" />
-                {order.currentStatus}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-muted-foreground/70 uppercase text-[9px] tracking-wider font-bold mb-0.5">Current Stage</span>
+                <span className="font-semibold text-sm" style={{ color: stage.color }}>
+                  {stage.label}
+                </span>
+              </div>
             )}
-            {/* ETA */}
-            <span className="flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5" />
-              ETA {order.estimatedCompletion}
-            </span>
-            {/* Operator */}
-            <span className="flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5" />
-              {order.assignedOperator}
-            </span>
+            
+            <div className="w-px h-8 bg-border hidden sm:block" />
+            
+            <div className="flex flex-col">
+              <span className="text-muted-foreground/70 uppercase text-[9px] tracking-wider font-bold mb-0.5">Started</span>
+              <span className="font-medium text-foreground text-sm">{order.startedTime}</span>
+            </div>
+            
+            <div className="flex flex-col">
+              <span className="text-muted-foreground/70 uppercase text-[9px] tracking-wider font-bold mb-0.5">ETA</span>
+              <span className="font-medium text-foreground text-sm">{order.estimatedCompletion}</span>
+            </div>
+            
+            <div className="flex flex-col">
+              <span className="text-muted-foreground/70 uppercase text-[9px] tracking-wider font-bold mb-0.5">Elapsed</span>
+              <span className="font-medium text-foreground text-sm">{order.elapsedTime}</span>
+            </div>
+            
           </div>
 
           {/* Action button */}
@@ -347,7 +513,7 @@ function OrderCard({
               onClick={() => onAdvance(order.id)}
               disabled={isBusy}
               className={cn(
-                "inline-flex min-w-[140px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150",
+                "inline-flex min-w-[140px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 mt-2 lg:mt-0",
                 "hover:brightness-110 hover:shadow-md active:scale-95",
                 "disabled:cursor-not-allowed disabled:opacity-50",
               )}
@@ -361,7 +527,7 @@ function OrderCard({
               {isBusy ? "Updating…" : order.nextAction}
             </button>
           ) : (
-            <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-2 lg:mt-0">
               <CheckCircle2 className="h-4 w-4" />
               Complete
             </span>
@@ -370,7 +536,12 @@ function OrderCard({
       </div>
     </div>
   );
-}
+}, (prev, next) => {
+  return prev.order.id === next.order.id 
+    && prev.order.currentStatus === next.order.currentStatus
+    && prev.order.updatedAt === next.order.updatedAt
+    && prev.isBusy === next.isBusy;
+});
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 
@@ -410,13 +581,8 @@ export default function ProcessingCenterPage({ initialStage }: { initialStage?: 
     try {
       const data = await api.operations.queue();
       const mapped = data.queue
-        .filter((row) => {
-          const status = String(row.status ?? "");
-          const stage = getStageForStatus(status);
-          // Only include orders that are in the processing pipeline (not delivered)
-          return stage !== null;
-        })
-        .map(mapRawOrder);
+        .map(mapRawOrder)
+        .filter((order) => order.stageId !== null);
       setOrders(mapped);
       setLastRefresh(new Date());
       if (silent) {
@@ -444,8 +610,10 @@ export default function ProcessingCenterPage({ initialStage }: { initialStage?: 
     setBusyId(id);
     try {
       await api.operations.updateStatus(order.id, order.nextStatus);
-      setOrders((prev) => prev.filter((o) => o.id !== id));
-      showToast(`✓ ${order.id}: ${order.nextAction} done`);
+      // Optimistic update: Just reload the queue rather than complex state mutation so mock data regenerates nicely.
+      // Doing this silently preserves scroll position thanks to React.memo filtering re-renders
+      await loadQueue(true);
+      showToast(`✓ ${order.id}: Advanced to next stage`);
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Status update failed", "error");
     } finally {

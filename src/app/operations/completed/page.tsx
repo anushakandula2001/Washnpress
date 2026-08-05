@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { operationsNav } from "@/lib/portal-nav";
@@ -24,7 +26,7 @@ export default function CompletedOrdersPage() {
 
   useEffect(() => {
     fetch("/api/operations/completed", { credentials: "same-origin" })
-      .then((res) => res.json())
+      .then((res) => readApiJson(res))
       .then((data) => setOrders(data.completed || []))
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));

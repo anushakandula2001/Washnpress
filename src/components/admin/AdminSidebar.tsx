@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -101,7 +103,7 @@ function NavGroup({
     return (
       <div className="space-y-0.5">
         {group.items.map((item) => (
-          <NavLink key={item.href} item={item} collapsed={collapsed} onNavigate={onNavigate} />
+          <NavLink key={`${item.href}-${item.label}`} item={item} collapsed={collapsed} onNavigate={onNavigate} />
         ))}
       </div>
     );
@@ -111,7 +113,7 @@ function NavGroup({
     return (
       <div className="space-y-1 border-t border-border/40 pt-2 first:border-0 first:pt-0">
         {group.items.map((item) => (
-          <NavLink key={item.href} item={item} collapsed onNavigate={onNavigate} />
+          <NavLink key={`${item.href}-${item.label}`} item={item} collapsed onNavigate={onNavigate} />
         ))}
       </div>
     );
@@ -136,7 +138,7 @@ function NavGroup({
         <div className="overflow-hidden">
           <div className="space-y-0.5 pb-1">
             {group.items.map((item) => (
-              <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+              <NavLink key={`${item.href}-${item.label}`} item={item} onNavigate={onNavigate} />
             ))}
           </div>
         </div>
@@ -172,7 +174,7 @@ function SidebarSearch({ collapsed, onResult }: { collapsed?: boolean; onResult?
     setLoading(true);
     const delayDebounce = setTimeout(() => {
       fetch(`/api/admin/search?q=${encodeURIComponent(term)}`)
-        .then((res) => res.json())
+        .then((res) => readApiJson(res))
         .then((data) => {
           if (data && data.results) {
             setDbResults(data.results);
@@ -244,7 +246,7 @@ function SidebarFooter({ collapsed }: { collapsed?: boolean }) {
 
   useEffect(() => {
     void fetch("/api/health")
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) => {
         setHealth({
           db: d.services?.database ?? "unknown",

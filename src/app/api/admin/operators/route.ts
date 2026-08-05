@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { ok, notFound, badRequest } from "@/backend/api/response";
 import {
@@ -7,7 +8,7 @@ import {
 } from "@/backend/repositories/admin";
 import { query } from "@/backend/db/pool";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const id = new URL(request.url).searchParams.get("id");
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
   return ok({ operators: await listOperatorsDetailed() });
 }
 
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const body = await request.json();
@@ -48,3 +49,7 @@ export async function PATCH(request: Request) {
 
   return badRequest("Nothing to update");
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

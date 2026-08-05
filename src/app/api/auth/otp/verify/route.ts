@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { cookies } from "next/headers";
 import { otpVerifySchema, verifyOtp } from "@/backend/services/auth-service";
 import { ok, badRequest } from "@/backend/api/response";
 import { SESSION_COOKIE } from "@/backend/api/session";
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   try {
     const body = await request.json();
     const parsed = otpVerifySchema.safeParse(body);
@@ -26,3 +27,6 @@ export async function POST(request: Request) {
     return badRequest(error instanceof Error ? error.message : "OTP verification failed");
   }
 }
+
+
+export const POST = withErrorHandling(_POST);

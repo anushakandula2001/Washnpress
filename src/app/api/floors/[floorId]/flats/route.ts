@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { getFlatsByFloor } from "@/backend/repositories/society-setup";
 
-export async function GET(
+async function _GET(
   _request: Request,
   { params }: { params: Promise<{ floorId: string }> }
 ) {
@@ -16,3 +17,6 @@ export async function GET(
     );
   }
 }
+
+
+export const GET = withErrorHandling(_GET);

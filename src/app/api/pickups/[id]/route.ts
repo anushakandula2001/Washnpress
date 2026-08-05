@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { cancelPickup, findPickupById } from "@/backend/repositories/pickups-ext";
@@ -7,7 +8,7 @@ import { ok, badRequest, notFound } from "@/backend/api/response";
 
 const patchSchema = z.object({ slotId: z.string().uuid() });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const { id } = await params;
@@ -21,7 +22,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const { id } = await params;
@@ -33,3 +34,6 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return badRequest(e instanceof Error ? e.message : "Cancel failed");
   }
 }
+
+export const PATCH = withErrorHandling(_PATCH);
+export const DELETE = withErrorHandling(_DELETE);

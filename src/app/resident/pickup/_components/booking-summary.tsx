@@ -90,10 +90,12 @@ export function BookingSummary({
   const { transition } = useMotionPrefs();
   const { profile } = useResident();
   const itemCount = totalGarmentCount(garments);
-  const weight = estimateWeightKg(garments, garmentOptions.length ? garmentOptions : undefined);
+  const weight = estimateWeightKg(garments, garmentOptions);
   const charges = computeCharges(
     selectedServiceIds,
-    serviceOptions.length ? serviceOptions : undefined,
+    garments,
+    garmentOptions,
+    serviceOptions,
     taxRate,
     deliveryFee,
   );

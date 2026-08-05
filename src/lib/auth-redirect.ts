@@ -2,9 +2,10 @@ import type { AuthUser } from "@/frontend/api-client";
 
 export type PortalRole = "resident" | "operator" | "admin";
 
-export function primaryRole(roles: string[]): PortalRole {
-  if (roles.includes("admin")) return "admin";
-  if (roles.includes("operator")) return "operator";
+export function primaryRole(roles: string[] | null | undefined): PortalRole {
+  const list = roles ?? [];
+  if (list.includes("admin")) return "admin";
+  if (list.includes("operator")) return "operator";
   return "resident";
 }
 

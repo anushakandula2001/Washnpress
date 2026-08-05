@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { getSession } from "@/backend/api/session";
 import { addTicketMessage } from "@/backend/repositories/support-hub";
 
-export async function POST(
+async function _POST(
   request: Request,
   { params }: { params: Promise<{ ticketId: string }> }
 ) {
@@ -30,3 +31,6 @@ export async function POST(
     );
   }
 }
+
+
+export const POST = withErrorHandling(_POST);

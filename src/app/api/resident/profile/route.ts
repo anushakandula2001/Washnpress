@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { findResidentProfile, updateResidentProfile } from "@/backend/repositories/residents";
 import { ok, unauthorized, badRequest, notFound } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const session = auth.session;
@@ -37,7 +38,7 @@ const updateSchema = z.object({
   preferredWindows: z.array(z.enum(["Morning", "Afternoon", "Evening"])).optional(),
 });
 
-export async function PUT(request: Request) {
+async function _PUT(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const session = auth.session;
@@ -57,3 +58,7 @@ export async function PUT(request: Request) {
 
   return ok({ profile });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PUT = withErrorHandling(_PUT);

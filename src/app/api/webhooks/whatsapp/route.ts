@@ -1,5 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { ok } from "@/backend/api/response";
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const payload = await request.json();
   return ok({ received: true, channel: "whatsapp", payload });
 }
+
+export const POST = withErrorHandling(_POST);

@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { query, queryOne } from "@/backend/db/pool";
 import { ok, badRequest, notFound } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
@@ -93,7 +94,7 @@ export async function GET(request: Request) {
   }
 }
 
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
@@ -135,3 +136,6 @@ export async function PATCH(request: Request) {
     );
   }
 }
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

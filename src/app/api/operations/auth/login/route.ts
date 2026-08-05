@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { operatorLogin } from "@/backend/repositories/operations";
 import { createSession, SESSION_COOKIE } from "@/backend/api/session";
@@ -6,7 +7,7 @@ import { ok, badRequest, unauthorized } from "@/backend/api/response";
 
 const schema = z.object({ phone: z.string().regex(/^[6-9]\d{9}$/) });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const parsed = schema.safeParse(await request.json());
   if (!parsed.success) return badRequest("Invalid phone");
   const user = await operatorLogin(parsed.data.phone);
@@ -19,3 +20,5 @@ export async function POST(request: Request) {
   cookieStore.set(SESSION_COOKIE, token, { httpOnly: true, path: "/", maxAge: 7 * 24 * 60 * 60 });
   return ok({ user: { phone: user.phone, fullName: user.full_name, roles: user.roles } });
 }
+
+export const POST = withErrorHandling(_POST);

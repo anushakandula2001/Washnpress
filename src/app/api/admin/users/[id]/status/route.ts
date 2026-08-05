@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { z } from "zod";
 import { logAudit, setUserStatus } from "@/backend/repositories/admin";
@@ -6,7 +7,7 @@ import { ok, badRequest, notFound } from "@/backend/api/response";
 
 const schema = z.object({ status: z.enum(["active", "blocked", "deleted"]) });
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const { id } = await params;
@@ -30,3 +31,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   return ok({ user });
 }
+
+
+export const PATCH = withErrorHandling(_PATCH);

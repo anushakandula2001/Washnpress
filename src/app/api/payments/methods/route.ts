@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireResident } from "@/backend/api/guards";
 import { addPaymentMethod } from "@/backend/repositories/billing-ext";
@@ -10,13 +11,13 @@ const schema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   return ok({ methods: await listPaymentMethods(auth.session.residentId!) });
 }
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -24,3 +25,6 @@ export async function POST(request: Request) {
   const method = await addPaymentMethod({ residentId: auth.session.residentId!, ...parsed.data });
   return created({ method });
 }
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

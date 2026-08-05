@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { NextResponse } from "next/server";
@@ -6,7 +7,7 @@ export const dynamic = "force-static";
 
 const specPath = join(process.cwd(), "backend/api-spec/openapi.json");
 
-export async function GET() {
+async function _GET() {
   const spec = readFileSync(specPath, "utf-8");
   return new NextResponse(spec, {
     headers: {
@@ -15,3 +16,6 @@ export async function GET() {
     },
   });
 }
+
+
+export const GET = withErrorHandling(_GET);

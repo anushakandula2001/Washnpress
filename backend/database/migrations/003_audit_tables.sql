@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   actor_user_id UUID REFERENCES users(id),
   actor_role VARCHAR(50),
@@ -15,8 +15,8 @@ CREATE TABLE audit_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_audit_logs_entity ON audit_logs(entity_name, entity_id);
-CREATE INDEX idx_audit_logs_actor_time ON audit_logs(actor_user_id, created_at);
-CREATE INDEX idx_audit_logs_action_time ON audit_logs(action, created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_name, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_actor_time ON audit_logs(actor_user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_action_time ON audit_logs(action, created_at);
 
 COMMIT;

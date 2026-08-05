@@ -8,7 +8,13 @@ export async function getOperationsQueue(societyIds?: string[]) {
   let sql = `
     SELECT o.id, o.order_code, o.status, o.pickup_garment_count, p.scheduled_for,
            r.unit_number, r.tower_block, s.name AS society_name,
-           COALESCE(u.full_name, 'Resident') AS resident_name
+           COALESCE(u.full_name, 'Resident') AS resident_name,
+           o.updated_at,
+           (
+             SELECT json_agg(json_build_object('status', event_payload->>'status', 'time', created_at))
+             FROM order_events
+             WHERE order_id = o.id AND event_type = 'status_change'
+           ) AS status_history
     FROM orders o
     JOIN pickups p ON p.id = o.pickup_id
     JOIN residents r ON r.id = p.resident_id

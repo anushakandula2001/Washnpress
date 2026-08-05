@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +28,7 @@ export function OperatorFilters({
   // Load cities dynamically
   useEffect(() => {
     fetch("/api/admin/operators/cities")
-      .then((res) => res.json())
+      .then((res) => readApiJson(res))
       .then((data) => {
         if (data && data.cities) {
           setCities(data.cities);

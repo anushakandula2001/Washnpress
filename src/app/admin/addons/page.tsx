@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +30,7 @@ export default function AdminAddonsPage() {
 
   const load = useCallback(async () => {
     const res = await fetch("/api/admin/addons", { credentials: "same-origin" });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Failed to load add-ons");
     setAddons((data.addons as Addon[]) ?? []);
   }, []);
@@ -46,7 +48,7 @@ export default function AdminAddonsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Save failed");
     setMsg("Saved.");
     setForm(emptyForm);

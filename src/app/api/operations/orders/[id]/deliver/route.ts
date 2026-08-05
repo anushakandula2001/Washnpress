@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { confirmDelivery } from "@/backend/repositories/orders-ext";
@@ -5,7 +6,7 @@ import { ok, badRequest, notFound } from "@/backend/api/response";
 
 const schema = z.object({ deliveryCount: z.number().int().min(0) });
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+async function _POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
   const { id } = await params;
@@ -19,3 +20,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return badRequest(e instanceof Error ? e.message : "Delivery blocked");
   }
 }
+
+export const POST = withErrorHandling(_POST);

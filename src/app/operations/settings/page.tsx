@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { operationsNav } from "@/lib/portal-nav";
@@ -60,7 +62,7 @@ export default function SettingsPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/operations/settings/profile", { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message || "Failed to load profile");
       
       setProfile(data.profile);
@@ -89,7 +91,7 @@ export default function SettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phone, notification_preferences: notifs }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message || "Failed to update settings");
       
       toast("Profile updated successfully.", "success");
@@ -244,7 +246,7 @@ export default function SettingsPage() {
                             credentials: "include",
                           });
 
-                          const data = await res.json();
+                          const data = await readApiJson(res);
 
                           if (res.ok) {
                             toast("All other sessions have been signed out.", "success");

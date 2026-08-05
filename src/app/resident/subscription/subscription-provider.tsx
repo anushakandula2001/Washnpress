@@ -21,6 +21,9 @@ type PlanFromApi = {
   monthlyInr: number;
   isCurrent: boolean;
   features: string[];
+  displayOrder: number;
+  isPopular: boolean;
+  supportType: string;
 };
 
 type SubscriptionContextValue = {

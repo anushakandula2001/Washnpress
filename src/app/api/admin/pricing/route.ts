@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireSession } from "@/backend/api/guards";
 import { forbidden, ok, badRequest, created } from "@/backend/api/response";
@@ -17,6 +18,8 @@ import {
   upsertPlan,
   setPlanActive,
   deletePlan,
+  archivePlan,
+  setPlanPopular,
   logPricingHistory,
   getPricingHistory,
   getPricingAnalytics
@@ -24,7 +27,7 @@ import {
 import { logAudit } from "@/backend/repositories/admin";
 import { queryOne } from "@/backend/db/pool";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireSession(request);
   if ("error" in auth) return auth.error;
 
@@ -135,7 +138,11 @@ const planSchema = z.object({
   expressDiscountPercent: z.number().min(0).optional(),
   validityDays: z.number().int().positive().optional(),
   isActive: z.boolean().optional(),
-  action: z.enum(["upsert", "delete", "toggle"]).optional(),
+  features: z.array(z.string()).optional(),
+  displayOrder: z.number().int().optional(),
+  isPopular: z.boolean().optional(),
+  supportType: z.string().optional(),
+  action: z.enum(["upsert", "delete", "toggle", "archive", "restore", "popular"]).optional(),
 });
 
 const bodySchema = z.object({
@@ -146,7 +153,7 @@ const bodySchema = z.object({
   plan: planSchema.optional(),
 });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireSession(request);
   if ("error" in auth) return auth.error;
 
@@ -180,6 +187,7 @@ export async function POST(request: Request) {
         return ok({ garment: toggled });
       }
       const garment = await upsertGarment(g);
+      if (!garment) return badRequest("Garment not found");
       await logPricingHistory("garment", garment.name, prevGarment, garment, g.id ? "Garment updated" : "Garment created", auth.session.userId);
       await logAudit({
         actorUserId: auth.session.userId,
@@ -211,6 +219,7 @@ export async function POST(request: Request) {
         return ok({ addon: toggled });
       }
       const addon = await upsertAddon(a);
+      if (!addon) return badRequest("Addon not found");
       await logPricingHistory("addon", addon.name, prevAddon, addon, a.id ? "Addon updated" : "Addon created", auth.session.userId);
       return created({ addon });
     }
@@ -218,6 +227,7 @@ export async function POST(request: Request) {
     if (section === "settings" && parsed.data.settings) {
       const prevSettings = await getCommerceSettings();
       const settings = await updateCommerceSettings(parsed.data.settings);
+      if (!settings) return badRequest("Failed to update settings");
       
       await logPricingHistory("delivery_taxes", "Platform Settings", prevSettings, settings, "Commerce settings updated", auth.session.userId);
       
@@ -249,7 +259,23 @@ export async function POST(request: Request) {
         await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, toggled, "Plan toggled", auth.session.userId);
         return ok({ plan: toggled });
       }
+      if (p.action === "archive" && p.id) {
+        const archived = await archivePlan(p.id, true);
+        await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, archived, "Plan archived", auth.session.userId);
+        return ok({ plan: archived });
+      }
+      if (p.action === "restore" && p.id) {
+        const restored = await archivePlan(p.id, false);
+        await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, restored, "Plan restored", auth.session.userId);
+        return ok({ plan: restored });
+      }
+      if (p.action === "popular" && p.id) {
+        const popular = await setPlanPopular(p.id);
+        await logPricingHistory("plan", prevPlan?.tier || p.id, prevPlan, popular, "Plan marked popular", auth.session.userId);
+        return ok({ plan: popular });
+      }
       const plan = await upsertPlan(p);
+      if (!plan) return badRequest("Plan not found");
       await logPricingHistory("plan", plan.tier, prevPlan, plan, p.id ? "Plan updated" : "Plan created", auth.session.userId);
       return created({ plan });
     }
@@ -261,6 +287,11 @@ export async function POST(request: Request) {
 }
 
 /** Keep PATCH for legacy plan price updates */
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   return POST(request);
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);
+export const PATCH = withErrorHandling(_PATCH);

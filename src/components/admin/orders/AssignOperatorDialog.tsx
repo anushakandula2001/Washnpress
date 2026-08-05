@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -30,7 +32,7 @@ export function AssignOperatorDialog({
   useEffect(() => {
     if (!open) return;
     void fetch("/api/admin/operators", { credentials: "same-origin" })
-      .then((r) => r.json())
+      .then((r) => readApiJson(r))
       .then((d) => setOperators((d.operators as OperatorOpt[]) ?? []))
       .catch(() => null);
     setOperatorId("");
@@ -57,7 +59,7 @@ export function AssignOperatorDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Assignment failed");
       toast(
         `Operator assigned to ${societyName}${orderCode ? ` for ${orderCode}` : ""}`,

@@ -1,8 +1,9 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireResident } from "@/backend/api/guards";
 import { listInvoices } from "@/backend/repositories/billing-ext";
 import { ok } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireResident(request);
   if ("error" in auth) return auth.error;
   const url = new URL(request.url);
@@ -10,3 +11,5 @@ export async function GET(request: Request) {
   const limit = parseInt(url.searchParams.get("limit") ?? "20", 10);
   return ok(await listInvoices(auth.session.residentId!, page, limit));
 }
+
+export const GET = withErrorHandling(_GET);

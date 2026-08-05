@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { getSessionFromRequest } from "@/backend/api/session";
 import { getSustainabilitySummary } from "@/backend/repositories/billing";
 import { summarizeWaterLogs } from "@/lib/domain";
 import { ok } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const session = await getSessionFromRequest(request);
 
   if (session?.residentId) {
@@ -21,3 +22,6 @@ export async function GET(request: Request) {
 
   return ok({ totalGarments: 0, totalActualLiters: 0, totalSavedLiters: 0 });
 }
+
+
+export const GET = withErrorHandling(_GET);

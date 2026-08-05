@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { ok, badRequest } from "@/backend/api/response";
@@ -6,7 +7,7 @@ import {
   setRefundStatus,
 } from "@/backend/repositories/admin-commerce";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   return ok(await listPaymentsBundle());
@@ -17,7 +18,7 @@ const schema = z.object({
   status: z.enum(["approved", "rejected"]),
 });
 
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const parsed = schema.safeParse(await request.json());
@@ -29,3 +30,7 @@ export async function PATCH(request: Request) {
   );
   return ok({ refund: row });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

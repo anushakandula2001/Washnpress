@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { PortalShell } from "@/components/portal/portal-shell";
@@ -51,20 +53,20 @@ export default function AdminSupportPage() {
 
   const loadTickets = useCallback(async () => {
     const res = await fetch("/api/admin/support", { credentials: "same-origin" });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Failed");
     setTickets((data.tickets as Ticket[]) ?? []);
   }, []);
 
   const loadOperators = useCallback(async () => {
     const res = await fetch("/api/admin/operators", { credentials: "same-origin" });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (res.ok) setOperators((data.operators as Operator[]) ?? []);
   }, []);
 
   const loadMessages = useCallback(async (ticketId: string) => {
     const res = await fetch(`/api/admin/support?ticketId=${ticketId}`, { credentials: "same-origin" });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Failed");
     setMessages((data.messages as Message[]) ?? []);
     if (Array.isArray(data.tickets)) setTickets(data.tickets as Ticket[]);
@@ -90,7 +92,7 @@ export default function AdminSupportPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    const data = await res.json();
+    const data = await readApiJson(res);
     if (!res.ok) throw new Error(data.message ?? "Update failed");
     setMsg("Ticket updated.");
     if (body.reply) setReply("");

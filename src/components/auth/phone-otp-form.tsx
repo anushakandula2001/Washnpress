@@ -71,7 +71,12 @@ export function PhoneOtpForm({ mode }: PhoneOtpFormProps) {
     setLoading(true);
     try {
       // Server validates existence + generates OTP into Redis (single source of truth)
-      await api.auth.sendOtp(phone, mode === "register" ? "register" : "login");
+      const res = await api.auth.sendOtp(phone, mode === "register" ? "register" : "login");
+      if (res.devOtp) {
+        console.log("========================================");
+        console.log("🔐 WASHNPRESS DEV OTP:", res.devOtp);
+        console.log("========================================");
+      }
       setStep("otp");
       setOtp("");
       setResendIn(RESEND_COOLDOWN_SEC);
@@ -113,7 +118,12 @@ export function PhoneOtpForm({ mode }: PhoneOtpFormProps) {
     setSuccess(null);
     setLoading(true);
     try {
-      await api.auth.sendOtp(phone, mode === "register" ? "register" : "login");
+      const res = await api.auth.sendOtp(phone, mode === "register" ? "register" : "login");
+      if (res.devOtp) {
+        console.log("========================================");
+        console.log("🔐 WASHNPRESS DEV OTP (Resend):", res.devOtp);
+        console.log("========================================");
+      }
       setResendIn(RESEND_COOLDOWN_SEC);
       setResendCount((c) => c + 1);
       setOtp("");
@@ -163,7 +173,14 @@ export function PhoneOtpForm({ mode }: PhoneOtpFormProps) {
                 placeholder="10-digit mobile number"
                 value={phone}
                 onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    e.preventDefault();
+                    void handleSendOtp();
+                  }
+                }}
                 disabled={loading}
+                autoFocus
               />
             </label>
             <Button className="w-full" onClick={() => void handleSendOtp()} disabled={loading}>
@@ -198,7 +215,14 @@ export function PhoneOtpForm({ mode }: PhoneOtpFormProps) {
                 maxLength={6}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    e.preventDefault();
+                    void handleVerifyOtp();
+                  }
+                }}
                 disabled={loading}
+                autoFocus
               />
             </label>
             <div className="flex flex-col gap-3 sm:flex-row">

@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import {
   getOperationsQueue,
@@ -5,11 +6,11 @@ import {
 } from "@/backend/repositories/operations";
 import { ok, forbidden } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
-  const isAdmin = auth.session.roles.includes("admin");
+  const isAdmin = (auth.session.roles ?? []).includes("admin");
   const societyId = new URL(request.url).searchParams.get("societyId");
   const assigned = isAdmin ? [] : await listOperatorSocietyIds(auth.session.userId);
 
@@ -28,3 +29,6 @@ export async function GET(request: Request) {
     queue: await getOperationsQueue(isAdmin ? undefined : assigned),
   });
 }
+
+
+export const GET = withErrorHandling(_GET);

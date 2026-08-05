@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { ResidentShell } from "@/components/resident/resident-shell";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +54,7 @@ export default function SupportPage() {
     setLoading(true);
     try {
       const res = await fetch(`/api/support/tickets?residentId=${RESIDENT_ID}`);
-      const data = await res.json();
+      const data = await readApiJson(res);
       setTickets(data.tickets || []);
     } catch (e) {
       console.error(e);
@@ -70,7 +72,7 @@ export default function SupportPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: issueDesc, residentName: RESIDENT_NAME }),
       });
-      const data = await res.json();
+      const data = await readApiJson(res);
       setAiSuggestion(data.analysis);
       setWizardStep(2);
     } catch (e) {
@@ -119,7 +121,7 @@ export default function SupportPage() {
       
       // Refresh the specific ticket
       const res = await fetch(`/api/support/tickets/${selectedTicket.id}?channel=customer`);
-      const updated = await res.json();
+      const updated = await readApiJson(res);
       setSelectedTicket(updated);
     } catch (e) {
       console.error(e);
@@ -136,7 +138,7 @@ export default function SupportPage() {
       });
       
       const res = await fetch(`/api/support/tickets/${selectedTicket.id}?channel=customer`);
-      const updated = await res.json();
+      const updated = await readApiJson(res);
       setSelectedTicket(updated);
       fetchTickets();
     } catch (e) {
@@ -147,7 +149,7 @@ export default function SupportPage() {
   function openTicket(t: SupportTicketRecord) {
     // Fetch full ticket details to get messages
     fetch(`/api/support/tickets/${t.id}?channel=customer`)
-      .then(res => res.json())
+      .then(res => readApiJson(res))
       .then(data => setSelectedTicket(data));
   }
 

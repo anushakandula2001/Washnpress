@@ -19,7 +19,7 @@ import {
   type OrderRow,
 } from "@/components/admin/orders/types";
 import { Truck } from "lucide-react";
-import { api } from "@/frontend/api-client";
+import { api, readApiJson } from "@/frontend/api-client";
 
 function applyClientFilters(rows: OrderRow[], filters: OrderFiltersType): OrderRow[] {
   let result = [...rows];
@@ -63,7 +63,7 @@ function DeliveryContent() {
       params.set("status", "READY_FOR_DELIVERY");
       if (filters.q) params.set("q", filters.q);
       const res = await fetch(`/api/operations/orders?${params}`, { credentials: "same-origin" });
-      const data = await res.json();
+      const data = await readApiJson(res);
       if (!res.ok) throw new Error(data.message ?? "Failed to load");
       setRows(((data.orders as Array<Record<string, unknown>>) ?? []).map(normalizeOrderRow));
     } catch (err) {

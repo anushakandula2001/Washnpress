@@ -1,9 +1,10 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { z } from "zod";
 import { requireRole } from "@/backend/api/guards";
 import { listUsers, createStaffUser, listOperatorsDetailed } from "@/backend/repositories/admin";
 import { ok, created, badRequest } from "@/backend/api/response";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const type = new URL(request.url).searchParams.get("type");
@@ -49,7 +50,7 @@ const createSchema = z.object({
   idempotencyKey: z.string().optional(),
 });
 
-export async function POST(request: Request) {
+async function _POST(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
 
@@ -101,3 +102,7 @@ export async function POST(request: Request) {
     return badRequest(message);
   }
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const POST = withErrorHandling(_POST);

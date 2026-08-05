@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { operationsNav } from "@/lib/portal-nav";
@@ -32,7 +34,7 @@ export default function ReportsPage() {
     fetch("/api/operations/reports", { credentials: "same-origin" })
       .then((res) => {
         if (!res.ok) throw new Error("Failed to load reports");
-        return res.json();
+        return readApiJson(res);
       })
       .then((d) => setData(d))
       .catch((e) => {

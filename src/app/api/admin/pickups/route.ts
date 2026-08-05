@@ -1,3 +1,4 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { requireRole } from "@/backend/api/guards";
 import { ok, badRequest, notFound } from "@/backend/api/response";
 import {
@@ -7,7 +8,7 @@ import {
   updateAdminPickup,
 } from "@/backend/repositories/admin-commerce";
 
-export async function GET(request: Request) {
+async function _GET(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
 
@@ -33,7 +34,7 @@ export async function GET(request: Request) {
   return ok(payload);
 }
 
-export async function PATCH(request: Request) {
+async function _PATCH(request: Request) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
   const body = await request.json();
@@ -45,3 +46,7 @@ export async function PATCH(request: Request) {
   if (!row) return badRequest("No valid fields to update");
   return ok({ pickup: row });
 }
+
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

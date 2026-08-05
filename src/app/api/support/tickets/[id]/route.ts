@@ -1,7 +1,8 @@
+import { withErrorHandling } from "@/backend/api/response";
 import { NextResponse } from "next/server";
 import { getSupportTicketDetails, updateTicketStatus, submitCsatRating } from "@/backend/repositories/support";
 
-export async function GET(
+async function _GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -24,7 +25,7 @@ export async function GET(
   }
 }
 
-export async function PATCH(
+async function _PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -49,3 +50,6 @@ export async function PATCH(
     );
   }
 }
+
+export const GET = withErrorHandling(_GET);
+export const PATCH = withErrorHandling(_PATCH);

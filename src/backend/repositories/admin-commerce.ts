@@ -1,4 +1,5 @@
 import { query, queryOne, withTransaction } from "@/backend/db/pool";
+import { publishEvent } from "@/backend/lib/realtime";
 
 /* ── Garments ─────────────────────────────────────────── */
 
@@ -20,7 +21,7 @@ export async function upsertGarment(data: {
   sortOrder?: number;
 }) {
   if (data.id) {
-    return queryOne(
+    const res = await queryOne(
       `UPDATE garment_catalog SET
          name = $2, wash_price_inr = $3, wash_iron_price_inr = $4,
          iron_price_inr = $5, dry_clean_price_inr = $6,
@@ -39,8 +40,11 @@ export async function upsertGarment(data: {
         data.sortOrder ?? null,
       ],
     );
+    publishEvent("sync:resident", "garment_updated", res);
+    publishEvent("sync:operations", "garment_updated", res);
+    return res;
   }
-  return queryOne(
+  const res = await queryOne(
     `INSERT INTO garment_catalog
        (name, wash_price_inr, wash_iron_price_inr, iron_price_inr, dry_clean_price_inr, is_active, sort_order)
      VALUES ($1,$2,$3,$4,$5,COALESCE($6,TRUE),COALESCE($7,0))
@@ -55,17 +59,25 @@ export async function upsertGarment(data: {
       data.sortOrder ?? 0,
     ],
   );
+  publishEvent("sync:resident", "garment_updated", res);
+  publishEvent("sync:operations", "garment_updated", res);
+  return res;
 }
 
 export async function deleteGarment(id: string) {
   await query(`UPDATE garment_catalog SET is_deleted = TRUE, updated_at = now() WHERE id = $1`, [id]);
+  publishEvent("sync:resident", "garment_deleted", { id });
+  publishEvent("sync:operations", "garment_deleted", { id });
 }
 
 export async function setGarmentActive(id: string, isActive: boolean) {
-  return queryOne(
+  const res = await queryOne(
     `UPDATE garment_catalog SET is_active = $2, updated_at = now() WHERE id = $1 RETURNING *`,
     [id, isActive],
   );
+  publishEvent("sync:resident", "garment_updated", res);
+  publishEvent("sync:operations", "garment_updated", res);
+  return res;
 }
 
 /* ── Addons ───────────────────────────────────────────── */
@@ -90,7 +102,7 @@ export async function upsertAddon(data: {
   isActive?: boolean;
 }) {
   if (data.id) {
-    return queryOne(
+    const res = await queryOne(
       `UPDATE addon_services SET
          code = COALESCE($2, code), name = COALESCE($3, name), description = COALESCE($4, description), price_inr = COALESCE($5, price_inr),
          icon = COALESCE($6, icon), is_active = COALESCE($7, is_active), category = COALESCE($8, category), priority = COALESCE($9, priority), display_order = COALESCE($10, display_order)
@@ -108,8 +120,11 @@ export async function upsertAddon(data: {
         data.displayOrder ?? null,
       ],
     );
+    publishEvent("sync:resident", "addon_updated", res);
+    publishEvent("sync:operations", "addon_updated", res);
+    return res;
   }
-  return queryOne(
+  const res = await queryOne(
     `INSERT INTO addon_services (code, name, description, price_inr, icon, is_active, category, priority, display_order)
      VALUES ($1,$2,$3,$4,COALESCE($5,'sparkles'),COALESCE($6,TRUE),COALESCE($7,'General'),COALESCE($8,'Normal'),COALESCE($9,0))
      RETURNING *`,
@@ -125,17 +140,25 @@ export async function upsertAddon(data: {
       data.displayOrder ?? 0,
     ],
   );
+  publishEvent("sync:resident", "addon_updated", res);
+  publishEvent("sync:operations", "addon_updated", res);
+  return res;
 }
 
 export async function deleteAddon(id: string) {
   await query(`UPDATE addon_services SET is_deleted = TRUE WHERE id = $1`, [id]);
+  publishEvent("sync:resident", "addon_deleted", { id });
+  publishEvent("sync:operations", "addon_deleted", { id });
 }
 
 export async function setAddonActive(id: string, isActive: boolean) {
-  return queryOne(
+  const res = await queryOne(
     `UPDATE addon_services SET is_active = $2 WHERE id = $1 RETURNING *`,
     [id, isActive],
   );
+  publishEvent("sync:resident", "addon_updated", res);
+  publishEvent("sync:operations", "addon_updated", res);
+  return res;
 }
 
 /* ── Commerce settings ────────────────────────────────── */
@@ -192,7 +215,7 @@ export async function updateCommerceSettings(data: {
   packagingFeeType?: string;
   packagingFeeIsActive?: boolean;
 }) {
-  return queryOne(
+  const res = await queryOne(
     `UPDATE platform_commerce_settings SET
        min_order_amount_inr = COALESCE($1, min_order_amount_inr),
        min_order_desc = COALESCE($2, min_order_desc),
@@ -272,14 +295,17 @@ export async function updateCommerceSettings(data: {
       data.otherChargesInr ?? null,
     ],
   );
+  publishEvent("sync:resident", "settings_updated", res);
+  publishEvent("sync:operations", "settings_updated", res);
+  return res;
 }
 
 /* ── Plans ────────────────────────────────────────────── */
 
 export async function listPlansAdmin(includeInactive = true) {
   const sql = includeInactive
-    ? `SELECT * FROM plans WHERE is_deleted = FALSE ORDER BY monthly_inr`
-    : `SELECT * FROM plans WHERE is_active = TRUE AND is_deleted = FALSE ORDER BY monthly_inr`;
+    ? `SELECT * FROM plans ORDER BY is_deleted ASC, monthly_inr ASC`
+    : `SELECT * FROM plans WHERE is_active = TRUE AND is_deleted = FALSE ORDER BY monthly_inr ASC`;
   return (await query(sql)).rows;
 }
 
@@ -299,10 +325,14 @@ export async function upsertPlan(data: {
   expressDiscountPercent?: number;
   validityDays?: number;
   isActive?: boolean;
+  features?: string[];
+  displayOrder?: number;
+  isPopular?: boolean;
+  supportType?: string;
 }) {
   const name = data.name?.trim() || data.tier;
   if (data.id) {
-    return queryOne(
+    const res = await queryOne(
       `UPDATE plans SET
          tier = $2, name = $3, description = $4,
          monthly_inr = $5, quarterly_inr = $6, yearly_inr = $7,
@@ -312,7 +342,11 @@ export async function upsertPlan(data: {
          free_delivery = COALESCE($12, free_delivery),
          express_discount_percent = COALESCE($13, express_discount_percent),
          validity_days = COALESCE($14, validity_days),
-         is_active = COALESCE($15, is_active)
+         is_active = COALESCE($15, is_active),
+         features = COALESCE($16, features),
+         display_order = COALESCE($17, display_order),
+         is_popular = COALESCE($18, is_popular),
+         support_type = COALESCE($19, support_type)
        WHERE id = $1 RETURNING *`,
       [
         data.id,
@@ -330,15 +364,23 @@ export async function upsertPlan(data: {
         data.expressDiscountPercent ?? null,
         data.validityDays ?? null,
         data.isActive ?? null,
+        data.features ? JSON.stringify(data.features) : null,
+        data.displayOrder ?? null,
+        data.isPopular ?? null,
+        data.supportType ?? null,
       ],
     );
+    publishEvent("sync:resident", "plan_updated", res);
+    publishEvent("sync:operations", "plan_updated", res);
+    return res;
   }
-  return queryOne(
+  const res = await queryOne(
     `INSERT INTO plans (
        tier, name, description, monthly_inr, quarterly_inr, yearly_inr,
        garment_cap, max_pickups, turnaround_hours, priority_pickup,
-       free_delivery, express_discount_percent, validity_days, is_active
-     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,COALESCE($14,TRUE))
+       free_delivery, express_discount_percent, validity_days, is_active,
+       features, display_order, is_popular, support_type
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,COALESCE($14,TRUE), COALESCE($15,'[]'::jsonb), COALESCE($16,0), COALESCE($17,FALSE), COALESCE($18,'Standard'))
      RETURNING *`,
     [
       data.tier,
@@ -355,12 +397,37 @@ export async function upsertPlan(data: {
       data.expressDiscountPercent ?? 0,
       data.validityDays ?? 30,
       data.isActive ?? true,
+      data.features ? JSON.stringify(data.features) : null,
+      data.displayOrder ?? null,
+      data.isPopular ?? null,
+      data.supportType ?? null,
     ],
   );
+  publishEvent("sync:resident", "plan_updated", res);
+  publishEvent("sync:operations", "plan_updated", res);
+  return res;
 }
 
 export async function setPlanActive(id: string, isActive: boolean) {
-  return queryOne(`UPDATE plans SET is_active = $2 WHERE id = $1 RETURNING *`, [id, isActive]);
+  const res = await queryOne(`UPDATE plans SET is_active = $2 WHERE id = $1 RETURNING *`, [id, isActive]);
+  publishEvent("sync:resident", "plan_updated", res);
+  publishEvent("sync:operations", "plan_updated", res);
+  return res;
+}
+
+export async function archivePlan(id: string, archive: boolean) {
+  const res = await queryOne(`UPDATE plans SET is_deleted = $2 WHERE id = $1 RETURNING *`, [id, archive]);
+  publishEvent("sync:resident", "plan_updated", res);
+  publishEvent("sync:operations", "plan_updated", res);
+  return res;
+}
+
+export async function setPlanPopular(id: string) {
+  await query(`UPDATE plans SET is_popular = FALSE`);
+  const res = await queryOne(`UPDATE plans SET is_popular = TRUE WHERE id = $1 RETURNING *`, [id]);
+  publishEvent("sync:resident", "plan_updated", res);
+  publishEvent("sync:operations", "plan_updated", res);
+  return res;
 }
 
 export async function deletePlan(id: string) {
@@ -369,9 +436,11 @@ export async function deletePlan(id: string) {
     [id],
   );
   if (parseInt(used?.c ?? "0", 10) > 0) {
-    return setPlanActive(id, false);
+    throw new Error("This plan cannot be deleted because it has active subscribers.");
   }
-  await query(`UPDATE plans SET is_deleted = TRUE WHERE id = $1`, [id]);
+  await query(`DELETE FROM plans WHERE id = $1`, [id]);
+  publishEvent("sync:resident", "plan_deleted", { id });
+  publishEvent("sync:operations", "plan_deleted", { id });
   return { id, deleted: true };
 }
 
@@ -1066,8 +1135,8 @@ export async function updateSupportTicket(data: {
 
 export async function addTicketReply(ticketId: string, senderUserId: string, body: string) {
   return queryOne(
-    `INSERT INTO ticket_messages (ticket_id, sender_user_id, body)
-     VALUES ($1, $2, $3) RETURNING *`,
+    `INSERT INTO ticket_messages (ticket_id, sender_user_id, body, message, sender_type, channel)
+     VALUES ($1, $2, $3, $3, 'admin', 'customer') RETURNING *`,
     [ticketId, senderUserId, body],
   );
 }

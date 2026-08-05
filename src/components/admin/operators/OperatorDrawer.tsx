@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import * as React from "react";
 import { OperatorProfile } from "./OperatorProfile";
 import { OperatorSocieties } from "./OperatorSocieties";
@@ -55,7 +57,7 @@ export function OperatorDrawer({
     setError(null);
     void fetch(`/api/admin/operators?id=${operatorId}`, { credentials: "same-origin" })
       .then(async (res) => {
-        const json = await res.json();
+        const json = await readApiJson(res);
         if (!res.ok) throw new Error(json.message ?? "Failed");
         setData(json);
       })
@@ -84,7 +86,7 @@ export function OperatorDrawer({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ operatorId: op.id, status: next }),
       });
-      const json = await res.json();
+      const json = await readApiJson(res);
       if (!res.ok) throw new Error(json.message ?? "Update failed");
       loadDetail();
       onRefreshList?.();

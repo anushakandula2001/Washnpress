@@ -1,5 +1,7 @@
 "use client";
 
+import { readApiJson } from "@/frontend/api-client";
+
 import { useEffect, useState } from "react";
 import { PortalShell } from "@/components/portal/portal-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +14,7 @@ export default function AdminAuditLogsPage() {
   useEffect(() => {
     void fetch("/api/admin/audit-logs", { credentials: "same-origin" })
       .then(async (res) => {
-        const data = await res.json();
+        const data = await readApiJson(res);
         if (!res.ok) throw new Error(data.message ?? "Failed");
         setLogs((data.logs as Array<Record<string, unknown>>) ?? data.auditLogs ?? []);
       })

@@ -25,11 +25,18 @@ export function SubscriptionPlanCard({
       }`}
     >
       <CardContent className="p-6">
-        {plan.current && (
-          <Badge className="absolute right-4 top-4">
-            {plan.badge}
-          </Badge>
-        )}
+        <div className="absolute right-4 top-4 flex flex-col gap-2 items-end">
+          {plan.isPopular && (
+            <Badge className="bg-amber-500 hover:bg-amber-600 text-white border-transparent shadow-sm">
+              Most Popular
+            </Badge>
+          )}
+          {plan.current && (
+            <Badge className="bg-primary text-primary-foreground shadow-sm">
+              Current Plan
+            </Badge>
+          )}
+        </div>
 
         <h2 className="text-2xl font-bold">
           {plan.name}
