@@ -34,7 +34,7 @@ import {
   SheetHeader,
 } from "@/components/ui/sheet";
 
-export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpdate: (b: any) => Promise<boolean> }) {
+export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: any[]; onUpdate: (b: any) => Promise<boolean>; onRefresh?: () => void; }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -97,7 +97,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
       freeDelivery: plan.free_delivery || false,
       expressDelivery: (plan.express_discount_percent || 0) > 0,
       dedicatedSupport: plan.support_type === "Dedicated Manager" || plan.name?.toLowerCase().includes("premium") || false,
-      features: plan.features && plan.features.length ? plan.features : ["Unlimited Orders", `${plan.express_discount_percent || 20}% Discount`, "Priority Pickup & Delivery"],
+      features: Array.isArray(plan.features) ? plan.features : ["Unlimited Orders", `${plan.express_discount_percent || 20}% Discount`, "Priority Pickup & Delivery"],
       displayOrder: plan.display_order ?? 0,
       isPopular: plan.is_popular ?? false,
       supportType: plan.support_type || "Standard",
@@ -141,15 +141,21 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
   const executeDelete = async () => {
     if (!planToDelete) return;
     try {
-      const success = await onUpdate({ section: "plan", plan: { ...planToDelete, action: "delete" } });
-      if (success) {
-        toast("Subscription plan deleted successfully.", "success");
+      const res = await fetch(`/api/admin/subscriptions/${planToDelete.id}`, {
+        method: "DELETE",
+        credentials: "same-origin"
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to delete plan");
       }
+      toast("Subscription plan deleted successfully.", "success");
+      setDeleteConfirmOpen(false);
+      setPlanToDelete(null);
+      if (onRefresh) onRefresh();
     } catch (e: any) {
-      // business page already handles the toast
+      toast(e.message || "Failed to delete plan", "error");
     }
-    setDeleteConfirmOpen(false);
-    setPlanToDelete(null);
   };
 
   const openSubscribersDrawer = async (plan: any) => {
@@ -196,38 +202,65 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
   };
 
   const handleSave = async () => {
-    if (!formData.name) {
+    if (!formData.name?.trim()) {
       toast("Plan name is required", "error");
       return;
     }
-
-    const payload: any = {
-      section: "plan",
-      plan: {
-        tier: formData.name.toLowerCase().replace(/\s+/g, '_').substring(0, 20),
-        name: formData.name,
-        description: formData.description || " ",
-        monthlyInr: Number(formData.monthlyInr) || 0,
-        garmentCap: Number(formData.garmentCap) || 1,
-        expressDiscountPercent: Number(formData.discount) || 0,
-        features: formData.features,
-        displayOrder: Number(formData.displayOrder) || 0,
-        isPopular: formData.isPopular,
-        supportType: formData.dedicatedSupport ? "Dedicated Manager" : formData.supportType,
-        isActive: formData.isActive,
-        priorityPickup: formData.priorityPickup,
-        freeDelivery: formData.freeDelivery,
-        validityDays: parseInt(formData.duration) || 30,
-      },
-    };
-    if (formData.id) {
-      payload.plan.id = formData.id;
+    const monthlyPrice = Number(formData.monthlyInr);
+    if (isNaN(monthlyPrice) || monthlyPrice < 0) {
+      toast("Please enter a valid monthly price.", "error");
+      return;
+    }
+    const cap = Number(formData.garmentCap);
+    if (isNaN(cap) || cap <= 0) {
+      toast("Please enter a valid garment cap (>0).", "error");
+      return;
     }
 
-    const success = await onUpdate(payload);
+    const planPayload = {
+      tier: formData.name.toLowerCase().replace(/\s+/g, '_').substring(0, 20),
+      name: formData.name,
+      description: formData.description || " ",
+      monthlyInr: Number(formData.monthlyInr) || 0,
+      garmentCap: Number(formData.garmentCap) || 1,
+      expressDiscountPercent: Number(formData.discount) || 0,
+      features: formData.features,
+      displayOrder: Number(formData.displayOrder) || 0,
+      isPopular: formData.isPopular,
+      supportType: formData.dedicatedSupport ? "Dedicated Manager" : formData.supportType,
+      isActive: formData.isActive,
+      priorityPickup: formData.priorityPickup,
+      freeDelivery: formData.freeDelivery,
+      validityDays: parseInt(formData.duration) || 30,
+    };
 
-    if (success) {
-      setIsModalOpen(false);
+    if (formData.id) {
+      // Edit existing plan
+      try {
+        const res = await fetch(`/api/admin/subscriptions/${formData.id}`, {
+          method: "PUT",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(planPayload)
+        });
+        if (!res.ok) throw new Error("Failed to update plan");
+        toast("Subscription plan updated successfully.", "success");
+        setIsModalOpen(false);
+        if (onRefresh) onRefresh();
+      } catch (e: any) {
+        toast(e.message || "Failed to update plan", "error");
+      }
+    } else {
+      // Create new plan - fallback to legacy pricing endpoint for now or we could add POST to our new API.
+      // Since new API is at /[id] we'll use legacy for CREATE.
+      const payload: any = {
+        section: "plan",
+        plan: planPayload,
+      };
+      const success = await onUpdate(payload);
+      if (success) {
+        setIsModalOpen(false);
+      }
     }
   };
 
@@ -522,7 +555,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
 
       {/* CREATE/EDIT MODAL */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
           <div className="px-8 py-6 border-b border-slate-100 bg-white">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               {formData.id ? "Edit Plan Details" : "Create New Plan"}
@@ -662,7 +695,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
 
       {/* DETAILS MODAL */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-[750px] p-0 overflow-hidden rounded-[24px] border-0 shadow-2xl">
           <div className="px-8 py-6 border-b border-slate-100 bg-white flex justify-between items-center">
             <DialogTitle className="text-2xl font-bold text-slate-900">
               Plan Details
@@ -749,7 +782,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
 
       {/* SUBSCRIBERS DRAWER */}
       <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-        <SheetContent className="w-full sm:max-w-md border-l-0 shadow-2xl p-0 flex flex-col bg-slate-50/50">
+        <SheetContent onOpenAutoFocus={(e) => e.preventDefault()} className="w-full sm:max-w-md border-l-0 shadow-2xl p-0 flex flex-col bg-slate-50/50">
           <div className="p-6 border-b border-slate-100 bg-white shadow-sm z-10">
             <SheetHeader>
               <h2 className="text-xl font-bold text-slate-900 m-0">Subscribers</h2>
@@ -810,7 +843,7 @@ export function SubscriptionsTab({ plans = [], onUpdate }: { plans: any[]; onUpd
 
       {/* DELETE CONFIRMATION */}
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent className="sm:max-w-md rounded-[24px] border-0 shadow-2xl p-8">
+        <DialogContent onOpenAutoFocus={(e) => e.preventDefault()} className="sm:max-w-md rounded-[24px] border-0 shadow-2xl p-8">
           <div className="flex flex-col items-center text-center space-y-4">
             <div className="bg-red-50 p-5 rounded-full text-red-500 mb-2 border border-red-100">
               <Trash2 className="h-8 w-8" />

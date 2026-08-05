@@ -153,7 +153,6 @@ export default function OnboardingPage() {
         const data = await readApiJson(res);
         if (cancelled) return;
         const fltList = (data.flats || [])
-          .filter((f: any) => f.status !== "Occupied" && f.status !== "Blocked" && f.status !== "occupied")
           .map((f: any) => ({ id: f.id, label: f.flat_number || f.flatNumber, status: f.status }));
         setFlats(fltList);
         setFlatId("");

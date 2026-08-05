@@ -3,11 +3,11 @@ import { requireRole } from "@/backend/api/guards";
 import { ok } from "@/backend/api/response";
 import { query } from "@/backend/db/pool";
 
-async function _GET(request: Request, context: { params: { id: string } }) {
+async function _GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const auth = await requireRole(request, "admin");
   if ("error" in auth) return auth.error;
 
-  const { id } = context.params;
+  const { id } = await context.params;
 
   try {
     const res = await query(
