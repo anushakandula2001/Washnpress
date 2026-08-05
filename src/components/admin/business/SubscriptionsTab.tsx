@@ -39,6 +39,7 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [planToDelete, setPlanToDelete] = useState<any>(null);
+  const [planToDeleteSubscribers, setPlanToDeleteSubscribers] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   // New States for Audit Logs and Settings
@@ -133,9 +134,21 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
     await onUpdate(payload);
   };
 
-  const confirmDelete = (plan: any) => {
+  const confirmDelete = async (plan: any) => {
     setPlanToDelete(plan);
+    setPlanToDeleteSubscribers(null);
     setDeleteConfirmOpen(true);
+    try {
+      const res = await fetch(`/api/admin/subscriptions/${plan.id}/subscribers`, { credentials: "same-origin" });
+      if (res.ok) {
+        const data = await res.json();
+        setPlanToDeleteSubscribers(data.data?.subscribers?.length || 0);
+      } else {
+        setPlanToDeleteSubscribers(0);
+      }
+    } catch (e) {
+      setPlanToDeleteSubscribers(0);
+    }
   };
 
   const executeDelete = async () => {
@@ -442,13 +455,13 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
                         <MoreVertical className="h-4 w-4" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-normal bg-white">
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                        <DropdownMenuItem onSelect={() => openEditModal(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                           <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                        <DropdownMenuItem onSelect={() => openSubscribersDrawer(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                           <Users className="mr-2.5 h-4 w-4 text-slate-400" /> Subscribers
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
+                        <DropdownMenuItem onSelect={() => confirmDelete(plan)} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
                           <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -535,13 +548,13 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
                       <MoreVertical className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-48 rounded-2xl shadow-lg border-slate-100 p-1.5 font-normal bg-white">
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                      <DropdownMenuItem onSelect={() => openEditModal(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                         <Edit className="mr-2.5 h-4 w-4 text-slate-400" /> Edit Plan
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openSubscribersDrawer(plan); }} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
+                      <DropdownMenuItem onSelect={() => openSubscribersDrawer(plan)} className="rounded-xl cursor-pointer py-2 hover:bg-slate-50 text-[13px] text-slate-700">
                         <Users className="mr-2.5 h-4 w-4 text-slate-400" /> View Subscribers
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); confirmDelete(plan); }} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
+                      <DropdownMenuItem onSelect={() => confirmDelete(plan)} className="rounded-xl cursor-pointer py-2 text-red-600 hover:bg-red-50 text-[13px] mt-1">
                         <Trash2 className="mr-2.5 h-4 w-4" /> Delete Plan
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -850,11 +863,21 @@ export function SubscriptionsTab({ plans = [], onUpdate, onRefresh }: { plans: a
             </div>
             <DialogTitle className="text-2xl font-bold text-slate-900">Delete Subscription Plan?</DialogTitle>
             <p className="text-slate-500 leading-relaxed">Are you sure you want to delete this subscription plan?</p>
-            <p className="text-slate-500 leading-relaxed mt-2">This action cannot be undone.</p>
+            {planToDeleteSubscribers !== null ? (
+              planToDeleteSubscribers > 0 ? (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-sm mt-2 text-left w-full">
+                  <strong>Warning:</strong> This plan has <strong>{planToDeleteSubscribers} active subscribers</strong>. You cannot delete it until they are reassigned or their subscriptions expire.
+                </div>
+              ) : (
+                <p className="text-slate-500 leading-relaxed mt-2">This action cannot be undone.</p>
+              )
+            ) : (
+              <p className="text-slate-500 leading-relaxed mt-2 animate-pulse">Checking subscribers...</p>
+            )}
           </div>
           <DialogFooter className="mt-8 flex gap-3 sm:justify-center w-full">
             <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)} className="rounded-xl border-slate-200 h-12 flex-1 font-semibold">Cancel</Button>
-            <Button onClick={executeDelete} className="rounded-xl bg-red-500 hover:bg-red-600 text-white h-12 flex-1 font-semibold shadow-md shadow-red-500/20">Delete</Button>
+            <Button onClick={executeDelete} disabled={planToDeleteSubscribers === null || planToDeleteSubscribers > 0} className="rounded-xl bg-red-500 hover:bg-red-600 text-white h-12 flex-1 font-semibold shadow-md shadow-red-500/20 disabled:opacity-50">Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

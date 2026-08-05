@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Menu, 
@@ -18,7 +19,8 @@ import {
   Tag, 
   Truck,
   Droplets,
-  Briefcase
+  Briefcase,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -38,7 +40,7 @@ const staggerContainer = {
 };
 
 export default function LandingPage() {
-  const router = useRouter();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -50,30 +52,46 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
+    { name: "Services", href: "/services" },
+    { name: "Pricing", href: "/pricing" },
+    { name: "Contact", href: "/contact" },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
       {/* HEADER */}
       <header 
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled ? "bg-white/80 backdrop-blur-md shadow-sm py-3" : "bg-transparent py-5"
+          isScrolled ? "bg-[rgba(255,255,255,0.35)] backdrop-blur-[18px] border-b border-[rgba(255,255,255,0.2)] shadow-[0_8px_30px_rgba(0,0,0,0.04)] py-3" : "bg-transparent py-5"
         }`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 z-50">
-            <img src="/logo.png" alt="Wash N Press" className="h-10 w-auto object-contain" />
+            <Image src="/logo.png" alt="Wash N Press" width={160} height={40} className="h-10 w-auto object-contain" />
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Home</Link>
-            <Link href="#about" className="text-sm font-medium text-foreground hover:text-primary transition-colors">About</Link>
-            <Link href="#services" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Services</Link>
-            <Link href="#pricing" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Pricing</Link>
-            <Link href="#contact" className="text-sm font-medium text-foreground hover:text-primary transition-colors">Contact</Link>
+          <nav className="hidden md:flex items-center gap-2">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.name} 
+                href={link.href} 
+                className={`text-[15px] font-[600] px-[18px] py-[10px] rounded-[10px] transition-all duration-300 ease-in-out hover:-translate-y-[2px] hover:shadow-sm ${
+                  pathname === link.href || (link.href !== '/' && pathname.startsWith(link.href))
+                    ? "bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white shadow-sm"
+                    : "text-[#0E8BA8] hover:bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] hover:text-white"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
           </nav>
 
           <div className="hidden md:flex items-center gap-4">
-            <Button asChild className="rounded-full px-6 shadow-md shadow-primary/20 hover:shadow-primary/40 transition-all duration-300">
+            <Button asChild className="rounded-[10px] px-6 py-[10px] h-auto bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white font-[600] hover:scale-[1.03] hover:shadow-[0_0_15px_rgba(17,184,184,0.4)] transition-all duration-300 border-0">
               <Link href="/login">Login</Link>
             </Button>
           </div>
@@ -95,14 +113,21 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-white pt-24 px-6 md:hidden flex flex-col gap-6"
+            className="fixed inset-0 z-40 bg-[rgba(255,255,255,0.95)] backdrop-blur-xl pt-24 px-6 md:hidden flex flex-col gap-4"
           >
-            <Link href="#" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-foreground py-2 border-b">Home</Link>
-            <Link href="#about" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-foreground py-2 border-b">About</Link>
-            <Link href="#services" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-foreground py-2 border-b">Services</Link>
-            <Link href="#pricing" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-foreground py-2 border-b">Pricing</Link>
-            <Link href="#contact" onClick={() => setMobileMenuOpen(false)} className="text-lg font-medium text-foreground py-2 border-b">Contact</Link>
-            <Button asChild className="mt-4 rounded-full w-full py-6 text-lg">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.name} 
+                href={link.href} 
+                onClick={() => setMobileMenuOpen(false)} 
+                className={`text-lg font-semibold py-3 px-4 rounded-[10px] transition-all ${
+                  pathname === link.href ? "bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white" : "text-[#0E8BA8]"
+                }`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            <Button asChild className="mt-4 rounded-[10px] w-full py-6 text-lg font-semibold bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white border-0">
               <Link href="/login" onClick={() => setMobileMenuOpen(false)}>Login</Link>
             </Button>
           </motion.div>
@@ -111,90 +136,108 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* HERO SECTION */}
-        <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-28 overflow-hidden">
-          {/* Background Gradients */}
-          <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-            <div className="absolute -top-[30%] -right-[10%] w-[70%] h-[70%] rounded-full bg-primary/10 blur-[120px]" />
-            <div className="absolute top-[20%] -left-[10%] w-[50%] h-[50%] rounded-full bg-accent/10 blur-[100px]" />
+        <section className="relative pt-28 pb-16 lg:pt-36 lg:pb-20 overflow-hidden bg-white">
+          {/* Animated Continuous Gradient Background */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {/* Base soft colors */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#FFFFFF] via-[#F8FFFE] to-[#DDF8F7] opacity-80" />
+            
+            {/* Moving blurred circular gradients */}
+            <motion.div 
+              animate={{ 
+                x: [0, 50, 0],
+                y: [0, -30, 0],
+                scale: [1, 1.1, 1]
+              }}
+              transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+              className="absolute -top-[20%] -right-[10%] w-[60%] h-[70%] rounded-full bg-gradient-to-b from-[#EAF9F8] to-[#DDF8F7] blur-[100px] mix-blend-multiply opacity-60"
+            />
+            <motion.div 
+              animate={{ 
+                x: [0, -40, 0],
+                y: [0, 40, 0],
+                scale: [1, 1.15, 1]
+              }}
+              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+              className="absolute top-[30%] -left-[10%] w-[50%] h-[60%] rounded-full bg-gradient-to-tr from-[#DDF8F7] to-[#D9F7FF] blur-[100px] mix-blend-multiply opacity-50"
+            />
           </div>
 
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="grid lg:grid-cols-12 gap-8 lg:gap-4 items-center text-center lg:text-left">
+              
+              {/* Left Column (45%) */}
               <motion.div 
                 initial="hidden"
                 animate="visible"
                 variants={staggerContainer}
-                className="max-w-2xl"
+                className="lg:col-span-5 flex flex-col items-center lg:items-start max-w-2xl mx-auto lg:mx-0 z-20"
               >
-                <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-6">
-                  <Sparkles size={16} />
-                  <span>Premium Laundry Service</span>
-                </motion.div>
-                <motion.h1 variants={fadeIn} className="text-5xl lg:text-7xl font-bold tracking-tight text-foreground mb-6 leading-[1.1]">
+                <motion.h1 variants={fadeIn} className="font-extrabold tracking-tight text-slate-900 mb-4 leading-[1.05]" style={{ fontSize: 'clamp(3.5rem, 5vw, 5rem)' }}>
                   Fresh Clothes,<br/>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary">Better Living.</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-[#0F2B5B]">Better Living.</span>
                 </motion.h1>
-                <motion.p variants={fadeIn} className="text-lg text-muted-foreground mb-8 max-w-lg">
+                
+                <motion.p variants={fadeIn} className="text-lg lg:text-xl text-slate-600 mb-6 max-w-[520px] font-medium leading-relaxed">
                   Professional laundry with pickup & delivery at your convenience. Give your clothes the care they deserve.
                 </motion.p>
                 
-                <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-4 mb-10">
-                  <Button asChild size="lg" className="rounded-full px-8 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
-                    <Link href="/login">Schedule Pickup</Link>
+                <motion.div variants={fadeIn} className="flex flex-col sm:flex-row gap-4 mb-8 w-full sm:w-auto">
+                  <Button asChild size="lg" className="rounded-full px-8 h-14 text-base font-bold bg-[linear-gradient(90deg,#11B8B8,#0E8BA8)] text-white hover:text-white border-0 hover:-translate-y-[2px] shadow-[0_4px_14px_0_rgba(17,184,184,0.39)] hover:shadow-[0_6px_20px_rgba(17,184,184,0.6)] transition-all duration-300 w-full sm:w-auto flex items-center gap-2 group">
+                    <Link href="/login?redirect=/resident/order">
+                      Book Pickup
+                      <ArrowRight className="w-5 h-5 text-white group-hover:translate-x-1 transition-transform" />
+                    </Link>
                   </Button>
-                  <Button asChild variant="outline" size="lg" className="rounded-full px-8 text-base bg-white/50 backdrop-blur-sm border-primary/20 hover:bg-primary/5 hover:text-primary transition-all">
+                  <Button asChild variant="outline" size="lg" className="rounded-full px-8 h-14 text-base font-bold bg-white border-2 border-[#0EA5A4] text-[#0EA5A4] hover:bg-[#0EA5A4] hover:border-[#0EA5A4] hover:text-white shadow-sm hover:shadow-md transition-all duration-300 w-full sm:w-auto">
                     <Link href="#services">Explore Services</Link>
                   </Button>
                 </motion.div>
 
-                <motion.div variants={fadeIn} className="grid grid-cols-2 gap-4 text-sm font-medium text-foreground/80">
-                  <div className="flex items-center gap-2"><CheckCircle2 className="text-accent" size={18} /> Free Pickup & Delivery</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="text-accent" size={18} /> Quality Cleaning</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="text-accent" size={18} /> On-Time Delivery</div>
-                  <div className="flex items-center gap-2"><CheckCircle2 className="text-accent" size={18} /> Affordable Pricing</div>
+                <motion.div variants={fadeIn} className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:text-base font-bold text-slate-700 w-full max-w-[520px]">
+                  <div className="flex items-center justify-center lg:justify-start gap-2"><CheckCircle2 className="text-[#0EA5A4] shrink-0" size={18} /> Free Pickup & Delivery</div>
+                  <div className="flex items-center justify-center lg:justify-start gap-2"><CheckCircle2 className="text-[#0EA5A4] shrink-0" size={18} /> Quality Cleaning</div>
+                  <div className="flex items-center justify-center lg:justify-start gap-2"><CheckCircle2 className="text-[#0EA5A4] shrink-0" size={18} /> On-Time Delivery</div>
+                  <div className="flex items-center justify-center lg:justify-start gap-2"><CheckCircle2 className="text-[#0EA5A4] shrink-0" size={18} /> Affordable Pricing</div>
                 </motion.div>
               </motion.div>
 
+              {/* Right Column (55%) */}
               <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="relative lg:h-[600px] flex items-center justify-center"
+                transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+                className="lg:col-span-7 relative flex items-center justify-center z-10 mt-8 lg:mt-0"
               >
-                {/* Abstract Premium Washing Machine Illustration area */}
-                <div className="relative w-full max-w-md aspect-square">
-                  <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-secondary/20 rounded-full blur-3xl animate-pulse" />
-                  <div className="relative z-10 glass rounded-[2.5rem] p-8 shadow-2xl border-white/40 h-full flex flex-col items-center justify-center bg-white/40">
-                    <div className="w-48 h-48 rounded-full border-[16px] border-white/80 shadow-inner flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 relative overflow-hidden">
-                       <div className="absolute bottom-0 w-full h-1/2 bg-primary/20 backdrop-blur-sm"></div>
-                       <WashingMachine size={64} className="text-primary z-10" />
-                       <motion.div 
-                         animate={{ rotate: 360 }}
-                         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                         className="absolute inset-0 border-4 border-dashed border-primary/30 rounded-full"
-                       />
-                    </div>
-                    <div className="mt-8 flex gap-3">
-                      <div className="w-16 h-12 bg-white/60 rounded-xl shadow-sm border border-white/50 flex items-center justify-center"><Shirt className="text-secondary" size={24}/></div>
-                      <div className="w-16 h-12 bg-white/60 rounded-xl shadow-sm border border-white/50 flex items-center justify-center"><Droplets className="text-primary" size={24}/></div>
-                      <div className="w-16 h-12 bg-white/60 rounded-xl shadow-sm border border-white/50 flex items-center justify-center"><Sparkles className="text-accent" size={24}/></div>
-                    </div>
-                  </div>
-                  
-                  {/* Floating Elements */}
-                  <motion.div 
-                    animate={{ y: [-10, 10, -10] }} 
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -top-6 -right-6 glass p-4 rounded-2xl shadow-lg border-white/50 bg-white/60 flex items-center gap-3"
-                  >
-                    <div className="bg-accent/20 p-2 rounded-full"><CheckCircle2 className="text-accent" size={20}/></div>
-                    <div>
-                      <div className="text-xs text-muted-foreground font-medium">Status</div>
-                      <div className="text-sm font-bold text-foreground">Sparkling Clean</div>
-                    </div>
-                  </motion.div>
-                </div>
+                {/* Soft ambient lighting and bloom behind the machine */}
+                <div className="absolute inset-0 bg-white/60 rounded-full blur-[80px] -z-10 transform scale-110" />
+                <div className="absolute inset-0 bg-[#EAF9F8] rounded-full blur-[120px] -z-20 opacity-50" />
+                
+                {/* Floating Particles */}
+                <motion.div animate={{ y: [-10, 20, -10], opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 4, repeat: Infinity }} className="absolute top-1/4 left-1/4 w-3 h-3 rounded-full bg-white blur-[2px]" />
+                <motion.div animate={{ y: [15, -15, 15], opacity: [0.2, 0.5, 0.2] }} transition={{ duration: 5, repeat: Infinity }} className="absolute bottom-1/3 right-1/4 w-4 h-4 rounded-full bg-primary/40 blur-[3px]" />
+                <motion.div animate={{ y: [-20, 10, -20], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 6, repeat: Infinity }} className="absolute top-1/2 right-1/3 w-2 h-2 rounded-full bg-blue-300 blur-[1px]" />
+
+                {/* Floating Image Container */}
+                <motion.div 
+                  animate={{ y: [-8, 8, -8] }} 
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                  className="relative w-full flex items-center justify-center lg:justify-end py-6 lg:py-0"
+                >
+                  <Image 
+                    src="/hero.png" 
+                    alt="Premium Washing Machine" 
+                    width={540}
+                    height={540}
+                    className="w-[70%] lg:w-[65%] max-w-[540px] object-contain drop-shadow-[0_20px_30px_rgba(14,165,164,0.15)] pointer-events-none lg:translate-x-4" 
+                    style={{
+                      WebkitMaskImage: 'radial-gradient(ellipse 75% 75% at 50% 50%, black 50%, transparent 100%)',
+                      maskImage: 'radial-gradient(ellipse 75% 75% at 50% 50%, black 50%, transparent 100%)'
+                    }}
+                  />
+                </motion.div>
               </motion.div>
+              
             </div>
           </div>
         </section>
@@ -282,39 +325,71 @@ export default function LandingPage() {
               <p className="text-muted-foreground text-lg">Your laundry done in 5 simple steps.</p>
             </div>
 
-            <div className="max-w-4xl mx-auto relative">
-              {/* Connector line for Desktop */}
-              <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/10 via-primary/30 to-primary/10 -translate-x-1/2" />
+            <div className="flex flex-col lg:flex-row items-center gap-12 max-w-5xl mx-auto">
               
-              <div className="space-y-12">
+              {/* Left Side - Steps */}
+              <div className="w-full lg:w-1/2 space-y-8 relative">
+                {/* Connector line */}
+                <div className="absolute left-6 top-6 bottom-6 w-0.5 bg-gray-200 -z-10" />
+                
                 {[
-                  { step: "1", title: "Schedule Pickup", desc: "Book a slot via our platform.", align: "left" },
-                  { step: "2", title: "Pickup by Operator", desc: "Our operator collects your items.", align: "right" },
-                  { step: "3", title: "Cleaning Process", desc: "Washing, drying & ironing.", align: "left" },
-                  { step: "4", title: "Quality Check", desc: "Ensuring everything is perfect.", align: "right" },
-                  { step: "5", title: "Delivery", desc: "Fresh clothes delivered to your door.", align: "left" },
+                  { step: "1", title: "Schedule Pickup", desc: "Choose a date and time that suits you." },
+                  { step: "2", title: "We Collect", desc: "Our executive will pick up your clothes." },
+                  { step: "3", title: "We Clean", desc: "Expert cleaning with quality products." },
+                  { step: "4", title: "We Deliver", desc: "Fresh & clean clothes delivered to you." },
                 ].map((item, i) => (
                   <motion.div 
                     key={i}
-                    initial={{ opacity: 0, x: item.align === "left" ? -30 : 30 }}
+                    initial={{ opacity: 0, x: -30 }}
                     whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true, margin: "-100px" }}
-                    className={`relative flex flex-col md:flex-row items-center ${item.align === "left" ? "md:flex-row" : "md:flex-row-reverse"}`}
+                    transition={{ delay: i * 0.1 }}
+                    className="flex items-start gap-6"
                   >
                     {/* Number Node */}
-                    <div className="md:absolute left-1/2 md:-translate-x-1/2 w-12 h-12 rounded-full bg-primary text-white font-bold text-xl flex items-center justify-center shadow-lg shadow-primary/30 z-10 mb-4 md:mb-0">
+                    <div className="w-12 h-12 rounded-full bg-primary text-white font-bold text-xl flex-shrink-0 flex items-center justify-center shadow-lg shadow-primary/30">
                       {item.step}
                     </div>
                     
-                    <div className={`md:w-1/2 ${item.align === "left" ? "md:pr-16 md:text-right text-center" : "md:pl-16 md:text-left text-center"}`}>
-                      <div className="bg-background md:bg-transparent p-6 md:p-0 rounded-2xl">
-                        <h3 className="text-2xl font-bold mb-2 text-foreground">{item.title}</h3>
-                        <p className="text-muted-foreground">{item.desc}</p>
-                      </div>
+                    <div className="pt-1">
+                      <h3 className="text-xl font-bold mb-1 text-foreground">{item.title}</h3>
+                      <p className="text-muted-foreground">{item.desc}</p>
                     </div>
                   </motion.div>
                 ))}
+                
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="pt-4"
+                >
+                  <Button asChild size="lg" className="rounded-full px-8 text-base shadow-lg shadow-primary/25 hover:shadow-primary/40 hover:-translate-y-0.5 transition-all">
+                    <Link href="/login">Schedule Pickup Now <span className="ml-2">→</span></Link>
+                  </Button>
+                </motion.div>
               </div>
+
+              {/* Right Side - Image */}
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                className="w-full lg:w-1/2 relative"
+              >
+                <div className="absolute inset-0 bg-primary/5 rounded-full blur-3xl -z-10" />
+                <img src="/basket.png" alt="Laundry Basket" className="w-full h-auto object-contain drop-shadow-xl" />
+                
+                {/* 100% Satisfaction Badge */}
+                <motion.div 
+                   animate={{ y: [-5, 5, -5] }} 
+                   transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                   className="absolute bottom-10 -right-4 md:right-10 bg-white p-4 rounded-2xl shadow-xl border border-gray-100 flex flex-col items-center justify-center w-32"
+                >
+                  <div className="text-3xl font-bold text-primary mb-1">100%</div>
+                  <div className="text-[10px] text-center text-muted-foreground font-medium uppercase tracking-wider leading-tight">Satisfaction<br/>Guaranteed</div>
+                </motion.div>
+              </motion.div>
             </div>
           </div>
         </section>
@@ -323,24 +398,23 @@ export default function LandingPage() {
         <section className="py-12 px-4">
           <div className="container mx-auto max-w-5xl">
             <motion.div 
-              initial={{ opacity: 0, scale: 0.95 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="bg-gradient-to-r from-secondary to-primary rounded-[3rem] p-12 text-center text-white relative overflow-hidden shadow-2xl shadow-primary/20"
+              className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between text-white shadow-xl shadow-primary/20 gap-8"
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-              
-              <div className="relative z-10">
-                <div className="inline-block px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-sm font-semibold mb-6">
-                  Limited Time Offer
+              <div className="flex items-center gap-6 md:gap-8 w-full md:w-auto">
+                <img src="/towels.png" alt="Towels" className="w-24 md:w-32 h-auto object-cover rounded-xl shadow-md hidden sm:block bg-white/20 p-2 backdrop-blur-sm" />
+                <div>
+                  <h2 className="text-2xl md:text-3xl font-bold mb-2">Get 20% OFF on Your First Order!</h2>
+                  <p className="text-white/90 text-sm md:text-base">
+                    Experience premium laundry service with our special welcome offer.
+                  </p>
                 </div>
-                <h2 className="text-4xl md:text-6xl font-bold mb-6">Get 20% OFF</h2>
-                <p className="text-xl text-white/90 mb-10 max-w-xl mx-auto">
-                  On your first laundry or dry cleaning order. Give your clothes the premium treatment they deserve.
-                </p>
-                <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 rounded-full px-10 py-6 text-lg font-bold shadow-xl transition-transform hover:scale-105">
-                  <Link href="/login">Book Now</Link>
+              </div>
+              <div className="w-full md:w-auto flex-shrink-0">
+                <Button asChild size="lg" className="w-full md:w-auto bg-white text-primary hover:bg-white/90 rounded-full px-8 py-6 text-base font-bold shadow-md transition-transform hover:scale-105">
+                  <Link href="/login">Book Now & Save <span className="ml-2">→</span></Link>
                 </Button>
               </div>
             </motion.div>

@@ -7,7 +7,6 @@
   --card-foreground: #111827;
   --muted: #edf7ff;
   --muted-foreground: #475569;
-<<<<<<< HEAD
   --primary: #7ec9f5;
   --primary-foreground: #0f172a;
   --secondary: #cfeeff;
@@ -16,18 +15,6 @@
   --border: #dfeefb;
   --input: #dbeafe;
   --ring: #7cc8f7;
-=======
-  --primary: #0ea5a4;
-  --primary-foreground: #ffffff;
-  --secondary: #0f2b5b;
-  --secondary-foreground: #ffffff;
-  --accent: #22c55e;
-  --accent-foreground: #ffffff;
-  --destructive: #dc2626;
-  --border: #e5e7eb;
-  --input: #d1d5db;
-  --ring: #0ea5a4;
->>>>>>> c5014149951d1f7abacb54a47cab265179fb3506
 }
 
 @theme inline {
@@ -52,7 +39,6 @@
 }
 
 html.dark {
-<<<<<<< HEAD
   --background: #091827;
   --foreground: #eaf4ff;
   --card: #112338;
@@ -67,66 +53,43 @@ html.dark {
   --border: #234560;
   --input: #1a3052;
   --ring: #7cc8f7;
-=======
-  --background: #090f1a;
-  --foreground: #f1f5f9;
-  --card: #101826;
-  --card-foreground: #f1f5f9;
-  --muted: #16343b;
-  --muted-foreground: #a6b3c7;
-  --primary: #0ea5a4;
-  --primary-foreground: #ffffff;
-  --secondary: #1a3a70;
-  --secondary-foreground: #ffffff;
-  --accent: #22c55e;
-  --accent-foreground: #ffffff;
-  --destructive: #f87171;
-  --border: #22304a;
-  --input: #22304a;
-  --ring: #0ea5a4;
->>>>>>> c5014149951d1f7abacb54a47cab265179fb3506
 }
 
 body {
   background:
-<<<<<<< HEAD
-    radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--primary) 18%, transparent), transparent 34%),
-    radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--secondary) 24%, transparent), transparent 38%),
-    linear-gradient(135deg, var(--background) 0%, color-mix(in oklab, var(--background) 88%, #ffffff) 100%);
-=======
     radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--primary) 5%, transparent), transparent 34%),
     radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--secondary) 6%, transparent), transparent 38%),
     linear-gradient(135deg, var(--background) 0%, color-mix(in oklab, var(--background) 82%, #ffffff) 100%);
->>>>>>> c5014149951d1f7abacb54a47cab265179fb3506
   color: var(--foreground);
   font-family: var(--font-sans), "Segoe UI", sans-serif;
   min-height: 100%;
 }
 
-h1,
-h2,
-h3,
-h4 {
-  font-family: var(--font-display), sans-serif;
-}
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display), sans-serif;
+  }
 
-a {
-  text-decoration: none;
-  color: color-mix(in oklab, var(--primary) 80%, #4f46e5 20%);
-}
+  a {
+    text-decoration: none;
+    color: color-mix(in oklab, var(--primary) 80%, #4f46e5 20%);
+  }
 
-a:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
+  a:hover {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
 
-tr th,
-tr td {
-  border: 1px solid color-mix(in oklab, var(--border) 85%, #e6e6e6 15%);
-}
+  tr th,
+  tr td {
+    border: 1px solid color-mix(in oklab, var(--border) 85%, #e6e6e6 15%);
+  }
 
-tr th {
-  background-color: color-mix(in oklab, var(--muted) 85%, #f5f5f5 15%);
+  tr th {
+    background-color: color-mix(in oklab, var(--muted) 85%, #f5f5f5 15%);
+  }
 }
 
 @keyframes fade-up {
@@ -175,4 +138,8 @@ tr th {
   .skeleton-shimmer {
     animation: none !important;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
