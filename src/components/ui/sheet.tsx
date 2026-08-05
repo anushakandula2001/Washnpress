@@ -37,17 +37,26 @@ export function SheetContent({
   className,
   side = "right",
   width = "500px",
+  onOpenAutoFocus,
 }: {
   children: React.ReactNode;
   className?: string;
   side?: "right" | "left";
   width?: string;
+  onOpenAutoFocus?: (event: Event) => void;
 }) {
   const ctx = React.useContext(SheetContext);
   if (!ctx?.open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 flex"
+      role="dialog"
+      aria-modal="true"
+      onFocusCapture={(event) => {
+        onOpenAutoFocus?.(event as unknown as Event);
+      }}
+    >
       <button
         type="button"
         className="absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity"

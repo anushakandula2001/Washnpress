@@ -7,16 +7,6 @@
   --card-foreground: #111827;
   --muted: #edf7ff;
   --muted-foreground: #475569;
-<<<<<<< HEAD
-  --primary: #7ec9f5;
-  --primary-foreground: #0f172a;
-  --secondary: #cfeeff;
-  --secondary-foreground: #0b3b5b;
-  --destructive: #dc2626;
-  --border: #dfeefb;
-  --input: #dbeafe;
-  --ring: #7cc8f7;
-=======
   --primary: #0ea5a4;
   --primary-foreground: #ffffff;
   --secondary: #0f2b5b;
@@ -27,7 +17,6 @@
   --border: #e5e7eb;
   --input: #d1d5db;
   --ring: #0ea5a4;
->>>>>>> c5014149951d1f7abacb54a47cab265179fb3506
 }
 
 @theme inline {
@@ -52,22 +41,6 @@
 }
 
 html.dark {
-<<<<<<< HEAD
-  --background: #091827;
-  --foreground: #eaf4ff;
-  --card: #112338;
-  --card-foreground: #eaf4ff;
-  --muted: #16324d;
-  --muted-foreground: #bfd8f0;
-  --primary: #8acdf8;
-  --primary-foreground: #061d34;
-  --secondary: #6bbaf1;
-  --secondary-foreground: #ebf8ff;
-  --destructive: #f87171;
-  --border: #234560;
-  --input: #1a3052;
-  --ring: #7cc8f7;
-=======
   --background: #090f1a;
   --foreground: #f1f5f9;
   --card: #101826;
@@ -84,20 +57,13 @@ html.dark {
   --border: #22304a;
   --input: #22304a;
   --ring: #0ea5a4;
->>>>>>> c5014149951d1f7abacb54a47cab265179fb3506
 }
 
 body {
   background:
-<<<<<<< HEAD
-    radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--primary) 18%, transparent), transparent 34%),
-    radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--secondary) 24%, transparent), transparent 38%),
-    linear-gradient(135deg, var(--background) 0%, color-mix(in oklab, var(--background) 88%, #ffffff) 100%);
-=======
     radial-gradient(circle at 12% 8%, color-mix(in oklab, var(--primary) 5%, transparent), transparent 34%),
     radial-gradient(circle at 88% 14%, color-mix(in oklab, var(--secondary) 6%, transparent), transparent 38%),
     linear-gradient(135deg, var(--background) 0%, color-mix(in oklab, var(--background) 82%, #ffffff) 100%);
->>>>>>> c5014149951d1f7abacb54a47cab265179fb3506
   color: var(--foreground);
   font-family: var(--font-sans), "Segoe UI", sans-serif;
   min-height: 100%;
@@ -176,3 +142,4 @@ tr th {
     animation: none !important;
   }
 }
+ 

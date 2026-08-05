@@ -50,10 +50,12 @@ export function DropdownMenuContent({
   children,
   className,
   align = "end",
+  onOpenAutoFocus,
 }: {
   children: React.ReactNode;
   className?: string;
   align?: "start" | "end";
+  onOpenAutoFocus?: (event: Event) => void;
 }) {
   const ctx = React.useContext(DropdownContext);
   if (!ctx?.open) return null;
@@ -65,6 +67,9 @@ export function DropdownMenuContent({
         align === "end" ? "right-0" : "left-0",
         className,
       )}
+      onFocusCapture={(event) => {
+        onOpenAutoFocus?.(event as unknown as Event);
+      }}
     >
       {children}
     </div>
@@ -74,11 +79,13 @@ export function DropdownMenuContent({
 export function DropdownMenuItem({
   children,
   onClick,
+  onSelect,
   className,
   destructive,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
+  onSelect?: (event: Event) => void;
   className?: string;
   destructive?: boolean;
 }) {
@@ -92,7 +99,8 @@ export function DropdownMenuItem({
         destructive && "text-destructive hover:bg-destructive/10",
         className,
       )}
-      onClick={() => {
+      onClick={(event) => {
+        onSelect?.(event as unknown as Event);
         onClick?.();
         ctx?.setOpen(false);
       }}
