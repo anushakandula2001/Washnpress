@@ -56,10 +56,10 @@ type TicketHistoryItem = {
 };
 
 type FullTicketData = SupportTicketRecord & {
-  messages: TicketMessageItem[];
-  attachments: TicketAttachmentItem[];
-  notes: TicketNoteItem[];
-  history: TicketHistoryItem[];
+  messages: any[];
+  attachments: any[];
+  notes: any[];
+  history: any[];
 };
 
 export function SupportTicketDetailDrawer({
@@ -91,9 +91,15 @@ export function SupportTicketDetailDrawer({
       } finally {
         setLoading(false);
       }
+    } catch (e) {
+      console.error("Failed to fetch ticket data", e);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    void loadTicket();
+  useEffect(() => {
+    void fetchData();
   }, [ticketId]);
 
   async function handleSendMessage() {

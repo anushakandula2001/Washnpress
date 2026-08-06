@@ -41,18 +41,21 @@ export default function ResidentDashboardPage() {
           <CurrentOrderTracking />
         </div>
 
+        {/* Right Sidebar Column (Hidden on smaller screens, collapses to bottom on tablet) */}
         <div className="w-full xl:w-80 shrink-0 space-y-6">
           <div className="xl:sticky xl:top-[5.5rem] space-y-6">
             <UpcomingPickups />
-
-            <div className="grid grid-cols-2 gap-6 xl:grid-cols-1">
+            
+            <div className="grid grid-cols-2 xl:grid-cols-1 gap-6">
               <SubscriptionMiniCard />
               <WalletMiniCard />
             </div>
+            
+            <RecentActivities />
           </div>
         </div>
       </div>
-
+      
       <ResidentFooter />
     </ResidentShell>
   );

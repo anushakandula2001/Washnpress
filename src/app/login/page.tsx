@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -20,6 +20,11 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Prefetch resident register on mount
+  useEffect(() => {
+    router.prefetch("/resident/register");
+  }, [router]);
+  
   function normalizePhone(value: string) {
     return value.replace(/\D/g, "").slice(0, 10);
   }

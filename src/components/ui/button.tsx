@@ -23,7 +23,9 @@ const sizeStyles: Record<ButtonSize, string> = {
   icon: "h-10 w-10 shrink-0 flex items-center justify-center",
 };
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   asChild?: boolean;
