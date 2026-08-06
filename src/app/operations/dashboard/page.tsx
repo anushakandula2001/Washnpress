@@ -12,9 +12,17 @@ import {
   OperationsRightSidebar,
 } from "./components";
 
+import { PortalShell } from "@/components/portal/portal-shell";
+import { operationsNav } from "@/lib/portal-nav";
+
 export default function OperationsDashboardPage() {
   return (
-    <OperationsShell>
+    <PortalShell
+      navItems={operationsNav}
+      portalLabel="Operations Portal"
+      greeting="Dashboard"
+      subtitle="Overview of today's operations"
+    >
       <div className="flex flex-col xl:flex-row gap-6 max-w-full">
         {/* Main Content Column */}
         <div className="flex-1 min-w-0 space-y-8 pb-12">
@@ -40,6 +48,6 @@ export default function OperationsDashboardPage() {
           </div>
         </div>
       </div>
-    </OperationsShell>
+    </PortalShell>
   );
 }

@@ -69,7 +69,15 @@ export function ResidentDrawer({
             <Skeleton className="h-64 w-full" />
           </div>
         )}
-        {error && <div className="p-6 text-sm text-destructive">{error}</div>}
+        {error && (
+          <div className="flex h-[80vh] flex-col items-center justify-center p-6 text-center">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Access Denied</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{error}</p>
+          </div>
+        )}
         {!loading && !error && resident && data && (
           <>
             <SheetHeader>

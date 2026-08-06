@@ -95,7 +95,6 @@ html.dark {
   tr th {
     background-color: color-mix(in oklab, var(--muted) 85%, #f5f5f5 15%);
   }
-}
 
 @keyframes fade-up {
   from {

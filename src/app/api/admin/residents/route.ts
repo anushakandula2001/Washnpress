@@ -8,7 +8,7 @@ import {
 } from "@/backend/repositories/admin";
 
 async function _GET(request: Request) {
-  const auth = await requireRole(request, "admin");
+  const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
 
   const url = new URL(request.url);
@@ -31,7 +31,7 @@ async function _GET(request: Request) {
 }
 
 async function _PATCH(request: Request) {
-  const auth = await requireRole(request, "admin");
+  const auth = await requireRole(request, "operator");
   if ("error" in auth) return auth.error;
   const body = await request.json();
   if (!body.residentId || !body.status) return badRequest("residentId and status required");

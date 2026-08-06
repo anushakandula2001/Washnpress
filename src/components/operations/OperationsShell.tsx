@@ -32,8 +32,8 @@ const navItems = [
   { href: "/operations/processing-center", label: "Laundry Processing", icon: Factory, section: "Operations" },
   { href: "/operations/completed", label: "Completed Orders", icon: CheckCircle2, section: "Operations" },
   { href: "/operations/customers", label: "Customers", icon: Users, section: "People" },
-  { href: "/operations/notifications", label: "Notifications", icon: Bell, section: "People" },
-  { href: "/operations/support-center", label: "Support", icon: Headphones, section: "People" },
+  { href: "/operations/notifications", label: "Notifications", icon: Bell, section: "Support" },
+  { href: "/operations/support-center", label: "Support Tickets", icon: Headphones, section: "Support" },
   { href: "/operations/profile", label: "Profile", icon: User, section: "Account" },
   { href: "/operations/settings", label: "Settings", icon: Settings, section: "Account" },
 ];

@@ -4,7 +4,8 @@ import { readApiJson } from "@/frontend/api-client";
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { OperationsShell } from "@/components/operations/OperationsShell";
+import { PortalShell } from "@/components/portal/portal-shell";
+import { operationsNav } from "@/lib/portal-nav";
 import { useToast } from "@/components/ui/toast";
 import { usePagination } from "@/lib/admin/use-pagination";
 import { EmptyState } from "@/components/admin/shared/EmptyState";
@@ -132,7 +133,12 @@ function PickupsContent() {
   }
 
   return (
-    <OperationsShell>
+    <PortalShell
+      navItems={operationsNav}
+      portalLabel="Operations Portal"
+      greeting="Today's Pickups"
+      subtitle="Manage scheduled pickups for today"
+    >
       {error && <p className="mb-4 text-sm text-destructive">{error}</p>}
 
       <OrdersToolbar
@@ -202,6 +208,6 @@ function PickupsContent() {
         onConfirm={handleConfirmComplete}
         isBusy={confirmOrder ? busyIds.has(confirmOrder.id) : false}
       />
-    </OperationsShell>
+    </PortalShell>
   );
 }
